@@ -555,7 +555,7 @@
     </section>
 
     <section class="result-group">
-      <h2 id="personal-year-heading">今年の数字（パーソナルイヤーナンバー）</h2>
+      <h2 id="personal-year-heading">今年・今月・今日の数字</h2>
       <div class="card-grid" id="group-personal-year"></div>
     </section>
 
@@ -854,6 +854,17 @@
     return reduceToSingleOrMaster(rMonth + rDay + rTargetYear);
   }
 
+  // Personal Month/Day build on top of Personal Year by adding the current
+  // calendar month/day as-is (not pre-reduced) and reducing again — each one
+  // narrows the "theme" from the year down to the month, then the day.
+  function calcPersonalMonthNumber(personalYear, targetMonth) {
+    return reduceToSingleOrMaster(personalYear + targetMonth);
+  }
+
+  function calcPersonalDayNumber(personalMonth, targetDay) {
+    return reduceToSingleOrMaster(personalMonth + targetDay);
+  }
+
   function calcDestinyNumber(letters) {
     if (letters.length === 0) return null;
     const raw = sumLetterValues(letters);
@@ -1020,11 +1031,23 @@
     allValues.push(challengeNumber);
     groupBasic3El.appendChild(createResultCard("チャレンジナンバー", challengeNumber, CHALLENGE_MEANINGS));
 
-    const currentYear = new Date().getFullYear();
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1;
+    const currentDay = now.getDate();
+
     const personalYear = calcPersonalYearNumber(lifePath.rMonth, lifePath.rDay, currentYear);
     allValues.push(personalYear);
-    personalYearHeadingEl.textContent = `今年（${currentYear}年）の数字（パーソナルイヤーナンバー）`;
+    personalYearHeadingEl.textContent = `今年・今月・今日の数字（${currentYear}年${currentMonth}月${currentDay}日時点）`;
     groupPersonalYearEl.appendChild(createResultCard(`${currentYear}年のパーソナルイヤーナンバー`, personalYear, NUMBER_MEANINGS, true));
+
+    const personalMonth = calcPersonalMonthNumber(personalYear, currentMonth);
+    allValues.push(personalMonth);
+    groupPersonalYearEl.appendChild(createResultCard(`${currentMonth}月のパーソナルマンスナンバー`, personalMonth, NUMBER_MEANINGS));
+
+    const personalDay = calcPersonalDayNumber(personalMonth, currentDay);
+    allValues.push(personalDay);
+    groupPersonalYearEl.appendChild(createResultCard(`${currentDay}日のパーソナルデイナンバー`, personalDay, NUMBER_MEANINGS));
 
     const ageRanges = calcPinnacleAgeRanges(lifePath.value);
     const periodTags = ["人生前半", "人生中盤", "メイン", "人生後半"];
