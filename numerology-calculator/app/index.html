@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>数秘電卓（試作版）</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app">
+    <h1>数秘電卓<span class="subtitle">Numerology Calculator (prototype)</span></h1>
+    <p class="lead">生年月日と名前（ローマ字）から、西洋数秘術（ピタゴラス式）のさまざまな数字を計算します。</p>
+
+    <form id="calc-form">
+      <label class="field">
+        <span>生年月日</span>
+        <input type="date" id="birthdate" required>
+      </label>
+
+      <label class="field">
+        <span>名前（ローマ字）</span>
+        <input type="text" id="name" placeholder="例：Taro Yamada">
+      </label>
+
+      <button type="submit" id="calc-btn">計算する</button>
+    </form>
+
+    <p id="error-message" class="error hidden"></p>
+
+    <div id="results" class="hidden">
+      <p id="master-summary" class="master-summary hidden"></p>
+      <p id="karmic-summary" class="karmic-summary hidden"></p>
+
+      <section class="result-group">
+        <h2>基本の3数字</h2>
+        <div class="card-grid" id="group-basic3"></div>
+      </section>
+
+      <section class="result-group">
+        <h2 id="personal-year-heading">今年の数字（パーソナルイヤーナンバー）</h2>
+        <div class="card-grid" id="group-personal-year"></div>
+      </section>
+
+      <section class="result-group">
+        <h2>チャレンジナンバー 詳細（人生の4つの時期の課題）</h2>
+        <div class="card-grid" id="group-challenge-detail"></div>
+      </section>
+
+      <section class="result-group">
+        <h2>ピナクルナンバー（人生の4つの時期の機会）</h2>
+        <div class="card-grid" id="group-pinnacle-detail"></div>
+      </section>
+
+      <section class="result-group">
+        <h2>名前から分かる数字</h2>
+        <div class="card-grid" id="group-name"></div>
+      </section>
+
+      <section class="result-group hidden" id="group-combined-wrap">
+        <h2>生年月日と名前から分かる数字</h2>
+        <div class="card-grid" id="group-combined"></div>
+      </section>
+    </div>
+
+    <p class="footnote">※ 数秘術には複数の計算方法・流派があり、本アプリは一般的なピタゴラス式の一例を採用しています。占いの結果は断定的なものではなく、参考としてお楽しみください。</p>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
