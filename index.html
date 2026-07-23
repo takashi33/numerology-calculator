@@ -1,44 +1,888 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ナンバーマージ（試作版）</title>
-<link rel="stylesheet" href="style.css">
-</head>
-<body>
-  <div id="page-backdrop"></div>
-  <div id="app">
-    <h1>ナンバーマージ<span class="subtitle">Number Merge (B&amp;W prototype)</span></h1>
+<title>数秘電卓</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<style>
+  /* ------------------------------------------------------------------
+     Studio Lantern — 数秘電卓 (Numerology Calculator)
+     Deliberately single-world: a dark, cosmic, gold-lit "night sky"
+     aesthetic that suits a numerology tool. Not a light/dark toggle —
+     the whole point is the sense of stepping into a lantern-lit study
+     at night, so it stays fixed regardless of the viewer's OS theme.
+     ------------------------------------------------------------------ */
+  :root {
+    --bg-0: #12081f;
+    --bg-1: #1b1039;
+    --bg-2: #2c1a4d;
+    --bg-3: #3a2260;
+    --gold: #f4d98b;
+    --gold-deep: #d9a94a;
+    --ink: #f3eefc;
+    --ink-soft: #cbb9f0;
+    --ink-faint: #9c88c2;
+    --card: rgba(255, 255, 255, 0.055);
+    --card-border: rgba(244, 217, 139, 0.28);
+    --input-bg: #faf7ff;
+    --input-ink: #221542;
+    --font-display: Georgia, "Iowan Old Style", "Palatino Linotype", "Hiragino Mincho ProN", "Yu Mincho", serif;
+    --font-body: -apple-system, "Segoe UI", "Hiragino Sans", "Yu Gothic", sans-serif;
+  }
 
-    <div id="topbar">
-      <div class="stat">SCORE<br><span id="score">0</span></div>
-      <div class="stat">NEXT<br><div id="next-preview" class="preview-circle">2</div></div>
-      <div class="stat">BEST<br><span id="best">0</span></div>
-      <div class="stat"><button id="bgm-toggle" class="bgm-btn" type="button">BGM: ON</button></div>
-    </div>
+  * {
+    box-sizing: border-box;
+  }
 
-    <div id="field-wrap">
-      <canvas id="field" width="420" height="600"></canvas>
-      <div id="start-overlay">
-        <div class="panel">
-          <div class="panel-title">ナンバーマージ</div>
-          <p class="panel-text">クリックした位置に数字を落として遊びます。<br>音を鳴らすため、まずはボタンを押してください。</p>
-          <button id="start-btn">はじめる</button>
-        </div>
-      </div>
-      <div id="gameover-overlay" class="hidden">
-        <div class="panel">
-          <div class="panel-title">GAME OVER</div>
-          <div class="panel-score">SCORE: <span id="final-score">0</span></div>
-          <button id="retry-btn">もう一度遊ぶ</button>
-        </div>
-      </div>
-    </div>
+  html, body {
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+  }
 
-    <p class="howto">上で待機している数字がマウスに合わせて左右に動きます。落としたい位置でクリックすると、その場所に数字が落ちます。同じ数字同士がぶつかると2倍の数字に合体します。破線より上に円が積み上がるとゲームオーバーです。しばらくクリックしないと、待機位置から自動的に数字が落ちてきます。</p>
+  body {
+    background:
+      radial-gradient(ellipse 120% 70% at 50% -10%, var(--bg-3) 0%, transparent 60%),
+      linear-gradient(165deg, var(--bg-0) 0%, var(--bg-1) 45%, var(--bg-2) 100%);
+    background-attachment: fixed;
+    color: var(--ink);
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1, h2, .result-number, #gate-title {
+    text-wrap: balance;
+  }
+
+  button:focus-visible,
+  input:focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  /* ---------------- Gate (passcode) screen ---------------- */
+
+  #gate {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 20px;
+  }
+
+  #gate.hidden {
+    display: none;
+  }
+
+  .sigil {
+    width: 88px;
+    height: 88px;
+    margin: 0 auto 20px;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 50% 50%, rgba(244, 217, 139, 0.35), transparent 70%);
+    border: 1px solid var(--card-border);
+    position: relative;
+    animation: breathe 5s ease-in-out infinite;
+  }
+
+  .sigil::before,
+  .sigil::after {
+    content: "";
+    position: absolute;
+    border-radius: 50%;
+    border: 1px solid rgba(244, 217, 139, 0.35);
+  }
+
+  .sigil::before {
+    inset: 14px;
+  }
+
+  .sigil::after {
+    inset: 28px;
+    border-color: var(--gold);
+  }
+
+  @keyframes breathe {
+    0%, 100% { box-shadow: 0 0 18px 2px rgba(244, 217, 139, 0.25); }
+    50% { box-shadow: 0 0 30px 6px rgba(244, 217, 139, 0.45); }
+  }
+
+  .gate-card {
+    width: 100%;
+    max-width: 360px;
+    text-align: center;
+  }
+
+  #gate-title {
+    font-family: var(--font-display);
+    font-size: 26px;
+    letter-spacing: 0.04em;
+    color: var(--gold);
+    margin: 0 0 8px;
+  }
+
+  .gate-lead {
+    font-size: 13px;
+    color: var(--ink-soft);
+    line-height: 1.8;
+    margin: 0 0 24px;
+  }
+
+  .gate-form {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  #passcode {
+    font-size: 16px;
+    text-align: center;
+    letter-spacing: 0.12em;
+    padding: 12px 14px;
+    border-radius: 10px;
+    border: 1px solid var(--card-border);
+    background: var(--input-bg);
+    color: var(--input-ink);
+  }
+
+  #passcode::placeholder {
+    color: #9083ab;
+    letter-spacing: 0;
+  }
+
+  #gate-submit {
+    font-size: 15px;
+    font-weight: 700;
+    padding: 12px;
+    border: none;
+    border-radius: 10px;
+    background: linear-gradient(135deg, var(--gold), var(--gold-deep));
+    color: #2a1a4d;
+    cursor: pointer;
+  }
+
+  #gate-submit:hover {
+    filter: brightness(1.06);
+  }
+
+  .gate-error {
+    font-size: 12.5px;
+    color: #ffd3d3;
+    min-height: 1.4em;
+    margin: 2px 0 0;
+  }
+
+  .gate-shake {
+    animation: shake 0.32s ease;
+  }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-6px); }
+    75% { transform: translateX(6px); }
+  }
+
+  /* ---------------- Main app ---------------- */
+
+  #app {
+    max-width: 460px;
+    margin: 0 auto;
+    padding: 32px 20px 48px;
+    animation: fadeIn 0.5s ease;
+  }
+
+  #app.hidden {
+    display: none;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  h1 {
+    text-align: center;
+    font-family: var(--font-display);
+    font-size: 27px;
+    margin: 0 0 4px;
+    letter-spacing: 0.04em;
+    color: var(--gold);
+  }
+
+  h1 .subtitle {
+    display: block;
+    font-family: var(--font-body);
+    font-size: 11px;
+    font-weight: normal;
+    color: var(--ink-soft);
+    letter-spacing: 0.08em;
+    margin-top: 6px;
+  }
+
+  .lead {
+    text-align: center;
+    font-size: 13px;
+    color: var(--ink-soft);
+    line-height: 1.75;
+    margin: 14px 0 24px;
+    max-width: 34ch;
+    margin-inline: auto;
+  }
+
+  #calc-form {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--ink-soft);
+  }
+
+  .field input {
+    font-size: 16px;
+    padding: 11px 12px;
+    border-radius: 9px;
+    border: 1px solid var(--card-border);
+    background: var(--input-bg);
+    color: var(--input-ink);
+    font-family: var(--font-body);
+  }
+
+  #calc-btn {
+    margin-top: 4px;
+    font-size: 15px;
+    font-weight: 700;
+    padding: 13px;
+    border: none;
+    border-radius: 9px;
+    background: linear-gradient(135deg, var(--gold), var(--gold-deep));
+    color: #2a1a4d;
+    cursor: pointer;
+  }
+
+  #calc-btn:hover {
+    filter: brightness(1.06);
+  }
+
+  .error {
+    text-align: center;
+    font-size: 13px;
+    color: #2a1a4d;
+    background: #ecdcff;
+    border-radius: 9px;
+    padding: 11px 14px;
+    margin: 16px 0 0;
+  }
+
+  .hidden {
+    display: none;
+  }
+
+  #results {
+    margin-top: 26px;
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+  }
+
+  .master-summary,
+  .karmic-summary {
+    text-align: center;
+    font-size: 13px;
+    font-weight: 700;
+    border-radius: 9px;
+    padding: 11px 14px;
+    margin: 0;
+    line-height: 1.6;
+  }
+
+  .master-summary {
+    color: #2a1a4d;
+    background: linear-gradient(135deg, var(--gold), var(--gold-deep));
+  }
+
+  .karmic-summary {
+    color: var(--ink);
+    background: rgba(120, 60, 140, 0.45);
+    border: 1px solid var(--card-border);
+  }
+
+  .result-group h2 {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink-soft);
+    letter-spacing: 0.06em;
+    margin: 0 0 12px;
+    text-align: center;
+  }
+
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  /* Basic-3 group: Birthday / Life Path (main) / Challenge side by side,
+     with the Life Path column given extra width since it's the headline
+     number of the three. */
+  #group-basic3 {
+    grid-template-columns: 1fr 1.35fr 1fr;
+  }
+
+  .result-card {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 14px;
+    padding: 16px 10px;
+    text-align: center;
+  }
+
+  .result-card.wide {
+    grid-column: 1 / -1;
+  }
+
+  .result-card.main .result-number {
+    font-size: 48px;
+  }
+
+  .result-card.main .result-label {
+    color: var(--gold);
+    font-weight: 700;
+  }
+
+  .result-card.master {
+    border: 2px solid var(--gold);
+    box-shadow: 0 0 18px rgba(244, 217, 139, 0.35);
+  }
+
+  .result-label {
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    color: var(--ink-soft);
+    margin-bottom: 6px;
+    line-height: 1.4;
+  }
+
+  .result-number {
+    font-family: var(--font-display);
+    font-size: 38px;
+    font-weight: 700;
+    color: var(--gold);
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .result-desc {
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--ink-soft);
+    line-height: 1.65;
+  }
+
+  .footnote {
+    margin-top: 30px;
+    font-size: 11px;
+    color: var(--ink-faint);
+    line-height: 1.75;
+    text-align: center;
+  }
+</style>
+
+<div id="gate">
+  <div class="gate-card">
+    <div class="sigil" aria-hidden="true"></div>
+    <h1 id="gate-title">数秘電卓</h1>
+    <p class="gate-lead">この先は許可された方のみご利用いただけます。<br>管理者から伝えられたコードを入力してください。</p>
+    <form id="gate-form" class="gate-form" autocomplete="off">
+      <input type="password" id="passcode" placeholder="コード入力" inputmode="numeric" required>
+      <button type="submit" id="gate-submit">扉を開く</button>
+      <p id="gate-error" class="gate-error"></p>
+    </form>
+  </div>
+</div>
+
+<div id="app" class="hidden">
+  <h1>数秘電卓<span class="subtitle">Numerology Calculator</span></h1>
+  <p class="lead">生年月日と名前（ローマ字）から、西洋数秘術（ピタゴラス式）のさまざまな数字を計算します。</p>
+
+  <form id="calc-form">
+    <label class="field">
+      <span>生年月日</span>
+      <input type="date" id="birthdate" required>
+    </label>
+
+    <label class="field">
+      <span>名前（ローマ字）</span>
+      <input type="text" id="name" placeholder="例：Taro Yamada">
+    </label>
+
+    <button type="submit" id="calc-btn">計算する</button>
+  </form>
+
+  <p id="error-message" class="error hidden"></p>
+
+  <div id="results" class="hidden">
+    <p id="master-summary" class="master-summary hidden"></p>
+    <p id="karmic-summary" class="karmic-summary hidden"></p>
+
+    <section class="result-group">
+      <h2>基本の3数字</h2>
+      <div class="card-grid" id="group-basic3"></div>
+    </section>
+
+    <section class="result-group">
+      <h2 id="personal-year-heading">今年の数字（パーソナルイヤーナンバー）</h2>
+      <div class="card-grid" id="group-personal-year"></div>
+    </section>
+
+    <section class="result-group">
+      <h2>チャレンジナンバー 詳細（人生の4つの時期の課題）</h2>
+      <div class="card-grid" id="group-challenge-detail"></div>
+    </section>
+
+    <section class="result-group">
+      <h2>ピナクルナンバー（人生の4つの時期の機会）</h2>
+      <div class="card-grid" id="group-pinnacle-detail"></div>
+    </section>
+
+    <section class="result-group">
+      <h2>名前から分かる数字</h2>
+      <div class="card-grid" id="group-name"></div>
+    </section>
+
+    <section class="result-group hidden" id="group-combined-wrap">
+      <h2>生年月日と名前から分かる数字</h2>
+      <div class="card-grid" id="group-combined"></div>
+    </section>
   </div>
 
-  <script src="script.js"></script>
-</body>
-</html>
+  <p class="footnote">※ 数秘術には複数の計算方法・流派があり、本アプリは一般的なピタゴラス式の一例を採用しています。占いの結果は断定的なものではなく、参考としてお楽しみください。</p>
+</div>
+
+<script>
+(() => {
+  // ---------------- Gate (passcode) ----------------
+  const PASSCODE = "19810619";
+  const SESSION_KEY = "numerology-gate-unlocked";
+
+  const gateEl = document.getElementById("gate");
+  const appEl = document.getElementById("app");
+  const gateForm = document.getElementById("gate-form");
+  const passcodeInput = document.getElementById("passcode");
+  const gateError = document.getElementById("gate-error");
+  const gateCard = document.querySelector(".gate-card");
+
+  function unlock() {
+    gateEl.classList.add("hidden");
+    appEl.classList.remove("hidden");
+  }
+
+  // Reading/writing sessionStorage can throw (e.g. browser privacy settings,
+  // or a sandboxed context when opened fresh in a new tab). If it throws
+  // before the listener below is registered, the "扉を開く" button silently
+  // stops responding — so both accesses are guarded and never allowed to
+  // interrupt setup.
+  function isAlreadyUnlocked() {
+    try {
+      return sessionStorage.getItem(SESSION_KEY) === "yes";
+    } catch (err) {
+      return false;
+    }
+  }
+
+  function rememberUnlocked() {
+    try {
+      sessionStorage.setItem(SESSION_KEY, "yes");
+    } catch (err) {
+      // Ignore: unlocking for this page load still works without storage.
+    }
+  }
+
+  if (isAlreadyUnlocked()) {
+    unlock();
+  }
+
+  gateForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    if (passcodeInput.value === PASSCODE) {
+      rememberUnlocked();
+      unlock();
+    } else {
+      gateError.textContent = "コードが違います。管理者にご確認ください。";
+      gateCard.classList.remove("gate-shake");
+      // eslint-disable-next-line no-unused-expressions
+      void gateCard.offsetWidth;
+      gateCard.classList.add("gate-shake");
+      passcodeInput.value = "";
+      passcodeInput.focus();
+    }
+  });
+
+  // ---------------- Numerology calculator ----------------
+  const form = document.getElementById("calc-form");
+  const birthdateInput = document.getElementById("birthdate");
+  const nameInput = document.getElementById("name");
+  const errorMessage = document.getElementById("error-message");
+  const resultsEl = document.getElementById("results");
+  const masterSummaryEl = document.getElementById("master-summary");
+  const groupBasic3El = document.getElementById("group-basic3");
+  const groupPersonalYearEl = document.getElementById("group-personal-year");
+  const personalYearHeadingEl = document.getElementById("personal-year-heading");
+  const groupChallengeDetailEl = document.getElementById("group-challenge-detail");
+  const groupPinnacleDetailEl = document.getElementById("group-pinnacle-detail");
+  const groupNameEl = document.getElementById("group-name");
+  const groupCombinedWrapEl = document.getElementById("group-combined-wrap");
+  const groupCombinedEl = document.getElementById("group-combined");
+  const karmicSummaryEl = document.getElementById("karmic-summary");
+
+  const MASTER_NUMBERS = [11, 22, 33];
+  const KARMIC_DEBT_NUMBERS = [13, 14, 16, 19];
+  const VOWELS = new Set(["a", "e", "i", "o", "u"]);
+
+  const NUMBER_MEANINGS = {
+    1: "リーダーシップや独立心、新しいことを始める力の象徴とされています。",
+    2: "協調性やバランス感覚、人との調和を大切にする傾向があると言われています。",
+    3: "表現力や創造性、明るさやコミュニケーション力の象徴とされています。",
+    4: "堅実さや責任感、コツコツ積み上げていく力があると言われています。",
+    5: "自由や変化を好み、好奇心旺盛な傾向があるとされています。",
+    6: "思いやりや調和、周囲を支える愛情深さの象徴とされています。",
+    7: "探究心や内省、精神性を大切にする傾向があると言われています。",
+    8: "実行力や物質的な成功、リーダーとしての手腕の象徴とされています。",
+    9: "博愛精神や包容力、人のために尽くす傾向があるとされています。",
+    11: "直感力やひらめき、精神的な気づきをもたらすマスターナンバーとされています。",
+    22: "大きな理想を現実の形にする力を持つマスターナンバーとされています。",
+    33: "無償の愛や奉仕の精神を象徴するマスターナンバーとされています。",
+  };
+
+  const CHALLENGE_MEANINGS = {
+    0: "特定の課題に偏らず、状況に応じて柔軟に向き合う時期とされています。",
+    1: "自立心を育て、自分の意思で行動する力を養う時期とされています。",
+    2: "人との関わり方や、協調・バランスの取り方が課題になるとされています。",
+    3: "自己表現や、気持ちを言葉にすることが課題になるとされています。",
+    4: "地道な努力や、物事を着実に積み上げることが課題になるとされています。",
+    5: "変化への適応や、自由と責任のバランスが課題になるとされています。",
+    6: "周囲への責任や、家庭・人間関係のバランスが課題になるとされています。",
+    7: "内面と向き合い、自分自身を深く理解することが課題になるとされています。",
+    8: "力や資源の使い方、物事の管理・采配が課題になるとされています。",
+    9: "私利私欲にとらわれず、広い視野で人や物事と関わることが課題になるとされています。",
+    11: "直感や気づきを通じて、自分自身と深く向き合うことが課題になるとされています。",
+  };
+
+  const KARMIC_DEBT_MEANINGS = {
+    13: "怠けず地道に積み上げることで、努力の大切さを学ぶ経験があるとされています。",
+    14: "自由を求めすぎた反動から、節度やバランスを学ぶ経験があるとされています。",
+    16: "自我や慢心を手放し、謙虚さを学ぶような大きな変化を経験するとされています。",
+    19: "人に頼りすぎず、自立する強さを経験を通して学ぶとされています。",
+  };
+
+  const LETTER_VALUES = {
+    a: 1, j: 1, s: 1,
+    b: 2, k: 2, t: 2,
+    c: 3, l: 3, u: 3,
+    d: 4, m: 4, v: 4,
+    e: 5, n: 5, w: 5,
+    f: 6, o: 6, x: 6,
+    g: 7, p: 7, y: 7,
+    h: 8, q: 8, z: 8,
+    i: 9, r: 9,
+  };
+
+  function sumDigits(n) {
+    return String(Math.abs(n))
+      .split("")
+      .reduce((sum, d) => sum + Number(d), 0);
+  }
+
+  function digitsOf(n) {
+    return String(Math.abs(n))
+      .split("")
+      .map(Number);
+  }
+
+  function reduceToSingleOrMaster(n) {
+    let value = Math.abs(n);
+    while (value > 9 && !MASTER_NUMBERS.includes(value)) {
+      value = sumDigits(value);
+    }
+    return value;
+  }
+
+  function isMaster(value) {
+    return MASTER_NUMBERS.includes(value);
+  }
+
+  function reduceToSingleDigitOnly(n) {
+    let value = Math.abs(n);
+    while (value > 9) {
+      value = sumDigits(value);
+    }
+    return value;
+  }
+
+  function nameLetters(name) {
+    return name.toLowerCase().replace(/[^a-z]/g, "").split("");
+  }
+
+  function sumLetterValues(letters) {
+    return letters.reduce((sum, letter) => sum + (LETTER_VALUES[letter] || 0), 0);
+  }
+
+  function calcLifePathNumber(year, month, day) {
+    const rMonth = reduceToSingleOrMaster(month);
+    const rDay = reduceToSingleOrMaster(day);
+    const rYear = reduceToSingleOrMaster(sumDigits(year));
+    const raw = sumDigits(year) + sumDigits(month) + sumDigits(day);
+    return { value: reduceToSingleOrMaster(raw), raw, rMonth, rDay, rYear };
+  }
+
+  function calcBirthdayNumber(day) {
+    return reduceToSingleOrMaster(day);
+  }
+
+  // Feeds only the "4 life periods" detail breakdown below (第1〜第4チャレンジ),
+  // not the basic-3 "チャレンジナンバー" card — that one uses the 未来数-style
+  // calcChallengeNumber (singular) instead. The two intentionally use
+  // different formulas and can produce different values for the same date.
+  function calcChallengeNumbers(rMonth, rDay, rYear) {
+    const c1 = reduceToSingleOrMaster(Math.abs(rMonth - rDay));
+    const c2 = reduceToSingleOrMaster(Math.abs(rDay - rYear));
+    const c3 = reduceToSingleOrMaster(Math.abs(c1 - c2));
+    const c4 = reduceToSingleOrMaster(Math.abs(rMonth - rYear));
+    return [c1, c2, c3, c4];
+  }
+
+  // The basic-3 "チャレンジナンバー": breaks the month and day into individual
+  // digits and adds them all together (year excluded), then reduces. This is
+  // the calculation commonly called 未来数 (future number) in Japanese
+  // numerology, and is often used interchangeably with the name
+  // "チャレンジナンバー" there — distinct from the Western subtraction-based
+  // Challenge Number used in the 4-period detail breakdown above.
+  function calcChallengeNumber(month, day) {
+    const raw = digitsOf(month).concat(digitsOf(day)).reduce((sum, d) => sum + d, 0);
+    return reduceToSingleOrMaster(raw);
+  }
+
+  function calcPinnacleNumbers(rMonth, rDay, rYear) {
+    const p1 = reduceToSingleOrMaster(rMonth + rDay);
+    const p2 = reduceToSingleOrMaster(rDay + rYear);
+    const p3 = reduceToSingleOrMaster(p1 + p2);
+    const p4 = reduceToSingleOrMaster(rMonth + rYear);
+    return [p1, p2, p3, p4];
+  }
+
+  function calcPinnacleAgeRanges(lifePathValue) {
+    const endFirst = 36 - reduceToSingleDigitOnly(lifePathValue);
+    return [
+      { from: 0, to: endFirst },
+      { from: endFirst + 1, to: endFirst + 9 },
+      { from: endFirst + 10, to: endFirst + 18 },
+      { from: endFirst + 19, to: null },
+    ];
+  }
+
+  function formatAgeRange(range) {
+    return range.to === null ? `${range.from}歳〜` : `${range.from}〜${range.to}歳`;
+  }
+
+  function calcPersonalYearNumber(rMonth, rDay, targetYear) {
+    const rTargetYear = reduceToSingleOrMaster(sumDigits(targetYear));
+    return reduceToSingleOrMaster(rMonth + rDay + rTargetYear);
+  }
+
+  function calcDestinyNumber(letters) {
+    if (letters.length === 0) return null;
+    const raw = sumLetterValues(letters);
+    return { value: reduceToSingleOrMaster(raw), raw };
+  }
+
+  function calcSoulNumber(letters) {
+    const vowels = letters.filter((l) => VOWELS.has(l));
+    if (vowels.length === 0) return null;
+    return reduceToSingleOrMaster(sumLetterValues(vowels));
+  }
+
+  function calcPersonalityNumber(letters) {
+    const consonants = letters.filter((l) => !VOWELS.has(l));
+    if (consonants.length === 0) return null;
+    return reduceToSingleOrMaster(sumLetterValues(consonants));
+  }
+
+  function calcMaturityNumber(lifePath, destiny) {
+    if (destiny === null) return null;
+    return reduceToSingleOrMaster(lifePath + destiny);
+  }
+
+  function showError(message) {
+    errorMessage.textContent = message;
+    errorMessage.classList.remove("hidden");
+    resultsEl.classList.add("hidden");
+  }
+
+  function createResultCard(label, value, meaningMap, wide, main) {
+    const card = document.createElement("div");
+    card.className = "result-card" + (wide ? " wide" : "") + (main ? " main" : "");
+    if (isMaster(value)) card.classList.add("master");
+
+    const labelEl = document.createElement("div");
+    labelEl.className = "result-label";
+    labelEl.textContent = label;
+
+    const numberEl = document.createElement("div");
+    numberEl.className = "result-number";
+    numberEl.textContent = String(value);
+
+    const descEl = document.createElement("div");
+    descEl.className = "result-desc";
+    const meaning = meaningMap[value] || "";
+    const masterNote = isMaster(value) ? "（マスターナンバーです）" : "";
+    descEl.textContent = `${meaning}${masterNote}`;
+
+    card.appendChild(labelEl);
+    card.appendChild(numberEl);
+    card.appendChild(descEl);
+    return card;
+  }
+
+  form.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && e.target.tagName === "INPUT") {
+      e.preventDefault();
+    }
+  });
+
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    errorMessage.classList.add("hidden");
+
+    const birthdateValue = birthdateInput.value;
+    if (!birthdateValue) {
+      showError("生年月日を入力してください。");
+      return;
+    }
+
+    const [yearStr, monthStr, dayStr] = birthdateValue.split("-");
+    const year = Number(yearStr);
+    const month = Number(monthStr);
+    const day = Number(dayStr);
+    if (!year || !month || !day) {
+      showError("生年月日を正しく入力してください。");
+      return;
+    }
+
+    groupBasic3El.innerHTML = "";
+    groupPersonalYearEl.innerHTML = "";
+    groupChallengeDetailEl.innerHTML = "";
+    groupPinnacleDetailEl.innerHTML = "";
+    groupNameEl.innerHTML = "";
+    groupCombinedEl.innerHTML = "";
+
+    const allValues = [];
+    const karmicHits = [];
+
+    function checkKarmic(raw) {
+      if (KARMIC_DEBT_NUMBERS.includes(raw)) karmicHits.push(raw);
+    }
+
+    // Basic-3 group is displayed left to right as Birthday / Life Path
+    // (main, emphasized) / Challenge.
+    const birthday = calcBirthdayNumber(day);
+    allValues.push(birthday);
+    groupBasic3El.appendChild(createResultCard("バースデーナンバー", birthday, NUMBER_MEANINGS));
+
+    const lifePath = calcLifePathNumber(year, month, day);
+    allValues.push(lifePath.value);
+    checkKarmic(lifePath.raw);
+    groupBasic3El.appendChild(createResultCard("ライフパスナンバー", lifePath.value, NUMBER_MEANINGS, false, true));
+
+    const challengeNumber = calcChallengeNumber(month, day);
+    allValues.push(challengeNumber);
+    groupBasic3El.appendChild(createResultCard("チャレンジナンバー", challengeNumber, CHALLENGE_MEANINGS));
+
+    const currentYear = new Date().getFullYear();
+    const personalYear = calcPersonalYearNumber(lifePath.rMonth, lifePath.rDay, currentYear);
+    allValues.push(personalYear);
+    personalYearHeadingEl.textContent = `今年（${currentYear}年）の数字（パーソナルイヤーナンバー）`;
+    groupPersonalYearEl.appendChild(createResultCard(`${currentYear}年のパーソナルイヤーナンバー`, personalYear, NUMBER_MEANINGS, true));
+
+    const ageRanges = calcPinnacleAgeRanges(lifePath.value);
+    const periodTags = ["人生前半", "人生中盤", "メイン", "人生後半"];
+
+    const challenges = calcChallengeNumbers(lifePath.rMonth, lifePath.rDay, lifePath.rYear);
+    challenges.forEach((c, i) => {
+      allValues.push(c);
+      const label = `第${i + 1}チャレンジ（${periodTags[i]}・${formatAgeRange(ageRanges[i])}）`;
+      groupChallengeDetailEl.appendChild(createResultCard(label, c, CHALLENGE_MEANINGS));
+    });
+
+    const pinnacles = calcPinnacleNumbers(lifePath.rMonth, lifePath.rDay, lifePath.rYear);
+    pinnacles.forEach((p, i) => {
+      allValues.push(p);
+      const label = `第${i + 1}ピナクル（${periodTags[i]}・${formatAgeRange(ageRanges[i])}）`;
+      groupPinnacleDetailEl.appendChild(createResultCard(label, p, NUMBER_MEANINGS));
+    });
+
+    const letters = nameLetters(nameInput.value);
+    const destinyResult = calcDestinyNumber(letters);
+    const destiny = destinyResult ? destinyResult.value : null;
+    if (destinyResult === null) {
+      groupNameEl.parentElement.classList.add("hidden");
+    } else {
+      groupNameEl.parentElement.classList.remove("hidden");
+      allValues.push(destiny);
+      checkKarmic(destinyResult.raw);
+      groupNameEl.appendChild(createResultCard("デスティニーナンバー", destiny, NUMBER_MEANINGS, true));
+
+      const soul = calcSoulNumber(letters);
+      if (soul !== null) {
+        allValues.push(soul);
+        groupNameEl.appendChild(createResultCard("ソウルナンバー", soul, NUMBER_MEANINGS));
+      }
+
+      const personality = calcPersonalityNumber(letters);
+      if (personality !== null) {
+        allValues.push(personality);
+        groupNameEl.appendChild(createResultCard("パーソナリティナンバー", personality, NUMBER_MEANINGS));
+      }
+    }
+
+    const maturity = calcMaturityNumber(lifePath.value, destiny);
+    if (maturity === null) {
+      groupCombinedWrapEl.classList.add("hidden");
+    } else {
+      groupCombinedWrapEl.classList.remove("hidden");
+      allValues.push(maturity);
+      groupCombinedEl.appendChild(createResultCard("成熟数（マチュリティナンバー）", maturity, NUMBER_MEANINGS, true));
+    }
+
+    const masterHits = allValues.filter(isMaster);
+    if (masterHits.length > 0) {
+      masterSummaryEl.textContent = `マスターナンバーが含まれています（${[...new Set(masterHits)].join("、")}）`;
+      masterSummaryEl.classList.remove("hidden");
+    } else {
+      masterSummaryEl.classList.add("hidden");
+    }
+
+    if (karmicHits.length > 0) {
+      const notes = [...new Set(karmicHits)].map((n) => `${n}（${KARMIC_DEBT_MEANINGS[n]}）`).join(" ");
+      karmicSummaryEl.textContent = `カルミックデット・ナンバーが見られます：${notes}`;
+      karmicSummaryEl.classList.remove("hidden");
+    } else {
+      karmicSummaryEl.classList.add("hidden");
+    }
+
+    resultsEl.classList.remove("hidden");
+  });
+})();
+</script>
