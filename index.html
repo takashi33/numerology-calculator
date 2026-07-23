@@ -399,6 +399,113 @@
     line-height: 1.75;
     text-align: center;
   }
+
+  #admin-qr-btn {
+    display: block;
+    margin: 18px auto 0;
+    padding: 8px 12px;
+    font-size: 11px;
+    color: var(--ink-faint);
+    background: none;
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    cursor: pointer;
+  }
+
+  #admin-qr-btn:hover {
+    color: var(--ink-soft);
+    border-color: var(--gold);
+  }
+
+  #qr-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(10, 4, 20, 0.72);
+  }
+
+  #qr-modal.hidden {
+    display: none;
+  }
+
+  .qr-modal-card {
+    position: relative;
+    width: 100%;
+    max-width: 320px;
+    background: linear-gradient(165deg, var(--bg-1) 0%, var(--bg-2) 100%);
+    border: 1px solid var(--card-border);
+    border-radius: 18px;
+    padding: 28px 22px 24px;
+    text-align: center;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+  }
+
+  .qr-modal-card h2 {
+    margin: 0 0 16px;
+    font-family: var(--font-display);
+    font-size: 18px;
+    color: var(--gold);
+  }
+
+  #qr-modal-close {
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    background: none;
+    border: none;
+    color: var(--ink-soft);
+    font-size: 22px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 4px 8px;
+  }
+
+  .qr-modal-img-wrap {
+    background: #ffffff;
+    border-radius: 14px;
+    padding: 14px;
+    display: inline-block;
+  }
+
+  .qr-modal-img-wrap img {
+    display: block;
+    width: 100%;
+    max-width: 220px;
+    height: auto;
+  }
+
+  .qr-modal-code {
+    margin-top: 18px;
+    padding: 12px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, var(--gold), var(--gold-deep));
+    color: #2a1a4d;
+  }
+
+  .qr-modal-code-label {
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    font-weight: 700;
+  }
+
+  .qr-modal-code-value {
+    font-family: var(--font-display);
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .qr-modal-note {
+    margin: 14px 0 0;
+    font-size: 11px;
+    color: var(--ink-faint);
+    line-height: 1.7;
+  }
 </style>
 
 <div id="gate">
@@ -470,6 +577,23 @@
   </div>
 
   <p class="footnote">※ 数秘術には複数の計算方法・流派があり、本アプリは一般的なピタゴラス式の一例を採用しています。占いの結果は断定的なものではなく、参考としてお楽しみください。</p>
+
+  <button id="admin-qr-btn" type="button">招待QRコードを表示（管理者用）</button>
+</div>
+
+<div id="qr-modal" class="hidden">
+  <div class="qr-modal-card">
+    <button id="qr-modal-close" type="button" aria-label="閉じる">×</button>
+    <h2>招待QRコード</h2>
+    <div class="qr-modal-img-wrap">
+      <img src="data:image/png;base64,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" alt="数秘電卓へのQRコード">
+    </div>
+    <div class="qr-modal-code">
+      <div class="qr-modal-code-label">コード</div>
+      <div class="qr-modal-code-value">19810619</div>
+    </div>
+    <p class="qr-modal-note">この画面を、招待したい相手に見せてください。</p>
+  </div>
 </div>
 
 <script>
@@ -883,6 +1007,23 @@
     }
 
     resultsEl.classList.remove("hidden");
+  });
+
+  // ---------------- Admin: invite QR modal ----------------
+  const adminQrBtn = document.getElementById("admin-qr-btn");
+  const qrModal = document.getElementById("qr-modal");
+  const qrModalClose = document.getElementById("qr-modal-close");
+
+  adminQrBtn.addEventListener("click", () => {
+    qrModal.classList.remove("hidden");
+  });
+
+  qrModalClose.addEventListener("click", () => {
+    qrModal.classList.add("hidden");
+  });
+
+  qrModal.addEventListener("click", (e) => {
+    if (e.target === qrModal) qrModal.classList.add("hidden");
   });
 })();
 </script>
