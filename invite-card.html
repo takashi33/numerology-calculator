@@ -1,0 +1,136 @@
+<title>数秘電卓 招待カード</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  :root {
+    --bg-0: #12081f;
+    --bg-1: #1b1039;
+    --bg-2: #2c1a4d;
+    --bg-3: #3a2260;
+    --gold: #f4d98b;
+    --gold-deep: #d9a94a;
+    --ink: #f3eefc;
+    --ink-soft: #cbb9f0;
+    --ink-faint: #9c88c2;
+    --card: rgba(255, 255, 255, 0.055);
+    --card-border: rgba(244, 217, 139, 0.28);
+    --font-display: Georgia, "Iowan Old Style", "Palatino Linotype", "Hiragino Mincho ProN", "Yu Mincho", serif;
+    --font-body: -apple-system, "Segoe UI", "Hiragino Sans", "Yu Gothic", sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; min-height: 100vh; }
+  body {
+    background:
+      radial-gradient(ellipse 120% 70% at 50% -10%, var(--bg-3) 0%, transparent 60%),
+      linear-gradient(165deg, var(--bg-0) 0%, var(--bg-1) 45%, var(--bg-2) 100%);
+    background-attachment: fixed;
+    color: var(--ink);
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+  }
+  h1 { text-wrap: balance; }
+  #card {
+    max-width: 380px;
+    margin: 0 auto;
+    padding: 40px 24px 48px;
+    text-align: center;
+  }
+  h1 {
+    font-family: var(--font-display);
+    font-size: 26px;
+    letter-spacing: 0.04em;
+    color: var(--gold);
+    margin: 0 0 6px;
+  }
+  .subtitle {
+    font-size: 12px;
+    color: var(--ink-soft);
+    letter-spacing: 0.08em;
+    margin: 0 0 28px;
+  }
+  .qr-wrap {
+    background: #ffffff;
+    border-radius: 20px;
+    padding: 20px;
+    display: inline-block;
+    box-shadow: 0 0 30px rgba(244, 217, 139, 0.25);
+    border: 1px solid var(--card-border);
+  }
+  .qr-wrap img {
+    display: block;
+    width: 100%;
+    max-width: 260px;
+    height: auto;
+  }
+  .instructions {
+    margin-top: 28px;
+    text-align: left;
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 14px;
+    padding: 18px 20px;
+    font-size: 13px;
+    line-height: 1.9;
+    color: var(--ink-soft);
+  }
+  .instructions ol { margin: 0; padding-left: 1.2em; }
+  .instructions li { margin-bottom: 6px; }
+  .passcode-box {
+    margin-top: 20px;
+    padding: 16px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--gold), var(--gold-deep));
+    color: #2a1a4d;
+  }
+  .passcode-label {
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .passcode-value {
+    font-family: var(--font-display);
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    font-variant-numeric: tabular-nums;
+  }
+  .url-fallback {
+    margin-top: 16px;
+    font-size: 11px;
+    color: var(--ink-faint);
+    word-break: break-all;
+    line-height: 1.7;
+  }
+  .note {
+    margin-top: 24px;
+    font-size: 11px;
+    color: var(--ink-faint);
+    line-height: 1.8;
+  }
+</style>
+
+<div id="card">
+  <h1>数秘電卓</h1>
+  <p class="subtitle">招待カード（許可した方にお見せください）</p>
+
+  <div class="qr-wrap">
+    <img src="data:image/png;base64,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" alt="数秘電卓へのQRコード">
+  </div>
+
+  <div class="passcode-box">
+    <div class="passcode-label">コード</div>
+    <div class="passcode-value">19810619</div>
+  </div>
+
+  <div class="instructions">
+    <ol>
+      <li>スマホのカメラでこのQRコードを読み取ってください</li>
+      <li>表示されたページで、上のコードを入力してください</li>
+      <li>「扉を開く」を押すと数秘電卓が使えます</li>
+    </ol>
+  </div>
+
+  <p class="url-fallback">QRコードが読み取れない場合：<br>https://takashi33.github.io/numerology-calculator/</p>
+
+  <p class="note">※ このカードとコードは、利用を許可した方にのみお伝えください。</p>
+</div>
