@@ -728,6 +728,18 @@
     19: "人に頼りすぎず、自立する強さを経験を通して学ぶとされています。",
   };
 
+  const LIFE_LESSON_MEANINGS = {
+    1: "リーダーシップや自主性を、意識して育てていく課題があるとされています。",
+    2: "人との協調やバランスの取り方を、意識して育てていく課題があるとされています。",
+    3: "自己表現やコミュニケーションを、意識して育てていく課題があるとされています。",
+    4: "地道な努力やコツコツ取り組む力を、意識して育てていく課題があるとされています。",
+    5: "変化への柔軟さや自由な発想を、意識して育てていく課題があるとされています。",
+    6: "思いやりや責任感を、意識して育てていく課題があるとされています。",
+    7: "内省や探究心を、意識して育てていく課題があるとされています。",
+    8: "実行力や物事を采配する力を、意識して育てていく課題があるとされています。",
+    9: "博愛の心や広い視野を、意識して育てていく課題があるとされています。",
+  };
+
   const LETTER_VALUES = {
     a: 1, j: 1, s: 1,
     b: 2, k: 2, t: 2,
@@ -865,6 +877,37 @@
     return reduceToSingleOrMaster(lifePath + destiny);
   }
 
+  // The digits (1-9) that never appear among the name's letter values —
+  // areas the name doesn't naturally cover, which this lifetime is said to
+  // ask you to develop deliberately. Can be an empty list (every digit is
+  // covered) or several digits at once.
+  function calcLifeLessonNumbers(letters) {
+    if (letters.length === 0) return null;
+    const present = new Set(letters.map((l) => LETTER_VALUES[l]).filter(Boolean));
+    const missing = [];
+    for (let n = 1; n <= 9; n++) {
+      if (!present.has(n)) missing.push(n);
+    }
+    return missing;
+  }
+
+  // The digit(s) that occur most often among the name's letter values —
+  // where the name's energy is most concentrated. Usually a single digit,
+  // but ties are possible and are all returned.
+  function calcIntensityNumbers(letters) {
+    if (letters.length === 0) return null;
+    const counts = {};
+    letters.forEach((l) => {
+      const v = LETTER_VALUES[l];
+      if (!v) return;
+      counts[v] = (counts[v] || 0) + 1;
+    });
+    const values = Object.keys(counts).map(Number);
+    if (values.length === 0) return [];
+    const maxCount = Math.max(...values.map((v) => counts[v]));
+    return values.filter((v) => counts[v] === maxCount).sort((a, b) => a - b);
+  }
+
   function showError(message) {
     errorMessage.textContent = message;
     errorMessage.classList.remove("hidden");
@@ -889,6 +932,33 @@
     const meaning = meaningMap[value] || "";
     const masterNote = isMaster(value) ? "（マスターナンバーです）" : "";
     descEl.textContent = `${meaning}${masterNote}`;
+
+    card.appendChild(labelEl);
+    card.appendChild(numberEl);
+    card.appendChild(descEl);
+    return card;
+  }
+
+  // For numbers that can come back as zero, one, or several digits at once
+  // (Life Lesson Number, Intensity Number), rather than always exactly one.
+  function createMultiNumberCard(label, values, meaningMap, emptyText, wide) {
+    const card = document.createElement("div");
+    card.className = "result-card" + (wide ? " wide" : "");
+    if (values.some(isMaster)) card.classList.add("master");
+
+    const labelEl = document.createElement("div");
+    labelEl.className = "result-label";
+    labelEl.textContent = label;
+
+    const numberEl = document.createElement("div");
+    numberEl.className = "result-number";
+    numberEl.textContent = values.length > 0 ? values.join("、") : "―";
+
+    const descEl = document.createElement("div");
+    descEl.className = "result-desc";
+    descEl.textContent = values.length > 0
+      ? values.map((v) => meaningMap[v] || "").filter(Boolean).join(" ")
+      : emptyText;
 
     card.appendChild(labelEl);
     card.appendChild(numberEl);
@@ -994,6 +1064,28 @@
       if (personality !== null) {
         allValues.push(personality);
         groupNameEl.appendChild(createResultCard("パーソナリティナンバー", personality, NUMBER_MEANINGS));
+      }
+
+      const lifeLessonNumbers = calcLifeLessonNumbers(letters);
+      if (lifeLessonNumbers !== null) {
+        lifeLessonNumbers.forEach((v) => allValues.push(v));
+        groupNameEl.appendChild(createMultiNumberCard(
+          "ライフレッスンナンバー",
+          lifeLessonNumbers,
+          LIFE_LESSON_MEANINGS,
+          "お名前の中に1〜9のすべての数字が含まれており、特に意識すべき数字は見当たりません。"
+        ));
+      }
+
+      const intensityNumbers = calcIntensityNumbers(letters);
+      if (intensityNumbers !== null && intensityNumbers.length > 0) {
+        intensityNumbers.forEach((v) => allValues.push(v));
+        groupNameEl.appendChild(createMultiNumberCard(
+          "インテンシティナンバー",
+          intensityNumbers,
+          NUMBER_MEANINGS,
+          ""
+        ));
       }
     }
 
