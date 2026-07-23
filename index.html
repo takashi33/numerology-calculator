@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ナンバーマージ（試作版）</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="page-backdrop"></div>
+  <div id="app">
+    <h1>ナンバーマージ<span class="subtitle">Number Merge (B&amp;W prototype)</span></h1>
+
+    <div id="topbar">
+      <div class="stat">SCORE<br><span id="score">0</span></div>
+      <div class="stat">NEXT<br><div id="next-preview" class="preview-circle">2</div></div>
+      <div class="stat">BEST<br><span id="best">0</span></div>
+      <div class="stat"><button id="bgm-toggle" class="bgm-btn" type="button">BGM: ON</button></div>
+    </div>
+
+    <div id="field-wrap">
+      <canvas id="field" width="420" height="600"></canvas>
+      <div id="start-overlay">
+        <div class="panel">
+          <div class="panel-title">ナンバーマージ</div>
+          <p class="panel-text">クリックした位置に数字を落として遊びます。<br>音を鳴らすため、まずはボタンを押してください。</p>
+          <button id="start-btn">はじめる</button>
+        </div>
+      </div>
+      <div id="gameover-overlay" class="hidden">
+        <div class="panel">
+          <div class="panel-title">GAME OVER</div>
+          <div class="panel-score">SCORE: <span id="final-score">0</span></div>
+          <button id="retry-btn">もう一度遊ぶ</button>
+        </div>
+      </div>
+    </div>
+
+    <p class="howto">上で待機している数字がマウスに合わせて左右に動きます。落としたい位置でクリックすると、その場所に数字が落ちます。同じ数字同士がぶつかると2倍の数字に合体します。破線より上に円が積み上がるとゲームオーバーです。しばらくクリックしないと、待機位置から自動的に数字が落ちてきます。</p>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
