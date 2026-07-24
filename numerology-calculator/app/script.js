@@ -3,7 +3,11 @@
   const birthYearInput = document.getElementById("birth-year");
   const birthMonthInput = document.getElementById("birth-month");
   const birthDayInput = document.getElementById("birth-day");
-  const nameInput = document.getElementById("name");
+  const lastNameInput = document.getElementById("last-name");
+  const firstNameInput = document.getElementById("first-name");
+  // タップ表・お試しボタンは1つしかないため、直前にフォーカスしていた方の
+  // 欄（苗字／名前）に対して操作する。既定は苗字欄。
+  let activeNameInput = lastNameInput;
   const nameWarningEl = document.getElementById("name-warning");
   const romajiToggleBtn = document.getElementById("romaji-table-toggle");
   const romajiTablePanel = document.getElementById("romaji-table");
@@ -613,7 +617,8 @@
       groupPinnacleDetailEl.appendChild(createResultCard(label, p, NUMBER_MEANINGS, false, false, "pinnacle"));
     });
 
-    const letters = nameLetters(nameInput.value);
+    const fullName = `${lastNameInput.value} ${firstNameInput.value}`;
+    const letters = nameLetters(fullName);
     const destinyResult = calcDestinyNumber(letters);
     const destiny = destinyResult ? destinyResult.value : null;
     if (destinyResult === null) {
@@ -716,14 +721,15 @@
   // Lets someone who only knows the kana for their name (and not modern
   // Hepburn romanization) tap out the correct spelling instead of guessing —
   // the whole reason this exists is so they don't write "si" for し.
-  let insertHistory = [];
+  // 苗字・名前それぞれ別に「1つ戻す」できるよう、欄ごとに履歴を分けて持つ。
+  const insertHistories = new WeakMap([[lastNameInput, []], [firstNameInput, []]]);
   let pendingSokuon = false;
   let sokuonKeyEl = null;
 
   function insertRomaji(text) {
-    nameInput.value += text;
-    insertHistory.push(text.length);
-    nameInput.focus();
+    activeNameInput.value += text;
+    insertHistories.get(activeNameInput).push(text.length);
+    activeNameInput.focus();
   }
 
   function clearPendingSokuon() {
@@ -824,9 +830,10 @@
 
   // 漢字などはひらがな・カタカナのどのキーにも一致せずそのまま素通りするため、
   // 気づかないまま計算対象から外れてしまう（nameLettersがa-z以外を除外する
-  // ため）。変換後もかな・漢字が残っていたら、名前欄の下に注意書きを出す。
+  // ため）。変換後も苗字・名前どちらかにかな・漢字が残っていたら、注意書きを出す。
   function checkNameWarning() {
-    const hasUnconverted = /[぀-ヿ一-鿿]/.test(nameInput.value);
+    const pattern = /[぀-ヿ一-鿿]/;
+    const hasUnconverted = pattern.test(lastNameInput.value) || pattern.test(firstNameInput.value);
     nameWarningEl.classList.toggle("hidden", !hasUnconverted);
   }
 
@@ -834,42 +841,50 @@
   // 直前トグルなど）で早まって変換してしまうと、きゃ→ki+ゃ のように壊れる。
   // そのため入力のたびに即変換はせず、少し打鍵が止まってから変換する。
   // IME変換中（isComposing）も同様に、確定するまでは手を出さない。
-  let autoConvertTimer = null;
-  function runAutoConvert() {
-    const before = nameInput.value;
+  // 苗字・名前は別々に打つので、待ちタイマーも欄ごとに独立させる。
+  const autoConvertTimers = new WeakMap();
+  function runAutoConvert(inputEl) {
+    const before = inputEl.value;
     const converted = convertKanaToRomaji(before);
-    nameInput.classList.remove("romaji-pending");
+    inputEl.classList.remove("romaji-pending");
     if (converted !== before) {
-      nameInput.value = converted;
+      inputEl.value = converted;
       // タップ表のキーと同じ「一瞬光る」フィードバックを入力欄自体にも与え、
       // 変換が起きたことに気づきやすくする（無音で0.5秒待つだけだと、初心者は
       // 何も起きていないと思いやすい）。
-      nameInput.classList.add("romaji-flash");
-      setTimeout(() => nameInput.classList.remove("romaji-flash"), 400);
+      inputEl.classList.add("romaji-flash");
+      setTimeout(() => inputEl.classList.remove("romaji-flash"), 400);
     }
     checkNameWarning();
   }
-  function scheduleAutoConvert() {
-    clearTimeout(autoConvertTimer);
+  function scheduleAutoConvert(inputEl) {
+    clearTimeout(autoConvertTimers.get(inputEl));
     // かなが含まれているときだけ「変換待ち」の見た目にする。普通にローマ字を
     // 直接タイプしている人まで毎回薄く点滅して見えるのを避けるため。
-    if (/[぀-ヿ]/.test(nameInput.value)) {
-      nameInput.classList.add("romaji-pending");
+    if (/[぀-ヿ]/.test(inputEl.value)) {
+      inputEl.classList.add("romaji-pending");
     }
-    autoConvertTimer = setTimeout(runAutoConvert, 500);
+    autoConvertTimers.set(inputEl, setTimeout(() => runAutoConvert(inputEl), 500));
   }
-  nameInput.addEventListener("input", (e) => {
-    if (e.isComposing) return;
-    scheduleAutoConvert();
-  });
-  nameInput.addEventListener("compositionend", () => {
-    clearTimeout(autoConvertTimer);
-    runAutoConvert();
-  });
-  nameInput.addEventListener("blur", () => {
-    clearTimeout(autoConvertTimer);
-    runAutoConvert();
-  });
+  function setupNameAutoConvert(inputEl) {
+    inputEl.addEventListener("focus", () => {
+      activeNameInput = inputEl;
+    });
+    inputEl.addEventListener("input", (e) => {
+      if (e.isComposing) return;
+      scheduleAutoConvert(inputEl);
+    });
+    inputEl.addEventListener("compositionend", () => {
+      clearTimeout(autoConvertTimers.get(inputEl));
+      runAutoConvert(inputEl);
+    });
+    inputEl.addEventListener("blur", () => {
+      clearTimeout(autoConvertTimers.get(inputEl));
+      runAutoConvert(inputEl);
+    });
+  }
+  setupNameAutoConvert(lastNameInput);
+  setupNameAutoConvert(firstNameInput);
 
   // 長音の省略（大野＝おおの→ono など）で2回目のタップが何も追加しないとき、
   // 初心者ほど「タップが反応していない」と誤解しやすい。タップ自体は効いている
@@ -897,7 +912,7 @@
     // （例：太郎＝たろう→Taro、東京＝とうきょう→Tokyo、八丁＝はっちょう→hatcho）。
     // 逆に「え段+い」（けいこ等）はhepburnでは省略しない例外なので、
     // 同じ母音同士のときしか反応しないこのロジックでは自然に対象外のままになる。
-    const lastChar = nameInput.value.slice(-1);
+    const lastChar = activeNameInput.value.slice(-1);
     if (VOWELS.has(romaji) && (romaji === lastChar || (romaji === "u" && lastChar === "o"))) {
       flashKey(keyEl);
       return;
@@ -907,7 +922,7 @@
     // 直前に何が入力されたかではなく、入力欄の実際の末尾文字を見て判定するため、
     // 手動編集で欄の中身が変わっていても正しく動く。
     if (lastChar === "n" && /^[pbm]/.test(romaji)) {
-      nameInput.value = nameInput.value.slice(0, -1) + "m";
+      activeNameInput.value = activeNameInput.value.slice(0, -1) + "m";
       insertRomaji(romaji);
       return;
     }
@@ -988,10 +1003,11 @@
   romajiSpaceBtn.addEventListener("click", () => insertRomaji(" "));
 
   romajiUndoBtn.addEventListener("click", () => {
-    const lastLength = insertHistory.pop();
+    const history = insertHistories.get(activeNameInput);
+    const lastLength = history.pop();
     if (!lastLength) return;
-    nameInput.value = nameInput.value.slice(0, -lastLength);
-    nameInput.focus();
+    activeNameInput.value = activeNameInput.value.slice(0, -lastLength);
+    activeNameInput.focus();
   });
 
   romajiCloseBtn.addEventListener("click", () => {
@@ -1016,14 +1032,14 @@
       romajiTablePanel.classList.remove("hidden");
       romajiToggleBtn.textContent = "ローマ字表を閉じる";
     }
-    nameInput.value = "";
+    activeNameInput.value = "";
     romajiDemoBtn.disabled = true;
     const demoKana = ["お", "お", "の"];
     let i = 0;
     function playNext() {
       if (i >= demoKana.length) {
         setTimeout(() => {
-          nameInput.value = "";
+          activeNameInput.value = "";
           romajiDemoBtn.disabled = false;
         }, 900);
         return;

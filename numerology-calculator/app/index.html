@@ -24,15 +24,20 @@
       </label>
 
       <label class="field">
+        <span>苗字（ローマ字）</span>
+        <input type="text" id="last-name" placeholder="例：Yamada（やまだ、と入力すると自動でローマ字に変換されます）">
+      </label>
+
+      <label class="field">
         <span>名前（ローマ字）</span>
-        <input type="text" id="name" placeholder="例：Taro Yamada（ひらがな・カタカナで入力すると自動でローマ字に変換されます）">
+        <input type="text" id="first-name" placeholder="例：Taro（たろう、と入力すると自動でローマ字に変換されます）">
       </label>
       <p id="name-warning" class="name-warning hidden">漢字などひらがな・カタカナ以外の文字は自動変換されません。読みをひらがなで入力するか、下のローマ字表から入力してください。</p>
 
       <div class="romaji-helper">
         <button type="button" id="romaji-table-toggle" class="romaji-toggle-btn">ヘボン式ローマ字表を見ながら入力する（かな入力がうまくいかないとき用）</button>
         <div id="romaji-table" class="romaji-table hidden">
-          <p class="romaji-table-note">名前欄にひらがな・カタカナで直接入力すると、少し待つと自動でヘボン式ローマ字に変換されます（例：「し」は shi）。うまく変換されない場合は、下のかなをタップして入力することもできます。同じ母音が続くときは2つ目をタップ（入力）しても文字は増えません（タップしたキーは光るので反応はわかります）。</p>
+          <p class="romaji-table-note">苗字・名前どちらの欄も、ひらがな・カタカナで直接入力すると、少し待つと自動でヘボン式ローマ字に変換されます（例：「し」は shi）。うまく変換されない場合は、下のかなをタップして入力することもできます（直前にタップ・入力していた方の欄に追加されます）。同じ母音が続くときは2つ目をタップ（入力）しても文字は増えません（タップしたキーは光るので反応はわかります）。</p>
           <button type="button" id="romaji-demo-btn" class="romaji-demo-btn">▶ 「おおの」の変換を試してみる</button>
           <div id="romaji-table-body"></div>
           <div class="romaji-table-actions">

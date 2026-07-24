@@ -70,11 +70,11 @@ h1 .subtitle {
   transition: background 0.4s ease, opacity 0.2s ease;
 }
 
-#name.romaji-pending {
+.field input.romaji-pending {
   opacity: 0.6;
 }
 
-#name.romaji-flash {
+.field input.romaji-flash {
   background: #f6e2ac;
   transition: background 0s;
 }
