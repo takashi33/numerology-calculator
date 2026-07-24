@@ -267,6 +267,32 @@
     font-family: var(--font-body);
   }
 
+  .date-input-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .date-input-group input {
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+    min-width: 0;
+  }
+
+  .date-input-group input#birth-year {
+    flex: 1.4;
+  }
+
+  .date-input-group input#birth-month,
+  .date-input-group input#birth-day {
+    flex: 1;
+  }
+
+  .date-sep {
+    color: var(--ink-faint);
+    font-size: 15px;
+  }
+
   #calc-btn {
     margin-top: 4px;
     font-size: 15px;
@@ -607,7 +633,13 @@
   <form id="calc-form">
     <label class="field">
       <span>生年月日</span>
-      <input type="date" id="birthdate" required>
+      <div class="date-input-group">
+        <input type="text" inputmode="numeric" pattern="[0-9]*" id="birth-year" maxlength="4" placeholder="年" aria-label="生まれた年（西暦）">
+        <span class="date-sep">/</span>
+        <input type="text" inputmode="numeric" pattern="[0-9]*" id="birth-month" maxlength="2" placeholder="月" aria-label="生まれた月">
+        <span class="date-sep">/</span>
+        <input type="text" inputmode="numeric" pattern="[0-9]*" id="birth-day" maxlength="2" placeholder="日" aria-label="生まれた日">
+      </div>
     </label>
 
     <label class="field">
@@ -756,7 +788,9 @@
 
   // ---------------- Numerology calculator ----------------
   const form = document.getElementById("calc-form");
-  const birthdateInput = document.getElementById("birthdate");
+  const birthYearInput = document.getElementById("birth-year");
+  const birthMonthInput = document.getElementById("birth-month");
+  const birthDayInput = document.getElementById("birth-day");
   const nameInput = document.getElementById("name");
   const errorMessage = document.getElementById("error-message");
   const resultsEl = document.getElementById("results");
@@ -1136,21 +1170,67 @@
     }
   });
 
+  // Birthdate is split into 3 numeric-only boxes (year/month/day) so it can
+  // be typed as one continuous run of digits, like "19781214": each box
+  // auto-advances to the next once it's full, and Backspace on an empty box
+  // jumps back to the previous one.
+  function digitsOnly(value) {
+    return value.replace(/[^0-9]/g, "");
+  }
+
+  function setupDateSegment(input, maxLength, nextInput) {
+    input.addEventListener("input", () => {
+      input.value = digitsOnly(input.value).slice(0, maxLength);
+      if (input.value.length === maxLength && nextInput) {
+        nextInput.focus();
+        nextInput.select();
+      }
+    });
+  }
+
+  function setupBackspaceToPrevious(input, prevInput) {
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Backspace" && input.value === "" && prevInput) {
+        prevInput.focus();
+      }
+    });
+  }
+
+  setupDateSegment(birthYearInput, 4, birthMonthInput);
+  setupDateSegment(birthMonthInput, 2, birthDayInput);
+  setupDateSegment(birthDayInput, 2, null);
+  setupBackspaceToPrevious(birthMonthInput, birthYearInput);
+  setupBackspaceToPrevious(birthDayInput, birthMonthInput);
+
+  // Pasting a full date (e.g. "19781214") into the year box distributes the
+  // digits across all 3 boxes instead of overflowing into just the year box.
+  birthYearInput.addEventListener("paste", (e) => {
+    const pasted = digitsOnly((e.clipboardData || window.clipboardData).getData("text"));
+    if (pasted.length < 5) return;
+    e.preventDefault();
+    birthYearInput.value = pasted.slice(0, 4);
+    birthMonthInput.value = pasted.slice(4, 6);
+    birthDayInput.value = pasted.slice(6, 8);
+    (birthDayInput.value.length === 2 ? birthDayInput : birthMonthInput).focus();
+  });
+
   form.addEventListener("submit", (e) => {
     e.preventDefault();
     errorMessage.classList.add("hidden");
 
-    const birthdateValue = birthdateInput.value;
-    if (!birthdateValue) {
+    if (birthYearInput.value.length !== 4 || !birthMonthInput.value || !birthDayInput.value) {
       showError("生年月日を入力してください。");
       return;
     }
 
-    const [yearStr, monthStr, dayStr] = birthdateValue.split("-");
-    const year = Number(yearStr);
-    const month = Number(monthStr);
-    const day = Number(dayStr);
-    if (!year || !month || !day) {
+    const year = Number(birthYearInput.value);
+    const month = Number(birthMonthInput.value);
+    const day = Number(birthDayInput.value);
+    const parsedDate = new Date(year, month - 1, day);
+    const isValidDate = parsedDate.getFullYear() === year
+      && parsedDate.getMonth() === month - 1
+      && parsedDate.getDate() === day;
+    if (!year || !month || !day || !isValidDate) {
       showError("生年月日を正しく入力してください。");
       return;
     }
