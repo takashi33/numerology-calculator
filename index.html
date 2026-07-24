@@ -390,12 +390,13 @@
   }
 
   .result-number {
-    font-family: var(--font-display);
+    font-family: var(--font-body);
     font-size: 38px;
     font-weight: 700;
     color: var(--gold);
     line-height: 1.1;
     font-variant-numeric: lining-nums tabular-nums;
+    font-feature-settings: "lnum" 1, "tnum" 1;
     white-space: nowrap;
   }
 
@@ -511,11 +512,12 @@
   }
 
   .qr-modal-code-value {
-    font-family: var(--font-display);
+    font-family: var(--font-body);
     font-size: 24px;
     font-weight: 700;
     letter-spacing: 0.1em;
     font-variant-numeric: lining-nums tabular-nums;
+    font-feature-settings: "lnum" 1, "tnum" 1;
   }
 
   .qr-modal-note {
