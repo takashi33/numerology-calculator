@@ -516,6 +516,75 @@
     color: var(--ink-faint);
     line-height: 1.7;
   }
+
+  .result-card {
+    cursor: pointer;
+    position: relative;
+  }
+
+  .result-card::after {
+    content: "ⓘ";
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    font-size: 11px;
+    color: var(--ink-faint);
+  }
+
+  #info-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(10, 4, 20, 0.72);
+  }
+
+  #info-modal.hidden {
+    display: none;
+  }
+
+  .info-modal-card {
+    position: relative;
+    width: 100%;
+    max-width: 340px;
+    background: linear-gradient(165deg, var(--bg-1) 0%, var(--bg-2) 100%);
+    border: 1px solid var(--card-border);
+    border-radius: 18px;
+    padding: 28px 22px 24px;
+    text-align: left;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+  }
+
+  .info-modal-card h2 {
+    margin: 0 0 12px;
+    font-family: var(--font-display);
+    font-size: 17px;
+    color: var(--gold);
+    text-align: center;
+  }
+
+  .info-modal-card p {
+    margin: 0;
+    font-size: 13px;
+    color: var(--ink-soft);
+    line-height: 1.8;
+  }
+
+  #info-modal-close {
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    background: none;
+    border: none;
+    color: var(--ink-soft);
+    font-size: 22px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 4px 8px;
+  }
 </style>
 
 <div id="gate">
@@ -603,6 +672,14 @@
       <div class="qr-modal-code-value">19810619</div>
     </div>
     <p class="qr-modal-note">この画面を、招待したい相手に見せてください。</p>
+  </div>
+</div>
+
+<div id="info-modal" class="hidden">
+  <div class="info-modal-card">
+    <button id="info-modal-close" type="button" aria-label="閉じる">×</button>
+    <h2 id="info-modal-title"></h2>
+    <p id="info-modal-body"></p>
   </div>
 </div>
 
@@ -744,6 +821,68 @@
     7: "内省や探究心を、意識して育てていく課題があるとされています。",
     8: "実行力や物事を采配する力を、意識して育てていく課題があるとされています。",
     9: "博愛の心や広い視野を、意識して育てていく課題があるとされています。",
+  };
+
+  // Tapped from any result card to explain what that category of number is,
+  // as opposed to the result-desc text which explains what the specific
+  // digit (1-9 etc.) means. Keyed per card type, not per digit.
+  const GLOSSARY = {
+    lifePath: {
+      title: "ライフパスナンバーとは？",
+      body: "生年月日の数字をすべて足し合わせて算出する数字です。数秘術の中でも特に重視されることが多く、生まれ持った性質や、人生を通じて向き合っていくとされるテーマを表すと言われています。",
+    },
+    birthday: {
+      title: "バースデーナンバーとは？",
+      body: "生まれた日にちの数字から算出する数字です。生まれ持った資質や、得意なこと・才能の活かし方を補助的に表すとされています。",
+    },
+    challenge: {
+      title: "チャレンジナンバーとは？",
+      body: "生まれた月と日の数字を組み合わせて算出する数字です（本アプリでは、日本の数秘術でよく使われる「未来数」式の計算方法を採用しています）。今世で意識して向き合うとよいとされる、身近な課題を表すと言われています。下の「チャレンジナンバー詳細」とは異なる計算方法（流派）を採用しているため、値が一致しないことがあります。",
+    },
+    personalYear: {
+      title: "パーソナルイヤーナンバーとは？",
+      body: "生年月日と、計算を行う年（西暦）を組み合わせて算出する数字です。1年ごとに変わり、「その年がどんなテーマの年になりそうか」を表すとされています。",
+    },
+    personalMonth: {
+      title: "パーソナルマンスナンバーとは？",
+      body: "パーソナルイヤーナンバーに、計算を行う月を組み合わせて算出する数字です。1か月ごとに変わり、「その月がどんなテーマの月になりそうか」を表すとされています。",
+    },
+    personalDay: {
+      title: "パーソナルデイナンバーとは？",
+      body: "パーソナルマンスナンバーに、計算を行う日を組み合わせて算出する数字です。毎日変わり、「今日がどんな日になりそうか」を表すとされています。",
+    },
+    challengeDetail: {
+      title: "チャレンジナンバー詳細（人生の4つの時期）とは？",
+      body: "生年月日の月・日・年をそれぞれ1桁に還元した数字の「差」を使って算出する、欧米式の計算方法による数字です。人生を4つの時期に分け、それぞれの時期に乗り越えていくとよいとされる課題を表すとされています。「基本の3数字」のチャレンジナンバー（未来数式）とは異なる計算方法・流派を採用しているため、値が一致しないことがあります。",
+    },
+    pinnacle: {
+      title: "ピナクルナンバーとは？",
+      body: "チャレンジナンバー詳細と同じ生年月日の要素を使いますが、差ではなく「足し算」で算出します。人生を4つの時期に分け、それぞれの時期に活かせるとされる機会・強みを表すとされています（チャレンジ＝課題、ピナクル＝機会、という対になる関係です）。",
+    },
+    destiny: {
+      title: "デスティニーナンバーとは？",
+      body: "名前（ローマ字）のすべてのアルファベットを数字に変換して合計し、算出する数字です。今世での使命や、社会との関わり方を表すとされています。",
+    },
+    soul: {
+      title: "ソウルナンバーとは？",
+      body: "名前の母音（A, E, I, O, U）だけを数字に変換して算出する数字です。心の奥にある、本当の欲求や本音を表すとされています。",
+    },
+    personality: {
+      title: "パーソナリティナンバーとは？",
+      body: "名前の子音（母音以外）だけを数字に変換して算出する数字です。他人から見た印象や、外に見せている顔を表すとされています。",
+    },
+    lifeLesson: {
+      title: "ライフレッスンナンバーとは？",
+      body: "名前を数字に変換したときに、1〜9のうち登場しない数字を探して算出します。今世で意識して育てていくとよいとされる、名前だけでは補いきれない資質を表すとされています。該当する数字が複数のことも、1つも無いこともあります。",
+    },
+    intensity: {
+      title: "インテンシティナンバーとは？",
+      body: "名前を数字に変換したときに、最も多く登場する数字を探して算出します。名前のエネルギーが集中しているとされる、際立った資質を表すとされています。同じ回数で並ぶ数字が複数ある場合は、すべて表示されます。",
+    },
+    maturity: {
+      title: "成熟数（マチュリティナンバー）とは？",
+      body: "ライフパスナンバーとデスティニーナンバーを足し合わせて算出する数字です。人生後半にかけて表れてくるとされています。",
+    },
   };
 
   const LETTER_VALUES = {
@@ -931,7 +1070,13 @@
     resultsEl.classList.add("hidden");
   }
 
-  function createResultCard(label, value, meaningMap, wide, main) {
+  function attachGlossary(card, glossaryKey) {
+    const entry = GLOSSARY[glossaryKey];
+    if (!entry) return;
+    card.addEventListener("click", () => openInfoModal(entry));
+  }
+
+  function createResultCard(label, value, meaningMap, wide, main, glossaryKey) {
     const card = document.createElement("div");
     card.className = "result-card" + (wide ? " wide" : "") + (main ? " main" : "");
     if (isMaster(value)) card.classList.add("master");
@@ -953,12 +1098,13 @@
     card.appendChild(labelEl);
     card.appendChild(numberEl);
     card.appendChild(descEl);
+    attachGlossary(card, glossaryKey);
     return card;
   }
 
   // For numbers that can come back as zero, one, or several digits at once
   // (Life Lesson Number, Intensity Number), rather than always exactly one.
-  function createMultiNumberCard(label, values, meaningMap, emptyText, wide) {
+  function createMultiNumberCard(label, values, meaningMap, emptyText, wide, glossaryKey) {
     const card = document.createElement("div");
     card.className = "result-card" + (wide ? " wide" : "");
     if (values.some(isMaster)) card.classList.add("master");
@@ -980,6 +1126,7 @@
     card.appendChild(labelEl);
     card.appendChild(numberEl);
     card.appendChild(descEl);
+    attachGlossary(card, glossaryKey);
     return card;
   }
 
@@ -1026,16 +1173,16 @@
     // (main, emphasized) / Challenge.
     const birthday = calcBirthdayNumber(day);
     allValues.push(birthday);
-    groupBasic3El.appendChild(createResultCard("バースデーナンバー", birthday, NUMBER_MEANINGS));
+    groupBasic3El.appendChild(createResultCard("バースデーナンバー", birthday, NUMBER_MEANINGS, false, false, "birthday"));
 
     const lifePath = calcLifePathNumber(year, month, day);
     allValues.push(lifePath.value);
     checkKarmic(lifePath.raw);
-    groupBasic3El.appendChild(createResultCard("ライフパスナンバー", lifePath.value, NUMBER_MEANINGS, false, true));
+    groupBasic3El.appendChild(createResultCard("ライフパスナンバー", lifePath.value, NUMBER_MEANINGS, false, true, "lifePath"));
 
     const challengeNumber = calcChallengeNumber(month, day);
     allValues.push(challengeNumber);
-    groupBasic3El.appendChild(createResultCard("チャレンジナンバー", challengeNumber, CHALLENGE_MEANINGS));
+    groupBasic3El.appendChild(createResultCard("チャレンジナンバー", challengeNumber, CHALLENGE_MEANINGS, false, false, "challenge"));
 
     const now = new Date();
     const currentYear = now.getFullYear();
@@ -1045,15 +1192,15 @@
     const personalYear = calcPersonalYearNumber(lifePath.rMonth, lifePath.rDay, currentYear);
     allValues.push(personalYear);
     personalYearHeadingEl.textContent = `今年・今月・今日の数字（${currentYear}年${currentMonth}月${currentDay}日時点）`;
-    groupPersonalYearEl.appendChild(createResultCard(`${currentYear}年のパーソナルイヤーナンバー`, personalYear, NUMBER_MEANINGS, true));
+    groupPersonalYearEl.appendChild(createResultCard(`${currentYear}年のパーソナルイヤーナンバー`, personalYear, NUMBER_MEANINGS, true, false, "personalYear"));
 
     const personalMonth = calcPersonalMonthNumber(personalYear, currentMonth);
     allValues.push(personalMonth);
-    groupPersonalYearEl.appendChild(createResultCard(`${currentMonth}月のパーソナルマンスナンバー`, personalMonth, NUMBER_MEANINGS));
+    groupPersonalYearEl.appendChild(createResultCard(`${currentMonth}月のパーソナルマンスナンバー`, personalMonth, NUMBER_MEANINGS, false, false, "personalMonth"));
 
     const personalDay = calcPersonalDayNumber(personalMonth, currentDay);
     allValues.push(personalDay);
-    groupPersonalYearEl.appendChild(createResultCard(`${currentDay}日のパーソナルデイナンバー`, personalDay, NUMBER_MEANINGS));
+    groupPersonalYearEl.appendChild(createResultCard(`${currentDay}日のパーソナルデイナンバー`, personalDay, NUMBER_MEANINGS, false, false, "personalDay"));
 
     const ageRanges = calcPinnacleAgeRanges(lifePath.value);
     const periodTags = ["人生前半", "人生中盤", "メイン", "人生後半"];
@@ -1062,14 +1209,14 @@
     challenges.forEach((c, i) => {
       allValues.push(c);
       const label = `第${i + 1}チャレンジ（${periodTags[i]}・${formatAgeRange(ageRanges[i])}）`;
-      groupChallengeDetailEl.appendChild(createResultCard(label, c, CHALLENGE_MEANINGS));
+      groupChallengeDetailEl.appendChild(createResultCard(label, c, CHALLENGE_MEANINGS, false, false, "challengeDetail"));
     });
 
     const pinnacles = calcPinnacleNumbers(lifePath.rMonth, lifePath.rDay, lifePath.rYear);
     pinnacles.forEach((p, i) => {
       allValues.push(p);
       const label = `第${i + 1}ピナクル（${periodTags[i]}・${formatAgeRange(ageRanges[i])}）`;
-      groupPinnacleDetailEl.appendChild(createResultCard(label, p, NUMBER_MEANINGS));
+      groupPinnacleDetailEl.appendChild(createResultCard(label, p, NUMBER_MEANINGS, false, false, "pinnacle"));
     });
 
     const letters = nameLetters(nameInput.value);
@@ -1081,18 +1228,18 @@
       groupNameEl.parentElement.classList.remove("hidden");
       allValues.push(destiny);
       checkKarmic(destinyResult.raw);
-      groupNameEl.appendChild(createResultCard("デスティニーナンバー", destiny, NUMBER_MEANINGS, true));
+      groupNameEl.appendChild(createResultCard("デスティニーナンバー", destiny, NUMBER_MEANINGS, true, false, "destiny"));
 
       const soul = calcSoulNumber(letters);
       if (soul !== null) {
         allValues.push(soul);
-        groupNameEl.appendChild(createResultCard("ソウルナンバー", soul, NUMBER_MEANINGS));
+        groupNameEl.appendChild(createResultCard("ソウルナンバー", soul, NUMBER_MEANINGS, false, false, "soul"));
       }
 
       const personality = calcPersonalityNumber(letters);
       if (personality !== null) {
         allValues.push(personality);
-        groupNameEl.appendChild(createResultCard("パーソナリティナンバー", personality, NUMBER_MEANINGS));
+        groupNameEl.appendChild(createResultCard("パーソナリティナンバー", personality, NUMBER_MEANINGS, false, false, "personality"));
       }
 
       const lifeLessonNumbers = calcLifeLessonNumbers(letters);
@@ -1102,7 +1249,9 @@
           "ライフレッスンナンバー",
           lifeLessonNumbers,
           LIFE_LESSON_MEANINGS,
-          "お名前の中に1〜9のすべての数字が含まれており、特に意識すべき数字は見当たりません。"
+          "お名前の中に1〜9のすべての数字が含まれており、特に意識すべき数字は見当たりません。",
+          false,
+          "lifeLesson"
         ));
       }
 
@@ -1113,7 +1262,9 @@
           "インテンシティナンバー",
           intensityNumbers,
           NUMBER_MEANINGS,
-          ""
+          "",
+          false,
+          "intensity"
         ));
       }
     }
@@ -1124,7 +1275,7 @@
     } else {
       groupCombinedWrapEl.classList.remove("hidden");
       allValues.push(maturity);
-      groupCombinedEl.appendChild(createResultCard("成熟数（マチュリティナンバー）", maturity, NUMBER_MEANINGS, true));
+      groupCombinedEl.appendChild(createResultCard("成熟数（マチュリティナンバー）", maturity, NUMBER_MEANINGS, true, false, "maturity"));
     }
 
     const masterHits = allValues.filter(isMaster);
@@ -1160,6 +1311,26 @@
 
   qrModal.addEventListener("click", (e) => {
     if (e.target === qrModal) qrModal.classList.add("hidden");
+  });
+
+  // ---------------- Number glossary modal ----------------
+  const infoModal = document.getElementById("info-modal");
+  const infoModalClose = document.getElementById("info-modal-close");
+  const infoModalTitle = document.getElementById("info-modal-title");
+  const infoModalBody = document.getElementById("info-modal-body");
+
+  function openInfoModal(entry) {
+    infoModalTitle.textContent = entry.title;
+    infoModalBody.textContent = entry.body;
+    infoModal.classList.remove("hidden");
+  }
+
+  infoModalClose.addEventListener("click", () => {
+    infoModal.classList.add("hidden");
+  });
+
+  infoModal.addEventListener("click", (e) => {
+    if (e.target === infoModal) infoModal.classList.add("hidden");
   });
 })();
 </script>
