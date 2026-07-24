@@ -4,6 +4,7 @@
   const birthMonthInput = document.getElementById("birth-month");
   const birthDayInput = document.getElementById("birth-day");
   const nameInput = document.getElementById("name");
+  const nameWarningEl = document.getElementById("name-warning");
   const romajiToggleBtn = document.getElementById("romaji-table-toggle");
   const romajiTablePanel = document.getElementById("romaji-table");
   const romajiTableBody = document.getElementById("romaji-table-body");
@@ -821,17 +822,40 @@
     return out;
   }
 
+  // 漢字などはひらがな・カタカナのどのキーにも一致せずそのまま素通りするため、
+  // 気づかないまま計算対象から外れてしまう（nameLettersがa-z以外を除外する
+  // ため）。変換後もかな・漢字が残っていたら、名前欄の下に注意書きを出す。
+  function checkNameWarning() {
+    const hasUnconverted = /[぀-ヿ一-鿿]/.test(nameInput.value);
+    nameWarningEl.classList.toggle("hidden", !hasUnconverted);
+  }
+
   // かな入力の途中（拗音・ヴ行の2文字目や、モバイル特有の「小さい文字」への
   // 直前トグルなど）で早まって変換してしまうと、きゃ→ki+ゃ のように壊れる。
   // そのため入力のたびに即変換はせず、少し打鍵が止まってから変換する。
   // IME変換中（isComposing）も同様に、確定するまでは手を出さない。
   let autoConvertTimer = null;
   function runAutoConvert() {
-    const converted = convertKanaToRomaji(nameInput.value);
-    if (converted !== nameInput.value) nameInput.value = converted;
+    const before = nameInput.value;
+    const converted = convertKanaToRomaji(before);
+    nameInput.classList.remove("romaji-pending");
+    if (converted !== before) {
+      nameInput.value = converted;
+      // タップ表のキーと同じ「一瞬光る」フィードバックを入力欄自体にも与え、
+      // 変換が起きたことに気づきやすくする（無音で0.5秒待つだけだと、初心者は
+      // 何も起きていないと思いやすい）。
+      nameInput.classList.add("romaji-flash");
+      setTimeout(() => nameInput.classList.remove("romaji-flash"), 400);
+    }
+    checkNameWarning();
   }
   function scheduleAutoConvert() {
     clearTimeout(autoConvertTimer);
+    // かなが含まれているときだけ「変換待ち」の見た目にする。普通にローマ字を
+    // 直接タイプしている人まで毎回薄く点滅して見えるのを避けるため。
+    if (/[぀-ヿ]/.test(nameInput.value)) {
+      nameInput.classList.add("romaji-pending");
+    }
     autoConvertTimer = setTimeout(runAutoConvert, 500);
   }
   nameInput.addEventListener("input", (e) => {
