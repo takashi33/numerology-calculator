@@ -1412,5 +1412,15 @@
   infoModal.addEventListener("click", (e) => {
     if (e.target === infoModal) infoModal.classList.add("hidden");
   });
+
+  // Offline support: caches the whole page on first visit so it keeps
+  // working with no network at all. Has no effect when opened as a local
+  // file (service workers require http/https), so this is a no-op for the
+  // app/ folder's local-only version.
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("sw.js").catch(() => {});
+    });
+  }
 })();
 </script>
