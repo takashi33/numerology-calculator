@@ -119,6 +119,27 @@ h1 .subtitle {
   background: rgba(255, 255, 255, 0.12);
 }
 
+.romaji-demo-btn {
+  display: inline-block;
+  font-size: 11px;
+  padding: 6px 10px;
+  margin: -4px 0 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(244, 217, 139, 0.35);
+  background: transparent;
+  color: #cbb9f0;
+  cursor: pointer;
+}
+
+.romaji-demo-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.romaji-demo-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
 .romaji-table {
   border: 1px solid rgba(244, 217, 139, 0.3);
   border-radius: 12px;

@@ -25,13 +25,14 @@
 
       <label class="field">
         <span>名前（ローマ字）</span>
-        <input type="text" id="name" placeholder="例：Taro Yamada">
+        <input type="text" id="name" placeholder="例：Taro Yamada（ひらがな・カタカナで入力すると自動でローマ字に変換されます）">
       </label>
 
       <div class="romaji-helper">
-        <button type="button" id="romaji-table-toggle" class="romaji-toggle-btn">ヘボン式ローマ字表を見ながら入力する</button>
+        <button type="button" id="romaji-table-toggle" class="romaji-toggle-btn">ヘボン式ローマ字表を見ながら入力する（かな入力がうまくいかないとき用）</button>
         <div id="romaji-table" class="romaji-table hidden">
-          <p class="romaji-table-note">ヘボン式のローマ字表です。かなをタップすると名前欄に追加されます。<br>例：「し」は si ではなく shi と入力します。<br>例：「大野（おおの）」は2つ目の「お」をタップしても文字が増えず ono になります（タップ自体は反応しており、光って知らせます）。</p>
+          <p class="romaji-table-note">名前欄にひらがな・カタカナで直接入力すると、少し待つと自動でヘボン式ローマ字に変換されます（例：「し」は shi）。うまく変換されない場合は、下のかなをタップして入力することもできます。同じ母音が続くときは2つ目をタップ（入力）しても文字は増えません（タップしたキーは光るので反応はわかります）。</p>
+          <button type="button" id="romaji-demo-btn" class="romaji-demo-btn">▶ 「おおの」の変換を試してみる</button>
           <div id="romaji-table-body"></div>
           <div class="romaji-table-actions">
             <button type="button" id="romaji-space-btn">スペース</button>

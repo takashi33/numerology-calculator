@@ -312,6 +312,28 @@
     background: rgba(255, 255, 255, 0.12);
   }
 
+  .romaji-demo-btn {
+    display: inline-block;
+    font-size: 11px;
+    padding: 6px 10px;
+    margin: -4px 0 10px;
+    border-radius: 999px;
+    border: 1px solid var(--card-border);
+    background: transparent;
+    color: var(--ink-soft);
+    font-family: var(--font-body);
+    cursor: pointer;
+  }
+
+  .romaji-demo-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .romaji-demo-btn:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+
   .romaji-table {
     border: 1px solid var(--card-border);
     border-radius: 12px;
@@ -749,13 +771,14 @@
 
     <label class="field">
       <span>名前（ローマ字）</span>
-      <input type="text" id="name" placeholder="例：Taro Yamada">
+      <input type="text" id="name" placeholder="例：Taro Yamada（ひらがな・カタカナで入力すると自動でローマ字に変換されます）">
     </label>
 
     <div class="romaji-helper">
-      <button type="button" id="romaji-table-toggle" class="romaji-toggle-btn">ヘボン式ローマ字表を見ながら入力する</button>
+      <button type="button" id="romaji-table-toggle" class="romaji-toggle-btn">ヘボン式ローマ字表を見ながら入力する（かな入力がうまくいかないとき用）</button>
       <div id="romaji-table" class="romaji-table hidden">
-        <p class="romaji-table-note">ヘボン式のローマ字表です。かなをタップすると名前欄に追加されます。<br>例：「し」は si ではなく shi と入力します。<br>例：「大野（おおの）」は2つ目の「お」をタップしても文字が増えず ono になります（タップ自体は反応しており、光って知らせます）。</p>
+        <p class="romaji-table-note">名前欄にひらがな・カタカナで直接入力すると、少し待つと自動でヘボン式ローマ字に変換されます（例：「し」は shi）。うまく変換されない場合は、下のかなをタップして入力することもできます。同じ母音が続くときは2つ目をタップ（入力）しても文字は増えません（タップしたキーは光るので反応はわかります）。</p>
+        <button type="button" id="romaji-demo-btn" class="romaji-demo-btn">▶ 「おおの」の変換を試してみる</button>
         <div id="romaji-table-body"></div>
         <div class="romaji-table-actions">
           <button type="button" id="romaji-space-btn">スペース</button>
@@ -916,6 +939,7 @@
   const romajiSpaceBtn = document.getElementById("romaji-space-btn");
   const romajiUndoBtn = document.getElementById("romaji-undo-btn");
   const romajiCloseBtn = document.getElementById("romaji-close-btn");
+  const romajiDemoBtn = document.getElementById("romaji-demo-btn");
   const errorMessage = document.getElementById("error-message");
   const resultsEl = document.getElementById("results");
   const masterSummaryEl = document.getElementById("master-summary");
@@ -1620,6 +1644,114 @@
     return romaji[0] + romaji;
   }
 
+  // ---------------- Kana → romaji auto-conversion ----------------
+  // Lets someone type their name in kana directly (via the device's own
+  // Japanese keyboard) and have it become Hepburn romaji automatically,
+  // instead of needing the tap table below. Reuses the exact same
+  // KANA_SECTIONS data and the same sokuon/long-vowel/n rules as the tap
+  // table, so the two stay consistent by construction.
+  const ROMAJI_MAP = {};
+  KANA_SECTIONS.forEach((section) => {
+    section.items.forEach(([kana, romaji]) => {
+      ROMAJI_MAP[kana] = romaji;
+    });
+  });
+  // ヴ単体の入力（濁点キー等）はひらがな化すると「ゔ」になるため、タップ表の
+  // 「ヴ」行と同じ変換先を、ひらがな側のキーとしても登録しておく。
+  ROMAJI_MAP["ゔぁ"] = "ba";
+  ROMAJI_MAP["ゔぃ"] = "bi";
+  ROMAJI_MAP["ゔ"] = "bu";
+  ROMAJI_MAP["ゔぇ"] = "be";
+  ROMAJI_MAP["ゔぉ"] = "bo";
+
+  // カタカナはひらがなと同じ並びでUnicode上+0x60ずれているだけなので、
+  // オフセットで変換する（ー等、この範囲に無い文字はそのまま残る）。
+  function katakanaToHiragana(str) {
+    return str.replace(/[ァ-ヶ]/g, (ch) => String.fromCharCode(ch.charCodeAt(0) - 0x60));
+  }
+
+  // タップ表（handleKanaKeyClick）と同じルールを、1文字ずつのクリックではなく
+  // 文字列全体に対して適用する版。すでにローマ字化済みの部分（a-z等）はどの
+  // キーにも一致しないため、そのまま素通りする。
+  function convertKanaToRomaji(input) {
+    const src = katakanaToHiragana(input);
+    let out = "";
+    let i = 0;
+    let pendingSokuonLocal = false;
+    while (i < src.length) {
+      const ch = src[i];
+      if (ch === "っ") {
+        pendingSokuonLocal = true;
+        i += 1;
+        continue;
+      }
+      if (ch === "ー") {
+        i += 1;
+        continue;
+      }
+      const two = src.slice(i, i + 2);
+      let romaji;
+      let consumed;
+      if (Object.prototype.hasOwnProperty.call(ROMAJI_MAP, two)) {
+        romaji = ROMAJI_MAP[two];
+        consumed = 2;
+      } else if (Object.prototype.hasOwnProperty.call(ROMAJI_MAP, ch)) {
+        romaji = ROMAJI_MAP[ch];
+        consumed = 1;
+      } else {
+        out += ch;
+        i += 1;
+        continue;
+      }
+      if (pendingSokuonLocal) {
+        out += applySokuon(romaji);
+        pendingSokuonLocal = false;
+        i += consumed;
+        continue;
+      }
+      const lastChar = out.slice(-1);
+      if (VOWELS.has(romaji) && (romaji === lastChar || (romaji === "u" && lastChar === "o"))) {
+        i += consumed;
+        continue;
+      }
+      if (lastChar === "n" && /^[pbm]/.test(romaji)) {
+        out = out.slice(0, -1) + "m" + romaji;
+      } else if (lastChar === "n" && /^[aiueoy]/.test(romaji)) {
+        out += "'" + romaji;
+      } else {
+        out += romaji;
+      }
+      i += consumed;
+    }
+    return out;
+  }
+
+  // かな入力の途中（拗音・ヴ行の2文字目や、モバイル特有の「小さい文字」への
+  // 直前トグルなど）で早まって変換してしまうと、きゃ→ki+ゃ のように壊れる。
+  // そのため入力のたびに即変換はせず、少し打鍵が止まってから変換する。
+  // IME変換中（isComposing）も同様に、確定するまでは手を出さない。
+  let autoConvertTimer = null;
+  function runAutoConvert() {
+    const converted = convertKanaToRomaji(nameInput.value);
+    if (converted !== nameInput.value) nameInput.value = converted;
+  }
+  function scheduleAutoConvert() {
+    clearTimeout(autoConvertTimer);
+    autoConvertTimer = setTimeout(runAutoConvert, 500);
+  }
+  nameInput.addEventListener("input", (e) => {
+    if (e.isComposing) return;
+    scheduleAutoConvert();
+  });
+  nameInput.addEventListener("compositionend", () => {
+    clearTimeout(autoConvertTimer);
+    runAutoConvert();
+  });
+  nameInput.addEventListener("blur", () => {
+    clearTimeout(autoConvertTimer);
+    runAutoConvert();
+  });
+
   // 長音の省略（大野＝おおの→ono など）で2回目のタップが何も追加しないとき、
   // 初心者ほど「タップが反応していない」と誤解しやすい。タップ自体は効いている
   // ことが分かるよう、対象のキーを一瞬光らせて視覚フィードバックを返す。
@@ -1671,6 +1803,10 @@
     insertRomaji(romaji);
   }
 
+  // 「おおの」のお試し再生（romajiDemoBtn）が、実在するキー要素を見つけて
+  // 本物のクリックとして発火させるためのルックアップ。
+  const kanaKeyMap = {};
+
   romajiTableBody.innerHTML = "";
   KANA_SECTIONS.forEach((section) => {
     const titleEl = document.createElement("div");
@@ -1686,6 +1822,7 @@
       keyEl.className = "romaji-key";
       keyEl.innerHTML = `<span class="k">${kana}</span><span class="r">${romaji}</span>`;
       keyEl.addEventListener("click", () => handleKanaKeyClick(romaji, keyEl));
+      kanaKeyMap[kana] = keyEl;
       gridEl.appendChild(keyEl);
     });
     romajiTableBody.appendChild(gridEl);
@@ -1749,6 +1886,34 @@
       ? "ヘボン式ローマ字表を見ながら入力する"
       : "ローマ字表を閉じる";
     if (isHidden) clearPendingSokuon();
+  });
+
+  // 文章で例を並べる代わりに、実際にタップされる様子を1回再生して見せる
+  // お試しボタン。「おおの→ono」で長音の省略を体感してもらうことで、他の
+  // 名前でも同じ仕組みが働くことが（大野さん限定の説明ではなく）伝わる。
+  romajiDemoBtn.addEventListener("click", () => {
+    if (romajiTablePanel.classList.contains("hidden")) {
+      romajiTablePanel.classList.remove("hidden");
+      romajiToggleBtn.textContent = "ローマ字表を閉じる";
+    }
+    nameInput.value = "";
+    romajiDemoBtn.disabled = true;
+    const demoKana = ["お", "お", "の"];
+    let i = 0;
+    function playNext() {
+      if (i >= demoKana.length) {
+        setTimeout(() => {
+          nameInput.value = "";
+          romajiDemoBtn.disabled = false;
+        }, 900);
+        return;
+      }
+      const keyEl = kanaKeyMap[demoKana[i]];
+      if (keyEl) keyEl.click();
+      i += 1;
+      setTimeout(playNext, 650);
+    }
+    playNext();
   });
 
   // Offline support: caches the whole page on first visit so it keeps
