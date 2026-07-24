@@ -667,12 +667,12 @@
     </section>
 
     <section class="result-group">
-      <h2>チャレンジナンバー 詳細（人生の4つの時期の課題）</h2>
+      <h2>ステージ別の課題</h2>
       <div class="card-grid" id="group-challenge-detail"></div>
     </section>
 
     <section class="result-group">
-      <h2>ピナクルナンバー（人生の4つの時期の機会）</h2>
+      <h2>ステージ別のチャンス</h2>
       <div class="card-grid" id="group-pinnacle-detail"></div>
     </section>
 
@@ -886,12 +886,12 @@
       body: "今日がどんな日になりそうかを表すとされる数字です。毎日切り替わり、その日を過ごすうえでのちょっとしたヒントになるとされています。",
     },
     challengeDetail: {
-      title: "チャレンジナンバー詳細（人生の4つの時期）とは？",
-      body: "人生を4つの時期に分け、それぞれの時期に乗り越えていくとよいとされる課題を表す数字です。「基本の3数字」のチャレンジナンバーとは別の数字として扱われます。",
+      title: "ステージ別の課題とは？",
+      body: "人生を4つの時期（ステージ）に分け、それぞれの時期に乗り越えていくとよいとされる課題を表す数字です。「基本の3数字」のチャレンジナンバーとは別の数字として扱われます。",
     },
     pinnacle: {
-      title: "ピナクルナンバーとは？",
-      body: "人生を4つの時期に分け、それぞれの時期に活かせるとされる機会・強みを表す数字です（チャレンジ＝課題、ピナクル＝機会、という対になる関係です）。",
+      title: "ステージ別のチャンスとは？",
+      body: "人生を4つの時期（ステージ）に分け、それぞれの時期に活かせるとされる機会・強みを表す数字です（課題とチャンスが対になる関係です）。",
     },
     destiny: {
       title: "デスティニーナンバーとは？",
@@ -1288,14 +1288,14 @@
     const challenges = calcChallengeNumbers(lifePath.rMonth, lifePath.rDay, lifePath.rYear);
     challenges.forEach((c, i) => {
       allValues.push(c);
-      const label = `第${i + 1}チャレンジ（${periodTags[i]}・${formatAgeRange(ageRanges[i])}）`;
+      const label = `第${i + 1}期の課題（${periodTags[i]}・${formatAgeRange(ageRanges[i])}）`;
       groupChallengeDetailEl.appendChild(createResultCard(label, c, CHALLENGE_MEANINGS, false, false, "challengeDetail"));
     });
 
     const pinnacles = calcPinnacleNumbers(lifePath.rMonth, lifePath.rDay, lifePath.rYear);
     pinnacles.forEach((p, i) => {
       allValues.push(p);
-      const label = `第${i + 1}ピナクル（${periodTags[i]}・${formatAgeRange(ageRanges[i])}）`;
+      const label = `第${i + 1}期のチャンス（${periodTags[i]}・${formatAgeRange(ageRanges[i])}）`;
       groupPinnacleDetailEl.appendChild(createResultCard(label, p, NUMBER_MEANINGS, false, false, "pinnacle"));
     });
 
