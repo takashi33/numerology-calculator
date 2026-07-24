@@ -163,6 +163,7 @@ h1 .subtitle {
   background: rgba(255, 255, 255, 0.06);
   color: #f1ecff;
   cursor: pointer;
+  transition: background 0.3s ease;
 }
 
 .romaji-key:hover {
@@ -172,6 +173,11 @@ h1 .subtitle {
 .romaji-key.active {
   border-color: #f4d98b;
   box-shadow: 0 0 8px rgba(244, 217, 139, 0.5);
+}
+
+.romaji-key.flash {
+  background: rgba(244, 217, 139, 0.55);
+  transition: background 0s;
 }
 
 .romaji-key .k {

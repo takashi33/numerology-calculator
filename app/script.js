@@ -738,7 +738,16 @@
     return romaji[0] + romaji;
   }
 
-  function handleKanaKeyClick(romaji) {
+  // 長音の省略（大野＝おおの→ono など）で2回目のタップが何も追加しないとき、
+  // 初心者ほど「タップが反応していない」と誤解しやすい。タップ自体は効いている
+  // ことが分かるよう、対象のキーを一瞬光らせて視覚フィードバックを返す。
+  function flashKey(keyEl) {
+    if (!keyEl) return;
+    keyEl.classList.add("flash");
+    setTimeout(() => keyEl.classList.remove("flash"), 350);
+  }
+
+  function handleKanaKeyClick(romaji, keyEl) {
     if (pendingSokuon) {
       const doubled = applySokuon(romaji);
       clearPendingSokuon();
@@ -749,14 +758,17 @@
     // 「同じ母音が連続する場合は2つ目を書かない」で網羅する：
     //   あ段+あ→a（例：ばあ→ba）　い段+い→i（例：井伊＝いい→Ii）
     //   う段+う→u（例：すう→su）　え段+え→e（例：ねえ→ne）
-    //   お段+お→o（例：とおい→to）
+    //   お段+お→o（例：とおい→to、大野＝おおの→ono）
     // 「お段+う」（おう＝長音のお、日本語で最も多いパターン）だけは母音の文字
     // 自体は異なる（o→u）ため、別途 lastChar==="o" を明示的に見て拾う
     // （例：太郎＝たろう→Taro、東京＝とうきょう→Tokyo、八丁＝はっちょう→hatcho）。
     // 逆に「え段+い」（けいこ等）はhepburnでは省略しない例外なので、
     // 同じ母音同士のときしか反応しないこのロジックでは自然に対象外のままになる。
     const lastChar = nameInput.value.slice(-1);
-    if (VOWELS.has(romaji) && (romaji === lastChar || (romaji === "u" && lastChar === "o"))) return;
+    if (VOWELS.has(romaji) && (romaji === lastChar || (romaji === "u" && lastChar === "o"))) {
+      flashKey(keyEl);
+      return;
+    }
     // ん（末尾がn）の直後にま・ば・ぱ行が続く場合は、ヘボン式の慣例に合わせて
     // n を m に書き換える（例：三瓶＝さんぺい→sampei、難波＝なんば→namba）。
     // 直前に何が入力されたかではなく、入力欄の実際の末尾文字を見て判定するため、
@@ -791,7 +803,7 @@
       keyEl.type = "button";
       keyEl.className = "romaji-key";
       keyEl.innerHTML = `<span class="k">${kana}</span><span class="r">${romaji}</span>`;
-      keyEl.addEventListener("click", () => handleKanaKeyClick(romaji));
+      keyEl.addEventListener("click", () => handleKanaKeyClick(romaji, keyEl));
       gridEl.appendChild(keyEl);
     });
     romajiTableBody.appendChild(gridEl);
@@ -824,11 +836,13 @@
 
   // ー（音引き）はヘボン式の一般的な慣例に合わせ、他の長音（お段+う、う段+う）
   // と同じく伸ばす分の文字を書かない（例：ヴォードレール→bodoreru）。押しても
-  // 何も入力されない旨がひと目でわかるよう、ボタン自体にそう表示しておく。
+  // 何も入力されない旨がひと目でわかるよう、ボタン自体にそう表示した上で、
+  // タップ時に一瞬光らせて「反応はしている」ことも伝える。
   const chouonKey = document.createElement("button");
   chouonKey.type = "button";
   chouonKey.className = "romaji-key";
   chouonKey.innerHTML = `<span class="k">ー</span><span class="r">表記なし</span>`;
+  chouonKey.addEventListener("click", () => flashKey(chouonKey));
   specialGridEl.appendChild(chouonKey);
 
   romajiTableBody.appendChild(specialGridEl);
