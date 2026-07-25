@@ -1999,7 +1999,29 @@
   // app/ folder's local-only version.
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => {
-      navigator.serviceWorker.register("sw.js").catch(() => {});
+      navigator.serviceWorker.register("sw.js").then((registration) => {
+        // ホーム画面から再度開いたときなど、OSがページを新規に読み込まず
+        // 中断していた状態から復帰させるだけのことがあり、その場合は
+        // sw.jsのfetchハンドラ（ネットワーク優先）すら一度も走らないまま
+        // 古い画面が表示され続けてしまう。アプリが再び見えるようになる
+        // たびに、新しいバージョンが出ていないか明示的に確認する。
+        document.addEventListener("visibilitychange", () => {
+          if (document.visibilityState === "visible") {
+            registration.update().catch(() => {});
+          }
+        });
+      }).catch(() => {});
+
+      // 新しいService Workerが有効になった（＝新しいバージョンが見つかった）
+      // 瞬間に、表示中のページを1回だけ自動で再読み込みし、最新の内容を
+      // 反映する。これが無いと、更新自体は裏側で完了していても、開いたまま
+      // だった画面には反映されない。
+      let hasReloaded = false;
+      navigator.serviceWorker.addEventListener("controllerchange", () => {
+        if (hasReloaded) return;
+        hasReloaded = true;
+        window.location.reload();
+      });
     });
   }
 })();

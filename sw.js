@@ -1,7 +1,7 @@
 // Offline support for 数秘電卓. The page is a single self-contained HTML
 // file (all CSS/JS/images inlined), so caching just the document itself is
 // enough for the whole app to keep working with no network at all.
-const CACHE_NAME = "numerology-calculator-v2";
+const CACHE_NAME = "numerology-calculator-v3";
 const URLS_TO_CACHE = ["./", "./index.html"];
 
 self.addEventListener("install", (event) => {
