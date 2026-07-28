@@ -776,7 +776,7 @@
 
 <div id="app" class="hidden">
   <h1>数秘電卓<span class="subtitle">Numerology Calculator</span></h1>
-  <p class="lead">生年月日と名前（ローマ字）から、西洋数秘術（ピタゴラス式）のさまざまな数字を計算します。</p>
+  <p class="lead">生年月日と名前（カナ）から、西洋数秘術（ピタゴラス式）のさまざまな数字を計算します。</p>
 
   <form id="calc-form">
     <label class="field">
@@ -791,18 +791,18 @@
     </label>
 
     <label class="field">
-      <span>苗字（ローマ字）</span>
-      <input type="text" id="last-name" placeholder="例：Yamada">
+      <span>苗字（カナ）</span>
+      <input type="text" id="last-name" placeholder="カナ入力">
     </label>
 
     <label class="field">
-      <span>名前（ローマ字）</span>
-      <input type="text" id="first-name" placeholder="例：Taro">
+      <span>名前（カナ）</span>
+      <input type="text" id="first-name" placeholder="カナ入力">
     </label>
-    <p id="name-warning" class="name-warning hidden">漢字などひらがな・カタカナ以外の文字は自動変換されません。読みをひらがなで入力するか、下のローマ字表から入力してください。</p>
+    <p id="name-warning" class="name-warning hidden">カナ以外の文字は自動変換されません。読みをカナで入力し直すか、下のローマ字表から入力してください。</p>
 
     <div class="romaji-helper">
-      <button type="button" id="romaji-table-toggle" class="romaji-toggle-btn">ヘボン式ローマ字表を見ながら入力する（かな入力がうまくいかないとき用）</button>
+      <button type="button" id="romaji-table-toggle" class="romaji-toggle-btn">ヘボン式ローマ字表を見ながら入力する</button>
       <div id="romaji-table" class="romaji-table hidden">
         <button type="button" id="romaji-help-btn" class="romaji-demo-btn">ⓘ 使い方を見る</button>
         <button type="button" id="romaji-demo-btn" class="romaji-demo-btn">▶ 「おおの」の変換を試してみる</button>
@@ -869,7 +869,7 @@
     </div>
     <div class="qr-modal-code">
       <div class="qr-modal-code-label">コード</div>
-      <div class="qr-modal-code-value">19810619</div>
+      <div class="qr-modal-code-value">325751</div>
     </div>
     <p class="qr-modal-note">この画面を、招待したい相手に見せてください。</p>
   </div>
@@ -886,8 +886,9 @@
 <script>
 (() => {
   // ---------------- Gate (passcode) ----------------
-  const GUEST_PASSCODE = "19810619";
-  const ADMIN_PASSCODE = "19781214";
+  const GUEST_PASSCODE = "325751";
+  const ADMIN_PASSCODE = "523451";
+  const BUYER_PASSCODE = "421589";
   const SESSION_KEY = "numerology-gate-role";
 
   const gateEl = document.getElementById("gate");
@@ -912,7 +913,7 @@
   function getRememberedRole() {
     try {
       const role = sessionStorage.getItem(SESSION_KEY);
-      return role === "admin" || role === "guest" ? role : null;
+      return role === "admin" || role === "guest" || role === "buyer" ? role : null;
     } catch (err) {
       return null;
     }
@@ -938,6 +939,8 @@
       role = "admin";
     } else if (passcodeInput.value === GUEST_PASSCODE) {
       role = "guest";
+    } else if (passcodeInput.value === BUYER_PASSCODE) {
+      role = "buyer";
     }
 
     if (role) {
@@ -1655,7 +1658,7 @@
   romajiHelpBtn.addEventListener("click", () => {
     openInfoModal({
       title: "ローマ字表の使い方",
-      body: "苗字・名前どちらの欄も、ひらがな・カタカナで直接入力すると、少し待つと自動でヘボン式ローマ字に変換されます（例：「し」は shi）。うまく変換されない場合は、下のかなをタップして入力することもできます（直前にタップ・入力していた方の欄に追加されます）。同じ母音が続くときは2つ目をタップ（入力）しても文字は増えません（タップしたキーは光るので反応はわかります）。",
+      body: "苗字・名前どちらの欄も、カナで直接入力すると、少し待つと自動でヘボン式ローマ字に変換されます（例：「し」は shi）。変換結果を調整したい場合は、下のカナをタップして入力することもできます（直前にタップ・入力していた方の欄に追加されます）。同じ母音が続くときは2つ目をタップ（入力）しても文字は増えません（タップしたキーは光るので反応はわかります）。",
     });
   });
 
