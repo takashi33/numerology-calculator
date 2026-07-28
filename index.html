@@ -1775,7 +1775,18 @@
         continue;
       }
       const lastChar = out.slice(-1);
-      if (VOWELS.has(romaji) && (romaji === lastChar || (romaji === "u" && lastChar === "o"))) {
+      // 外務省のヘボン式ローマ字綴方表では、長音の扱いが位置によって分かれる。
+      //   ・末尾以外の長音「お」→ O を表記しない（大野＝おおの→ono、大西→onishi）
+      //   ・末尾の長音「お」    → O を表記する  （高遠＝たかとお→takatoo、
+      //                                          妹尾＝せのお→senoo、横尾＝よこお→yokoo）
+      //   ・長音「う」          → 末尾かどうかに関わらず U を表記しない
+      //                          （幸太＝こうた→kota、優子＝ゆうこ→yuko、太郎→taro）
+      // 末尾の「お」だけが例外なので、そこだけ省略の対象から外す。
+      const isTrailingLongO = romaji === "o" && lastChar === "o"
+        && (i + consumed) >= src.length;
+      if (!isTrailingLongO
+          && VOWELS.has(romaji)
+          && (romaji === lastChar || (romaji === "u" && lastChar === "o"))) {
         i += consumed;
         continue;
       }
