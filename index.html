@@ -1474,6 +1474,24 @@
       return;
     }
 
+    // かな→ローマ字の自動変換は、打鍵が止まってから走る（拗音・ヴ行が壊れる
+    // のを防ぐため）。ボタンを押した時点でまだ変換待ちが残っている可能性が
+    // あるので、計算に入る前に確実に流し込んでおく。
+    clearTimeout(autoConvertTimers.get(lastNameInput));
+    runAutoConvert(lastNameInput);
+    clearTimeout(autoConvertTimers.get(firstNameInput));
+    runAutoConvert(firstNameInput);
+
+    // 漢字など変換できない文字が残ったまま計算すると、その欄が丸ごと計算から
+    // 抜け落ちた数字が「正しい結果」として表示されてしまう。苗字だけ漢字で
+    // 名前はかな、といった混在で特に危険なため、計算せずに止める。
+    const UNCONVERTED_PATTERN = /[぀-ヿ一-鿿]/;
+    if (UNCONVERTED_PATTERN.test(lastNameInput.value)
+        || UNCONVERTED_PATTERN.test(firstNameInput.value)) {
+      showError("名前に、ローマ字へ変換できない文字が残っています。読みをカナで入力し直すか、ローマ字表から入力してください。");
+      return;
+    }
+
     groupBasic3El.innerHTML = "";
     groupPersonalYearEl.innerHTML = "";
     groupChallengeDetailEl.innerHTML = "";
