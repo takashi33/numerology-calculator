@@ -675,6 +675,26 @@
     font-weight: 700;
   }
 
+  body.is-trial #master-summary,
+  body.is-trial #karmic-summary { display: none !important; }
+  .result-card.locked { opacity: .72; }
+  .result-card.locked .result-number {
+    letter-spacing: .12em;
+    opacity: .55;
+  }
+  .result-card.locked .result-desc {
+    font-size: .82rem;
+    opacity: .7;
+  }
+  .trial-notice {
+    margin: 1.5rem 0;
+    padding: 1rem 1.15rem;
+    border: 1px dashed rgba(120,120,120,.5);
+    border-radius: 8px;
+    font-size: .92rem;
+    line-height: 1.75;
+    opacity: .85;
+  }
   .qr-modal-code-value {
     font-family: var(--font-body);
     font-size: 24px;
@@ -829,27 +849,29 @@
       <div class="card-grid" id="group-basic3"></div>
     </section>
 
-    <section class="result-group">
+    <p id="trial-notice" class="trial-notice hidden">体験モードでは「基本の3数字」までを表示しています。<br>この下に並んでいる🔒付きのカードが、記事のコードでご覧いただける数字です。お名前から出る数字、今年・今月・今日の数字、ステージ別の課題とチャンス、成熟数が含まれます。</p>
+
+    <section class="result-group" data-tier="paid">
       <h2 id="personal-year-heading">今年・今月・今日の数字</h2>
       <div class="card-grid" id="group-personal-year"></div>
     </section>
 
-    <section class="result-group">
+    <section class="result-group" data-tier="paid">
       <h2>名前から分かる数字</h2>
       <div class="card-grid" id="group-name"></div>
     </section>
 
-    <section class="result-group hidden" id="group-combined-wrap">
+    <section class="result-group hidden" id="group-combined-wrap" data-tier="paid">
       <h2>生年月日と名前から分かる数字</h2>
       <div class="card-grid" id="group-combined"></div>
     </section>
 
-    <section class="result-group">
+    <section class="result-group" data-tier="paid">
       <h2>ステージ別の課題</h2>
       <div class="card-grid" id="group-challenge-detail"></div>
     </section>
 
-    <section class="result-group">
+    <section class="result-group" data-tier="paid">
       <h2>ステージ別のチャンス</h2>
       <div class="card-grid" id="group-pinnacle-detail"></div>
     </section>
@@ -889,7 +911,9 @@
   const GUEST_PASSCODE = "325751";
   const ADMIN_PASSCODE = "523451";
   const BUYER_PASSCODE = "421589";
+  const TRIAL_PASSCODE = "649096";
   const SESSION_KEY = "numerology-gate-role";
+  let currentRole = null;
 
   const gateEl = document.getElementById("gate");
   const appEl = document.getElementById("app");
@@ -903,6 +927,15 @@
     gateEl.classList.add("hidden");
     appEl.classList.remove("hidden");
     adminQrBtn.classList.toggle("hidden", role !== "admin");
+    // 体験モードでは「基本の3数字」だけ数字を出し、それ以外はカードの見出し
+    // だけ残して数字と解説を伏せる。何がいくつ算出できるのかは一覧で見えるが、
+    // 値そのものは渡さない。名前の入力欄は残すので、カナ→ローマ字の自動変換
+    // 自体は体験できる。
+    currentRole = role;
+    const isTrial = role === "trial";
+    const trialNotice = document.getElementById("trial-notice");
+    if (trialNotice) trialNotice.classList.toggle("hidden", !isTrial);
+    document.body.classList.toggle("is-trial", isTrial);
   }
 
   // Reading/writing sessionStorage can throw (e.g. browser privacy settings,
@@ -913,7 +946,7 @@
   function getRememberedRole() {
     try {
       const role = sessionStorage.getItem(SESSION_KEY);
-      return role === "admin" || role === "guest" || role === "buyer" ? role : null;
+      return ["admin", "guest", "buyer", "trial"].includes(role) ? role : null;
     } catch (err) {
       return null;
     }
@@ -941,6 +974,8 @@
       role = "guest";
     } else if (passcodeInput.value === BUYER_PASSCODE) {
       role = "buyer";
+    } else if (passcodeInput.value === TRIAL_PASSCODE) {
+      role = "trial";
     }
 
     if (role) {
@@ -1349,6 +1384,41 @@
     card.addEventListener("click", () => openInfoModal(entry));
   }
 
+
+  // 体験モード用。すでに組み立て済みのカードから見出しだけを取り出し、数字と
+  // 解説を取り除いたカードに差し替える。DOMから値自体が消えるため、開発者
+  // ツールで読み取ることもできない。
+  function lockPaidGroupsForTrial() {
+    document.querySelectorAll('[data-tier="paid"]').forEach((section) => {
+      const grid = section.querySelector(".card-grid");
+      if (!grid) return;
+      const labels = [...grid.children].map((card) => {
+        const el = card.querySelector(".result-label");
+        return el ? el.textContent : "";
+      });
+      grid.innerHTML = "";
+      labels.forEach((label) => {
+        const card = document.createElement("div");
+        card.className = "result-card locked";
+        const labelEl = document.createElement("div");
+        labelEl.className = "result-label";
+        labelEl.textContent = label;
+        const numberEl = document.createElement("div");
+        numberEl.className = "result-number";
+        numberEl.textContent = "🔒";
+        const descEl = document.createElement("div");
+        descEl.className = "result-desc";
+        descEl.textContent = "記事のコードで表示されます";
+        card.appendChild(labelEl);
+        card.appendChild(numberEl);
+        card.appendChild(descEl);
+        grid.appendChild(card);
+      });
+      // 名前が未入力のときに隠れる成熟数のグループも、体験モードでは
+      // 「そういう数字がある」ことを見せたいので開いておく。
+      section.classList.remove("hidden");
+    });
+  }
   function createResultCard(label, value, meaningMap, wide, main, glossaryKey) {
     const card = document.createElement("div");
     card.className = "result-card" + (wide ? " wide" : "") + (main ? " main" : "");
@@ -1632,6 +1702,7 @@
       karmicSummaryEl.classList.add("hidden");
     }
 
+    if (currentRole === "trial") lockPaidGroupsForTrial();
     resultsEl.classList.remove("hidden");
   });
 
