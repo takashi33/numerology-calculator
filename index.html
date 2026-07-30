@@ -779,6 +779,222 @@
     cursor: pointer;
     padding: 4px 8px;
   }
+
+  /* ---------------- Library (reference docs) ----------------
+     算出方法・深堀解説・ローマ字の詳細は、どれも読み物としての長さがある。
+     カード単位のⓘモーダルに入れると読みきれず、計算画面に並べると入力欄が
+     下へ押し出されるため、別画面（メニュー→記事）として切り分けている。 */
+
+  .library-open-btn {
+    display: block;
+    width: 100%;
+    margin: -8px 0 24px;
+    padding: 12px 14px;
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--gold);
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    cursor: pointer;
+    line-height: 1.6;
+  }
+
+  .library-open-btn:hover {
+    background: rgba(255, 255, 255, 0.12);
+  }
+
+  #library {
+    max-width: 460px;
+    margin: 0 auto;
+    padding: 28px 20px 56px;
+    animation: fadeIn 0.4s ease;
+  }
+
+  .library-back {
+    display: inline-block;
+    margin-bottom: 20px;
+    padding: 7px 14px;
+    font-family: var(--font-body);
+    font-size: 12px;
+    color: var(--ink-soft);
+    background: none;
+    border: 1px solid var(--card-border);
+    border-radius: 999px;
+    cursor: pointer;
+  }
+
+  .library-back:hover {
+    color: var(--ink);
+    border-color: var(--gold);
+  }
+
+  .library-h1 {
+    font-family: var(--font-display);
+    font-size: 21px;
+    color: var(--gold);
+    text-align: center;
+    letter-spacing: 0.04em;
+    margin: 0 0 8px;
+  }
+
+  .library-sub {
+    text-align: center;
+    font-size: 12px;
+    color: var(--ink-faint);
+    line-height: 1.8;
+    margin: 0 0 24px;
+  }
+
+  .library-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  /* .hidden と同じ詳細度なので、後勝ちで display:flex に戻ってしまう。
+     記事を開いたときにメニューを隠せるよう、明示的に上書きしておく。 */
+  .library-menu.hidden {
+    display: none;
+  }
+
+  .library-menu-item {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 14px;
+    padding: 16px;
+    font-family: var(--font-body);
+    cursor: pointer;
+  }
+
+  .library-menu-item:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .library-menu-item .lm-title {
+    display: block;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--gold);
+    margin-bottom: 6px;
+  }
+
+  .library-menu-item .lm-desc {
+    display: block;
+    font-size: 12px;
+    color: var(--ink-soft);
+    line-height: 1.75;
+  }
+
+  .library-menu-item.locked,
+  .library-menu-item.locked:hover {
+    cursor: default;
+    opacity: 0.6;
+    background: var(--card);
+  }
+
+  .library-menu-item.locked .lm-title {
+    color: var(--ink-soft);
+  }
+
+  .doc-lead {
+    font-size: 13px;
+    color: var(--ink-soft);
+    line-height: 1.95;
+    margin: 0 0 24px;
+  }
+
+  .doc-section {
+    margin-bottom: 28px;
+  }
+
+  .doc-section > h2 {
+    font-family: var(--font-display);
+    font-size: 15px;
+    color: var(--gold);
+    text-align: left;
+    letter-spacing: 0.02em;
+    margin: 0 0 12px;
+    padding-bottom: 7px;
+    border-bottom: 1px solid var(--card-border);
+  }
+
+  .doc-entry {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 14px;
+    margin-bottom: 12px;
+  }
+
+  .doc-entry > h3 {
+    font-size: 13px;
+    color: var(--ink);
+    margin: 0 0 9px;
+    line-height: 1.6;
+  }
+
+  .doc-entry p {
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    line-height: 1.95;
+    margin: 0 0 9px;
+  }
+
+  .doc-entry > *:last-child {
+    margin-bottom: 0;
+  }
+
+  .doc-formula {
+    font-size: 12.5px;
+    color: var(--ink);
+    background: rgba(0, 0, 0, 0.28);
+    border-left: 3px solid var(--gold-deep);
+    border-radius: 0 8px 8px 0;
+    padding: 9px 12px;
+    margin: 0 0 9px;
+    line-height: 1.85;
+    overflow-x: auto;
+    font-variant-numeric: lining-nums tabular-nums;
+  }
+
+  .doc-note {
+    font-size: 11.5px;
+    color: var(--ink-faint);
+    line-height: 1.9;
+    margin: 9px 0 0;
+  }
+
+  .doc-table-wrap {
+    overflow-x: auto;
+    margin: 0 0 9px;
+  }
+
+  .doc-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+
+  .doc-table th,
+  .doc-table td {
+    border: 1px solid var(--card-border);
+    padding: 6px 9px;
+    text-align: left;
+    color: var(--ink-soft);
+    line-height: 1.65;
+    white-space: nowrap;
+  }
+
+  .doc-table th {
+    color: var(--gold);
+    font-weight: 700;
+    background: rgba(255, 255, 255, 0.05);
+  }
 </style>
 
 <div id="gate">
@@ -797,6 +1013,8 @@
 <div id="app" class="hidden">
   <h1>数秘電卓<span class="subtitle">Numerology Calculator</span></h1>
   <p class="lead">生年月日と名前（カナ）から、西洋数秘術（ピタゴラス式）のさまざまな数字を計算します。</p>
+
+  <button type="button" id="library-open-btn" class="library-open-btn">📖 資料メニュー（算出方法・深堀解説・ローマ字）</button>
 
   <form id="calc-form">
     <label class="field">
@@ -880,6 +1098,14 @@
   <p class="footnote">※ 数秘術には複数の計算方法・流派があり、本アプリは一般的なピタゴラス式の一例を採用しています。占いの結果は断定的なものではなく、参考としてお楽しみください。</p>
 
   <button id="admin-qr-btn" type="button">招待QRコードを表示（管理者用）</button>
+</div>
+
+<div id="library" class="hidden">
+  <button type="button" id="library-back-btn" class="library-back">← 戻る</button>
+  <h1 class="library-h1" id="library-h1">資料メニュー</h1>
+  <p class="library-sub" id="library-sub">読みたいものを選んでください。</p>
+  <div id="library-menu" class="library-menu"></div>
+  <div id="library-doc" class="hidden"></div>
 </div>
 
 <div id="qr-modal" class="hidden">
@@ -1704,6 +1930,802 @@
 
     if (currentRole === "trial") lockPaidGroupsForTrial();
     resultsEl.classList.remove("hidden");
+  });
+
+  // ---------------- Library (reference docs) ----------------
+  // 本文はデータとして持ち、DOMは textContent で組み立てる（結果カードと同じ
+  // 方針）。ブロックの型は "p"（本文）／"f"（式・変換例）／"n"（補足）／
+  // "t"（表）の4つだけに絞ってある。
+  //
+  // 算出方法の計算例は、すべて「1990年5月23日生まれ／YAMADA TARO」で統一し、
+  // 実際の計算関数に通して値を検証済み。式を変えたときは例の値も見直すこと。
+  const LIBRARY_DOCS = [
+    {
+      id: "how",
+      tier: "paid",
+      title: "各ナンバーの算出方法",
+      desc: "どの数字を、どう足して出しているか。全20種類ぶんの式と計算例。",
+      lead: "この電卓が表示する数字は、すべてこのページの式のとおりに計算しています。数秘術には複数の流派があり、ここに載せているのは一般的なピタゴラス式の一例です。唯一絶対の計算方法ではありません。計算例は、すべて「1990年5月23日生まれ／YAMADA TARO（やまだ たろう）」で統一しています。",
+      sections: [
+        {
+          heading: "共通ルール",
+          entries: [
+            {
+              h3: "1桁への還元",
+              blocks: [
+                ["p", "合計が2桁以上になったら、その各桁をさらに足し、1桁になるまで繰り返します。"],
+                ["f", "36 → 3＋6 ＝ 9"],
+                ["f", "39 → 3＋9 ＝ 12 → 1＋2 ＝ 3"],
+                ["p", "ただし、途中で 11・22・33（マスターナンバー）になった場合は、それ以上還元せず、そこで止めます。"],
+                ["f", "29 → 2＋9 ＝ 11 → マスターナンバーなので、ここで止める"],
+              ],
+            },
+            {
+              h3: "アルファベット → 数字の変換表",
+              blocks: [
+                ["t", ["数字", "アルファベット"], [
+                  ["1", "A ・ J ・ S"],
+                  ["2", "B ・ K ・ T"],
+                  ["3", "C ・ L ・ U"],
+                  ["4", "D ・ M ・ V"],
+                  ["5", "E ・ N ・ W"],
+                  ["6", "F ・ O ・ X"],
+                  ["7", "G ・ P ・ Y"],
+                  ["8", "H ・ Q ・ Z"],
+                  ["9", "I ・ R"],
+                ]],
+                ["p", "名前から出す数字は、すべてこの表で1文字ずつ置き換えてから合計します。スペースや記号は数えません。"],
+                ["n", "この表を使うため、名前のローマ字の綴りが変わると出る数字も変わります。綴りの決め方は「ヘボン式ローマ字の詳細説明」を参照してください。"],
+              ],
+            },
+          ],
+        },
+        {
+          heading: "基本の3数字",
+          entries: [
+            {
+              h3: "ライフパスナンバー",
+              blocks: [
+                ["f", "西暦年・月・日の「すべての桁」をそのまま合計 → 1桁へ還元"],
+                ["f", "1990年5月23日\n→ 1＋9＋9＋0 ＋ 5 ＋ 2＋3 ＝ 29\n→ 2＋9 ＝ 11（マスターナンバー）"],
+                ["n", "月・日・年をそれぞれ先に1桁へ還元してから足す流派もありますが、その方式では本来出るはずのマスターナンバーが消えることがあります（1978年12月14日の場合、桁をすべて足すと33、先に還元すると6）。この電卓は、ライフパスナンバーだけは「桁をすべてそのまま合計する」方式を採っています。"],
+              ],
+            },
+            {
+              h3: "チャレンジナンバー",
+              blocks: [
+                ["f", "月と日をそれぞれ桁にバラして全部合計（年は使わない） → 1桁へ還元"],
+                ["f", "5月23日 → 5 ＋ 2＋3 ＝ 10 → 1＋0 ＝ 1"],
+                ["n", "日本の数秘術で「未来数」と呼ばれる計算です。後半の「ステージ別の課題」の第1期とは別の流派の式なので、値が一致しないことがあります（この例では、基本の3数字が1、第1期の課題は0）。"],
+              ],
+            },
+            {
+              h3: "バースデーナンバー",
+              blocks: [
+                ["f", "生まれた「日」を1桁へ還元"],
+                ["f", "23日 → 2＋3 ＝ 5"],
+              ],
+            },
+          ],
+        },
+        {
+          heading: "今年・今月・今日の数字",
+          entries: [
+            {
+              h3: "前提：月数・日数",
+              blocks: [
+                ["p", "以下の計算では、生年月日の月・日をそれぞれ1桁へ還元した値を使います。"],
+                ["f", "5月 → 5（月数）　／　23日 → 2＋3 ＝ 5（日数）"],
+              ],
+            },
+            {
+              h3: "パーソナルイヤーナンバー",
+              blocks: [
+                ["f", "月数 ＋ 日数 ＋（計算した年の各桁を合計して還元した値） → 1桁へ還元"],
+                ["f", "2026年に計算した場合\n→ 5 ＋ 5 ＋（2＋0＋2＋6 ＝ 10 → 1）＝ 11（マスターナンバー）"],
+                ["n", "年が変わると値も変わります。この電卓は、開いた時点の年月日を自動で使います。"],
+              ],
+            },
+            {
+              h3: "パーソナルマンスナンバー",
+              blocks: [
+                ["f", "パーソナルイヤーナンバー ＋ 計算した月（1〜12をそのまま） → 1桁へ還元"],
+                ["f", "7月 → 11 ＋ 7 ＝ 18 → 1＋8 ＝ 9"],
+              ],
+            },
+            {
+              h3: "パーソナルデイナンバー",
+              blocks: [
+                ["f", "パーソナルマンスナンバー ＋ 計算した日（1〜31をそのまま） → 1桁へ還元"],
+                ["f", "30日 → 9 ＋ 30 ＝ 39 → 3＋9 ＝ 12 → 1＋2 ＝ 3"],
+                ["n", "月・日は、月数・日数のように先に還元せず、そのままの数を足します。"],
+              ],
+            },
+          ],
+        },
+        {
+          heading: "名前から分かる数字",
+          entries: [
+            {
+              h3: "前提：名前を数字に置き換える",
+              blocks: [
+                ["p", "苗字と名前をつなげ、変換表で1文字ずつ数字に置き換えます。"],
+                ["f", "YAMADA TARO\n→ Y7 A1 M4 A1 D4 A1 ／ T2 A1 R9 O6"],
+              ],
+            },
+            {
+              h3: "デスティニーナンバー",
+              blocks: [
+                ["f", "全アルファベット（母音＋子音）を合計 → 1桁へ還元"],
+                ["f", "7＋1＋4＋1＋4＋1＋2＋1＋9＋6 ＝ 36 → 3＋6 ＝ 9"],
+              ],
+            },
+            {
+              h3: "ソウルナンバー",
+              blocks: [
+                ["f", "母音（A・E・I・O・U）だけを合計 → 1桁へ還元"],
+                ["f", "A1＋A1＋A1＋A1＋O6 ＝ 10 → 1＋0 ＝ 1"],
+              ],
+            },
+            {
+              h3: "パーソナリティナンバー",
+              blocks: [
+                ["f", "子音（母音以外）だけを合計 → 1桁へ還元"],
+                ["f", "Y7＋M4＋D4＋T2＋R9 ＝ 26 → 2＋6 ＝ 8"],
+                ["n", "Y は、この電卓では常に子音として扱います。"],
+              ],
+            },
+            {
+              h3: "ライフレッスンナンバー",
+              blocks: [
+                ["f", "1〜9のうち、名前に一度も出てこない数字（そのまま。還元しない）"],
+                ["f", "出てきた数字：1・2・4・6・7・9\n→ 出てこない 3・5・8 がライフレッスンナンバー"],
+                ["n", "複数になることも、1つも無いこともあります。"],
+              ],
+            },
+            {
+              h3: "インテンシティナンバー",
+              blocks: [
+                ["f", "名前の中でいちばん多く出てくる数字（同数で並んだ場合はすべて）"],
+                ["f", "1が4回で最多（A が4文字） → インテンシティナンバーは 1"],
+              ],
+            },
+          ],
+        },
+        {
+          heading: "生年月日と名前から分かる数字",
+          entries: [
+            {
+              h3: "成熟数（マチュリティナンバー）",
+              blocks: [
+                ["f", "ライフパスナンバー ＋ デスティニーナンバー → 1桁へ還元"],
+                ["f", "11 ＋ 9 ＝ 20 → 2＋0 ＝ 2"],
+                ["n", "名前が未入力のときは、計算も表示もしません。"],
+              ],
+            },
+          ],
+        },
+        {
+          heading: "ステージ別の課題",
+          entries: [
+            {
+              h3: "前提：月数・日数・年数",
+              blocks: [
+                ["p", "月・日・西暦年を、それぞれ1桁へ還元した値を使います。"],
+                ["f", "月数 ＝ 5\n日数 ＝ 2＋3 ＝ 5\n年数 ＝ 1＋9＋9＋0 ＝ 19 → 1＋9 ＝ 10 → 1＋0 ＝ 1"],
+              ],
+            },
+            {
+              h3: "4つの時期の課題",
+              blocks: [
+                ["f", "第1期 ＝ ｜月数 − 日数｜ ＝ ｜5 − 5｜ ＝ 0"],
+                ["f", "第2期 ＝ ｜日数 − 年数｜ ＝ ｜5 − 1｜ ＝ 4"],
+                ["f", "第3期（メイン） ＝ ｜第1期 − 第2期｜ ＝ ｜0 − 4｜ ＝ 4"],
+                ["f", "第4期 ＝ ｜月数 − 年数｜ ＝ ｜5 − 1｜ ＝ 4"],
+                ["n", "差はすべて絶対値（マイナスにしない）で取り、2桁になった場合は1桁へ還元します。基本の3数字の「チャレンジナンバー」とは別の流派の式です。"],
+              ],
+            },
+            {
+              h3: "各時期の年齢範囲",
+              blocks: [
+                ["f", "第1期の終わり ＝ 36 −（ライフパスナンバーを1桁まで還元した値）"],
+                ["f", "ライフパス 11 → 1＋1 ＝ 2 → 36 − 2 ＝ 34\n→ 第1期 0〜34歳／第2期 35〜43歳／第3期 44〜52歳／第4期 53歳〜"],
+                ["n", "第2期以降は9年ずつの区切りです。年齢範囲の計算に限り、マスターナンバーも1桁まで還元します。還元せずに計算すると、たとえばライフパス33の人は 36−33 ＝ 3 となり、第1期が0〜3歳という不自然に短い期間になってしまうためです。"],
+              ],
+            },
+          ],
+        },
+        {
+          heading: "ステージ別のチャンス",
+          entries: [
+            {
+              h3: "4つの時期のチャンス",
+              blocks: [
+                ["p", "課題と同じ「月数・日数・年数」を使いますが、差ではなく足し算で出します（課題＝乗り越えるもの、チャンス＝活かせるもの、という対の関係）。"],
+                ["f", "第1期 ＝ 月数 ＋ 日数 ＝ 5 ＋ 5 ＝ 10 → 1"],
+                ["f", "第2期 ＝ 日数 ＋ 年数 ＝ 5 ＋ 1 ＝ 6"],
+                ["f", "第3期（メイン） ＝ 第1期 ＋ 第2期 ＝ 1 ＋ 6 ＝ 7"],
+                ["f", "第4期 ＝ 月数 ＋ 年数 ＝ 5 ＋ 1 ＝ 6"],
+                ["n", "年齢範囲は「ステージ別の課題」と同じです。"],
+              ],
+            },
+          ],
+        },
+        {
+          heading: "特別な数字",
+          entries: [
+            {
+              h3: "マスターナンバー（11・22・33）",
+              blocks: [
+                ["p", "還元の途中でこの3つのいずれかになったら、そこで止めてそのまま扱います。この電卓では、該当するカードを金色の縁取りで表示し、結果の冒頭にもまとめを出します。"],
+              ],
+            },
+            {
+              h3: "カルミックデット・ナンバー（13・14・16・19）",
+              blocks: [
+                ["f", "ライフパスナンバー・デスティニーナンバーの「還元する前の合計値」が 13・14・16・19 のいずれかと一致したときに検出"],
+                ["f", "この例：ライフパスの合計値 29／デスティニーの合計値 36\n→ どちらも該当しないため、表示なし"],
+                ["n", "還元後の値ではなく、還元する前の合計値で判定します。"],
+              ],
+            },
+          ],
+        },
+      ],
+    },
+    {
+      id: "deep",
+      tier: "paid",
+      title: "各ナンバーの深堀解説",
+      desc: "1〜9の数字そのものの意味と、ナンバーごとの読み方・組み合わせの見かた。",
+      lead: "結果カードをタップすると出る短い説明を、もう少し踏み込んで書いたものです。数字は当たり外れを決めるものではなく、読み手が手がかりとして使うものとされています。ここに書いたことも、決めつけずに本人の実感と照らし合わせながら読んでいくものとお考えください。",
+      sections: [
+        {
+          heading: "数字そのものの意味（1〜9）",
+          entries: [
+            {
+              h3: "1 ｜ 始める力",
+              blocks: [
+                ["p", "キーワード：独立・主導・開拓"],
+                ["p", "自分で決めて動き出す力を表すとされます。前例のない場面でも最初の一歩を踏み出す役回りになりやすいと言われます。"],
+                ["p", "強く出すぎたときは、人に任せられず抱え込む、周囲に対して強引になる、といった形で表れることがあるとされています。"],
+              ],
+            },
+            {
+              h3: "2 ｜ 支える力",
+              blocks: [
+                ["p", "キーワード：協調・受容・バランス"],
+                ["p", "人と人のあいだに立ち、場を整える力を表すとされます。細やかに気づき、相手に合わせて動けると言われます。"],
+                ["p", "強く出すぎたときは、自分の意見を後回しにする、決断を人に委ねすぎる、といった形で表れることがあるとされています。"],
+              ],
+            },
+            {
+              h3: "3 ｜ 表す力",
+              blocks: [
+                ["p", "キーワード：表現・創造・楽しさ"],
+                ["p", "感じたことを言葉や形にして外へ出す力を表すとされます。場を明るくする軽やかさがあると言われます。"],
+                ["p", "強く出すぎたときは、話が広がりすぎて形にならない、深く掘り下げる前に次へ移る、といった形で表れることがあるとされています。"],
+              ],
+            },
+            {
+              h3: "4 ｜ 築く力",
+              blocks: [
+                ["p", "キーワード：堅実・継続・責任"],
+                ["p", "決めたことを地道に積み上げる力を表すとされます。土台をつくり、長く続く形にしていくと言われます。"],
+                ["p", "強く出すぎたときは、変化を受け入れにくい、決めた手順から外れることに強い抵抗を感じる、といった形で表れることがあるとされています。"],
+              ],
+            },
+            {
+              h3: "5 ｜ 動く力",
+              blocks: [
+                ["p", "キーワード：自由・変化・好奇心"],
+                ["p", "新しいものに反応し、身軽に動く力を表すとされます。環境が変わっても順応しやすいと言われます。"],
+                ["p", "強く出すぎたときは、一つのことが続かない、身軽さが無責任と受け取られる、といった形で表れることがあるとされています。"],
+              ],
+            },
+            {
+              h3: "6 ｜ 育てる力",
+              blocks: [
+                ["p", "キーワード：愛情・調和・世話"],
+                ["p", "身近な人や場を気にかけ、支え育てる力を表すとされます。頼られやすい立場になりやすいと言われます。"],
+                ["p", "強く出すぎたときは、面倒を見すぎる、相手の領分にまで踏み込んでしまう、といった形で表れることがあるとされています。"],
+              ],
+            },
+            {
+              h3: "7 ｜ 深める力",
+              blocks: [
+                ["p", "キーワード：探究・内省・専門性"],
+                ["p", "一つのことを深く掘り下げ、本質を確かめようとする力を表すとされます。ひとりで考える時間を必要とすると言われます。"],
+                ["p", "強く出すぎたときは、人との距離が開く、納得できるまで動き出せない、といった形で表れることがあるとされています。"],
+              ],
+            },
+            {
+              h3: "8 ｜ 動かす力",
+              blocks: [
+                ["p", "キーワード：実行・采配・現実化"],
+                ["p", "人や物やお金を動かし、現実の成果にしていく力を表すとされます。規模の大きい場面で力を発揮しやすいと言われます。"],
+                ["p", "強く出すぎたときは、成果や数字で物事を測りすぎる、力の使い方が強引になる、といった形で表れることがあるとされています。"],
+              ],
+            },
+            {
+              h3: "9 ｜ 手放す力",
+              blocks: [
+                ["p", "キーワード：博愛・包容・完結"],
+                ["p", "自分の枠を超えて広く人に関わる力を表すとされます。相手の背景を含めて受けとめられると言われます。"],
+                ["p", "強く出すぎたときは、自分のことが後回しになる、境界があいまいになって疲れやすくなる、といった形で表れることがあるとされています。"],
+              ],
+            },
+          ],
+        },
+        {
+          heading: "マスターナンバー（11・22・33）",
+          entries: [
+            {
+              h3: "共通の考え方",
+              blocks: [
+                ["p", "還元せずそのまま扱う特別な数字とされています。ただし「優れている数字」という意味ではなく、扱いの難しさを含む数字と説明されることが多い数です。"],
+                ["p", "読むときは、還元した先の数字（11なら2、22なら4、33なら6）の性質も土台として持っている、という見かたをすると読みやすくなるとされています。"],
+              ],
+            },
+            {
+              h3: "11",
+              blocks: [
+                ["p", "直感やひらめき、気づきの鋭さを表すとされます。土台には2（支える力）があるとされ、人の感情を受け取りやすい面を伴うと言われます。"],
+              ],
+            },
+            {
+              h3: "22",
+              blocks: [
+                ["p", "大きな構想を現実の形にする力を表すとされます。土台には4（築く力）があるとされ、理想と地道な作業の両方を必要とすると言われます。"],
+              ],
+            },
+            {
+              h3: "33",
+              blocks: [
+                ["p", "見返りを求めない愛情や奉仕を表すとされます。土台には6（育てる力）があるとされ、対象が身近な範囲を超えて広がりやすいと言われます。"],
+              ],
+            },
+          ],
+        },
+        {
+          heading: "カルミックデット・ナンバー（13・14・16・19）",
+          entries: [
+            {
+              h3: "共通の考え方",
+              blocks: [
+                ["p", "還元する前の合計値がこの4つのいずれかだったときに現れる数字です。「前世の借り」と説明されることが多いものですが、罰や不運を意味するものではなく、その分野を経験を通して学んでいく、という読み方をされます。"],
+                ["n", "この電卓では、断定的な吉凶の判断は行いません。出ていること自体を悪い知らせとして伝えないよう気をつけてください。"],
+              ],
+            },
+            {
+              h3: "13",
+              blocks: [
+                ["p", "地道に積み上げることの大切さを、経験を通して学ぶとされています。近道を探したくなる場面が繰り返し訪れる、という読み方をされます。"],
+              ],
+            },
+            {
+              h3: "14",
+              blocks: [
+                ["p", "自由と節度のバランスを学ぶとされています。求めるままに動いた反動から、加減を身につけていく、という読み方をされます。"],
+              ],
+            },
+            {
+              h3: "16",
+              blocks: [
+                ["p", "慢心を手放し、謙虚さを学ぶとされています。積み上げたものが一度崩れるような転機を通じて、という読み方をされます。"],
+              ],
+            },
+            {
+              h3: "19",
+              blocks: [
+                ["p", "人に頼りすぎず自立することを学ぶとされています。ひとりで立つ場面を通じて、という読み方をされます。"],
+              ],
+            },
+          ],
+        },
+        {
+          heading: "ナンバーごとの読み方",
+          entries: [
+            {
+              h3: "ライフパスナンバー",
+              blocks: [
+                ["p", "生まれ持った性質と、人生全体を通じて向き合うことになる中心的なテーマを表すとされます。生年月日から出るため、生涯変わりません。"],
+                ["p", "読むときの土台になる数字です。他の数字が食い違って見えるときは、まずライフパスを軸に置き、そこからどれだけ離れているかを見ると整理しやすくなります。"],
+              ],
+            },
+            {
+              h3: "バースデーナンバー",
+              blocks: [
+                ["p", "生まれ持った資質、得意な進み方を表すとされます。ライフパスを補う「持ち技」のような位置づけです。"],
+                ["p", "ライフパスと同じ数字が出た場合は、その性質がはっきり表に出やすいと読まれます。違う数字なら、テーマ（ライフパス）に対して、どんな手段（バースデー）で取り組むか、という組み合わせで読めます。"],
+              ],
+            },
+            {
+              h3: "チャレンジナンバー",
+              blocks: [
+                ["p", "日々の暮らしのなかで出会いやすい、身近な課題を表すとされます。人生規模のテーマであるライフパスに対して、こちらはもっと手前の、繰り返し出てくる引っかかりを指します。"],
+                ["n", "「ステージ別の課題」の第1期とは別の計算式のため、値が一致しないことがあります。どちらかが間違っているのではなく、流派が違います。"],
+              ],
+            },
+            {
+              h3: "デスティニーナンバー",
+              blocks: [
+                ["p", "今世での使命、社会との関わり方を表すとされます。名前の全アルファベットから出るため、名前が変わると値も変わります。"],
+                ["p", "ライフパス（生まれ持った性質）とデスティニー（社会での役割）を並べると、「自分の持ち味を、どういう形で外に出していくか」という読み方ができます。両者が離れているほど、その差を埋める工夫が必要になるとされます。"],
+              ],
+            },
+            {
+              h3: "ソウルナンバー",
+              blocks: [
+                ["p", "心の奥にある本当の欲求、誰にも見せていない本音を表すとされます。名前の母音だけから出ます。"],
+                ["p", "パーソナリティ（外に見せている顔）と対で読むのが基本です。この2つが離れている場合、「見られている自分」と「本当に望んでいること」のあいだにギャップがある、という読み方をされます。"],
+              ],
+            },
+            {
+              h3: "パーソナリティナンバー",
+              blocks: [
+                ["p", "他人から見た印象、第一印象を表すとされます。名前の子音だけから出ます。"],
+                ["p", "本人が自覚しにくい数字です。鑑定の場では、ここが本人の自己認識と食い違うことがよくあります。食い違い自体が読み解きの材料になります。"],
+              ],
+            },
+            {
+              h3: "ライフレッスンナンバー",
+              blocks: [
+                ["p", "名前に一度も現れない数字です。生まれつき備わっているものではなく、意識して育てていくとよいとされる資質を表します。"],
+                ["p", "複数出ることも、1つも出ないこともあります。1つも無い場合は「欠けがない」という意味で、名前がバランスよく数字を含んでいることを示します。"],
+              ],
+            },
+            {
+              h3: "インテンシティナンバー",
+              blocks: [
+                ["p", "名前の中でいちばん多く現れる数字で、エネルギーが集中しているところを表すとされます。"],
+                ["p", "強みとして読めると同時に、行きすぎたときの偏りとしても読めます。ライフレッスン（欠けている数字）と対で見ると、その人の凸凹の形が見えやすくなります。"],
+              ],
+            },
+            {
+              h3: "成熟数（マチュリティナンバー）",
+              blocks: [
+                ["p", "ライフパスとデスティニーを足して出す数字で、人生後半にかけて表れてくるとされます。若いうちは実感しにくく、年齢を重ねてから意識されやすいと言われます。"],
+                ["p", "生年月日と名前の両方を使う唯一の数字です。名前が未入力だと出ません。"],
+              ],
+            },
+            {
+              h3: "ステージ別の課題",
+              blocks: [
+                ["p", "人生を4つの時期に分け、それぞれの時期に向き合うとされる課題です。第3期がメインで、人生全体を通じての中心的な課題とされます。"],
+                ["p", "年齢範囲が併記されているので、いま自分がどの時期にいるかを見てから読むと、実感と結びつけやすくなります。"],
+              ],
+            },
+            {
+              h3: "ステージ別のチャンス",
+              blocks: [
+                ["p", "課題と対になる、それぞれの時期に活かせるとされる機会・強みです。同じ時期の課題とセットで読みます。"],
+                ["p", "「この時期は◯◯が課題で、◯◯が追い風になる」という形で並べると、時期ごとの見取り図として使えます。"],
+              ],
+            },
+            {
+              h3: "パーソナルイヤー／マンス／デイナンバー",
+              blocks: [
+                ["p", "その年・その月・その日のテーマを表すとされます。他の数字と違い、時間とともに変わります。"],
+                ["p", "イヤーからマンス、マンスからデイへと絞り込んでいく入れ子の構造です。年のテーマの中に月があり、月のテーマの中に日がある、という順番で読みます。"],
+                ["n", "この電卓は、開いた時点の年月日を自動で使います。日付を指定しての計算はできません。"],
+              ],
+            },
+          ],
+        },
+        {
+          heading: "複数の数字が食い違って見えるとき",
+          entries: [
+            {
+              h3: "食い違いは、読み解きの材料になる",
+              blocks: [
+                ["p", "20種類の数字を並べると、正反対に見える組み合わせが必ず出てきます。どれかが間違っているわけではなく、その人の中に両方あると読むのが基本です。"],
+                ["p", "たとえばソウル（本音）が7で、パーソナリティ（外向き）が3の場合、「ひとりで深く考えたいのに、周囲からは明るく社交的だと思われている」という読み方ができます。この差そのものが、本人にとっての疲れの原因になっていることもあります。"],
+                ["p", "食い違いを見つけたら、まずどちらが「内側」で、どちらが「外側」の数字かを確かめてください。内側＝ソウル・ライフパス、外側＝パーソナリティ・デスティニー、と分けると整理しやすくなります。"],
+              ],
+            },
+          ],
+        },
+      ],
+    },
+    {
+      id: "romaji",
+      tier: "free",
+      title: "ヘボン式ローマ字の詳細説明",
+      desc: "名前をどう綴るかで数字は変わります。この電卓が採っているルールの全部。",
+      lead: "名前から出る数字は、ローマ字の綴りが変わると値も変わります。つまり「どう綴るか」を決めることが、計算の正しさそのものです。この電卓は、パスポートで使われるヘボン式（外務省のローマ字綴方表）の考え方に合わせています。同じカナを入れれば必ず同じ綴りになるので、入力ごとに結果がぶれることはありません。",
+      sections: [
+        {
+          heading: "なぜ綴りで迷うのか",
+          entries: [
+            {
+              h3: "訓令式とヘボン式は別のもの",
+              blocks: [
+                ["p", "学校で習うローマ字（訓令式）と、パスポートで使うローマ字（ヘボン式）は綴りが違います。同じ「し」でも si と shi に分かれ、文字数が変わるため、変換表で出る数字も変わります。"],
+                ["t", ["かな", "訓令式", "ヘボン式（この電卓）"], [
+                  ["し", "si", "shi"],
+                  ["ち", "ti", "chi"],
+                  ["つ", "tu", "tsu"],
+                  ["ふ", "hu", "fu"],
+                  ["じ", "zi", "ji"],
+                  ["しゃ", "sya", "sha"],
+                  ["ちゃ", "tya", "cha"],
+                  ["じゃ", "zya", "ja"],
+                ]],
+                ["n", "この電卓はすべてヘボン式で統一しています。"],
+              ],
+            },
+          ],
+        },
+        {
+          heading: "長音（伸ばす音）",
+          entries: [
+            {
+              h3: "「う」で伸ばすときは、書かない",
+              blocks: [
+                ["f", "たろう → taro　／　ゆうこ → yuko\nこうた → kota　／　さとう → sato\nとうきょう → tokyo"],
+                ["p", "日本語の長音でいちばん多いのがこの形です。「う」は表記しません。語末かどうかに関わらず同じ扱いです。"],
+              ],
+            },
+            {
+              h3: "同じ母音が続くときは、2つ目を書かない",
+              blocks: [
+                ["f", "おおの → ono　／　おおにし → onishi\nいい → i　／　すう → su　／　ねえ → ne"],
+              ],
+            },
+            {
+              h3: "ただし、語末の「おお」は書く",
+              blocks: [
+                ["f", "たかとお → takatoo　／　せのお → senoo\nよこお → yokoo"],
+                ["n", "外務省のヘボン式では、末尾の長音「お」だけは O を残します。ここだけが例外です。"],
+              ],
+            },
+            {
+              h3: "「えい」は長音として扱わない",
+              blocks: [
+                ["f", "けいこ → keiko　／　へいせい → heisei"],
+                ["p", "「え段＋い」は異なる母音の組み合わせなので、省略せずそのまま ei と書きます。"],
+              ],
+            },
+          ],
+        },
+        {
+          heading: "促音「っ」",
+          entries: [
+            {
+              h3: "次の子音を重ねる",
+              blocks: [
+                ["f", "はっとり → hattori　／　はっちょう → hatcho"],
+              ],
+            },
+            {
+              h3: "ち行だけは、t を補う",
+              blocks: [
+                ["f", "ほっち → hotchi　／　まっちゃ → matcha"],
+                ["n", "c を重ねて cchi とはせず、t を補って tchi と書くのがヘボン式の慣例です。"],
+              ],
+            },
+          ],
+        },
+        {
+          heading: "撥音「ん」",
+          entries: [
+            {
+              h3: "基本は n",
+              blocks: [
+                ["f", "じんない → jinnai"],
+              ],
+            },
+            {
+              h3: "b・m・p の前は m",
+              blocks: [
+                ["f", "なんば → namba　／　ほんま → homma\nさんぺい → sampei"],
+              ],
+            },
+            {
+              h3: "母音・や行の前はアポストロフィを挟む",
+              blocks: [
+                ["f", "じゅんいち → jun'ichi　／　ほんい → hon'i\nきんゆう → kin'yu　／　しんいち → shin'ichi"],
+                ["n", "区切りがないと「じゅにち」「ほに」と読めてしまうため、パスポートのヘボン式に合わせて ' を挟みます。b・m・p が続く場合は、アポストロフィではなく m への変換が優先されます。"],
+              ],
+            },
+          ],
+        },
+        {
+          heading: "外来語の「ヴ」",
+          entries: [
+            {
+              h3: "b で表記する",
+              blocks: [
+                ["f", "ヴィヴィアン → bibian"],
+                ["p", "日本語に v の音がないため、ヘボン式の一般的な慣例に合わせて b で代用します。"],
+              ],
+            },
+          ],
+        },
+        {
+          heading: "この電卓での入力",
+          entries: [
+            {
+              h3: "カナを入れると自動で変換される",
+              blocks: [
+                ["p", "苗字・名前の欄にカナを入力すると、打鍵が止まってから自動でヘボン式ローマ字に変わります。ひらがなでもカタカナでも同じ結果になります。"],
+                ["n", "入力の途中で変換してしまうと拗音（きゃ・しゅ等）が壊れるため、少し待ってから変換する作りになっています。変換待ちのあいだは入力欄が薄く表示されます。"],
+              ],
+            },
+            {
+              h3: "漢字は変換されない",
+              blocks: [
+                ["p", "漢字はどのかなにも一致しないため、変換されません。その状態のまま計算しようとすると、電卓はエラーを出して止まります。"],
+                ["n", "止めているのは、漢字の部分だけが計算から抜け落ちた「一見それらしい誤った数字」が出るのを防ぐためです。とくに苗字だけ漢字・名前はカナ、といった混在は見落としやすいので、計算そのものを行いません。読みをカナで入力し直してください。"],
+              ],
+            },
+            {
+              h3: "ローマ字表から手で入力する",
+              blocks: [
+                ["p", "変換結果を自分で調整したいときは、名前欄の下の「ヘボン式ローマ字表」を開いて、かなをタップして入力できます。"],
+                ["p", "同じ母音が続くところで2つ目をタップしても文字は増えません（長音のルールどおりです）。タップしたキーは光るので、反応がないわけではないと分かります。"],
+              ],
+            },
+          ],
+        },
+        {
+          heading: "綴りが分かれるとき",
+          entries: [
+            {
+              h3: "本人のパスポート表記と違う場合",
+              blocks: [
+                ["p", "パスポートの表記は、本人の申し出によって例外的な綴りが認められている場合があります（長音を残す OH 表記など）。この電卓の出力と一致しないことがあります。"],
+                ["p", "どちらを使うかに絶対の正解はありません。鑑定で扱うときは、どちらの綴りで計算したかを控えておくと、後から結果を見返したときに同じ数字を再現できます。"],
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  ];
+
+  const libraryEl = document.getElementById("library");
+  const libraryMenuEl = document.getElementById("library-menu");
+  const libraryDocEl = document.getElementById("library-doc");
+  const libraryOpenBtn = document.getElementById("library-open-btn");
+  const libraryBackBtn = document.getElementById("library-back-btn");
+  const libraryH1 = document.getElementById("library-h1");
+  const librarySub = document.getElementById("library-sub");
+
+  function appendDocBlock(block, parent) {
+    const type = block[0];
+    if (type === "t") {
+      const wrap = document.createElement("div");
+      wrap.className = "doc-table-wrap";
+      const table = document.createElement("table");
+      table.className = "doc-table";
+      const thead = document.createElement("thead");
+      const headRow = document.createElement("tr");
+      block[1].forEach((label) => {
+        const th = document.createElement("th");
+        th.textContent = label;
+        headRow.appendChild(th);
+      });
+      thead.appendChild(headRow);
+      table.appendChild(thead);
+      const tbody = document.createElement("tbody");
+      block[2].forEach((row) => {
+        const tr = document.createElement("tr");
+        row.forEach((cell) => {
+          const td = document.createElement("td");
+          td.textContent = cell;
+          tr.appendChild(td);
+        });
+        tbody.appendChild(tr);
+      });
+      table.appendChild(tbody);
+      wrap.appendChild(table);
+      parent.appendChild(wrap);
+      return;
+    }
+    const el = document.createElement("p");
+    if (type === "f") el.className = "doc-formula";
+    else if (type === "n") el.className = "doc-note";
+    // 式は改行位置に意味がある（「→」で計算の段が変わる）ため、そのまま残す。
+    if (type === "f") el.style.whiteSpace = "pre-line";
+    el.textContent = block[1];
+    parent.appendChild(el);
+  }
+
+  function buildDoc(doc) {
+    const frag = document.createDocumentFragment();
+    const lead = document.createElement("p");
+    lead.className = "doc-lead";
+    lead.textContent = doc.lead;
+    frag.appendChild(lead);
+    doc.sections.forEach((section) => {
+      const sectionEl = document.createElement("section");
+      sectionEl.className = "doc-section";
+      const h2 = document.createElement("h2");
+      h2.textContent = section.heading;
+      sectionEl.appendChild(h2);
+      section.entries.forEach((entry) => {
+        const entryEl = document.createElement("div");
+        entryEl.className = "doc-entry";
+        const h3 = document.createElement("h3");
+        h3.textContent = entry.h3;
+        entryEl.appendChild(h3);
+        entry.blocks.forEach((block) => appendDocBlock(block, entryEl));
+        sectionEl.appendChild(entryEl);
+      });
+      frag.appendChild(sectionEl);
+    });
+    return frag;
+  }
+
+  // 体験モードでは、有料記事側の中身にあたる「算出方法」「深堀解説」を伏せる。
+  // ローマ字の説明だけは開けておく（記事の無料部分で体験してもらう機能その
+  // ものの説明であり、ここを閉じると体験の意味がなくなるため）。
+  function isDocLocked(doc) {
+    return currentRole === "trial" && doc.tier === "paid";
+  }
+
+  function renderLibraryMenu() {
+    libraryMenuEl.innerHTML = "";
+    LIBRARY_DOCS.forEach((doc) => {
+      const locked = isDocLocked(doc);
+      const item = document.createElement("button");
+      item.type = "button";
+      item.className = "library-menu-item" + (locked ? " locked" : "");
+      const title = document.createElement("span");
+      title.className = "lm-title";
+      title.textContent = (locked ? "🔒 " : "") + doc.title;
+      const desc = document.createElement("span");
+      desc.className = "lm-desc";
+      desc.textContent = locked ? "記事のコードで読めるようになります。" : doc.desc;
+      item.appendChild(title);
+      item.appendChild(desc);
+      if (locked) {
+        item.disabled = true;
+      } else {
+        item.addEventListener("click", () => showDoc(doc));
+      }
+      libraryMenuEl.appendChild(item);
+    });
+  }
+
+  function showLibraryMenu() {
+    libraryH1.textContent = "資料メニュー";
+    librarySub.textContent = "読みたいものを選んでください。";
+    librarySub.classList.remove("hidden");
+    renderLibraryMenu();
+    libraryMenuEl.classList.remove("hidden");
+    libraryDocEl.classList.add("hidden");
+    libraryDocEl.innerHTML = "";
+    window.scrollTo(0, 0);
+  }
+
+  function showDoc(doc) {
+    libraryH1.textContent = doc.title;
+    librarySub.classList.add("hidden");
+    libraryDocEl.innerHTML = "";
+    libraryDocEl.appendChild(buildDoc(doc));
+    libraryMenuEl.classList.add("hidden");
+    libraryDocEl.classList.remove("hidden");
+    window.scrollTo(0, 0);
+  }
+
+  libraryOpenBtn.addEventListener("click", () => {
+    appEl.classList.add("hidden");
+    libraryEl.classList.remove("hidden");
+    showLibraryMenu();
+  });
+
+  // 記事を開いているならメニューへ、メニューにいるなら電卓へ。1つのボタンで
+  // 1段ずつ戻す（端末の戻るボタンと同じ感覚で押せるようにするため）。
+  libraryBackBtn.addEventListener("click", () => {
+    if (!libraryDocEl.classList.contains("hidden")) {
+      showLibraryMenu();
+      return;
+    }
+    libraryEl.classList.add("hidden");
+    appEl.classList.remove("hidden");
+    window.scrollTo(0, 0);
   });
 
   // ---------------- Admin: invite QR modal ----------------
