@@ -545,6 +545,18 @@
     box-shadow: 0 0 18px rgba(244, 217, 139, 0.35);
   }
 
+  /* マスターナンバーの金とは意味が違うので、上部のカルミックデット帯と同じ
+     紫系でそろえ、見分けがつくようにする。 */
+  .result-card.karmic {
+    border: 1px solid rgba(190, 140, 210, 0.75);
+    background: rgba(120, 60, 140, 0.3);
+  }
+
+  .result-card.karmic .result-number {
+    color: #e6c4f0;
+    font-size: 32px;
+  }
+
   .result-label {
     font-size: 11px;
     letter-spacing: 0.04em;
@@ -1084,6 +1096,13 @@
       <div class="card-grid" id="group-combined"></div>
     </section>
 
+    <!-- 該当があったときだけ開く。体験モードでは、カードが「あるかないか」
+         そのものが結果になってしまうため、セクションごと隠す（data-trial-hide）。 -->
+    <section class="result-group hidden" id="group-karmic-wrap" data-tier="paid" data-trial-hide="true">
+      <h2>カルミックデット・ナンバー</h2>
+      <div class="card-grid" id="group-karmic"></div>
+    </section>
+
     <section class="result-group" data-tier="paid">
       <h2>ステージ別の課題</h2>
       <div class="card-grid" id="group-challenge-detail"></div>
@@ -1249,6 +1268,8 @@
   const groupCombinedWrapEl = document.getElementById("group-combined-wrap");
   const groupCombinedEl = document.getElementById("group-combined");
   const karmicSummaryEl = document.getElementById("karmic-summary");
+  const groupKarmicWrapEl = document.getElementById("group-karmic-wrap");
+  const groupKarmicEl = document.getElementById("group-karmic");
 
   const MASTER_NUMBERS = [11, 22, 33];
   const KARMIC_DEBT_NUMBERS = [13, 14, 16, 19];
@@ -1361,6 +1382,10 @@
     maturity: {
       title: "成熟数（マチュリティナンバー）とは？",
       body: "人生後半にかけて表れてくるとされる数字です。若い頃よりも、年齢を重ねてから意識されやすい資質を表すとされています。",
+    },
+    karmicDebt: {
+      title: "カルミックデット・ナンバーとは？",
+      body: "13・14・16・19 のいずれかが、還元する前の合計値として現れたときに検出される特別な数字です。ラベルには、どのナンバーの計算過程に出ているかを表示しています。「前世の借り」と呼ばれることがありますが、罰や不運を意味するものではなく、その分野を経験を通して学んでいくとされる数字です。カードに表示している数字は、他のカードと違い、1桁に還元する前の値です。",
     },
   };
 
@@ -1550,16 +1575,20 @@
     return { value: reduceToSingleOrMaster(raw), raw };
   }
 
+  // Destiny/Soul/Personality all return the pre-reduction total as well: the
+  // karmic-debt check looks at that raw sum, not the reduced value.
   function calcSoulNumber(letters) {
     const vowels = letters.filter((l) => VOWELS.has(l));
     if (vowels.length === 0) return null;
-    return reduceToSingleOrMaster(sumLetterValues(vowels));
+    const raw = sumLetterValues(vowels);
+    return { value: reduceToSingleOrMaster(raw), raw };
   }
 
   function calcPersonalityNumber(letters) {
     const consonants = letters.filter((l) => !VOWELS.has(l));
     if (consonants.length === 0) return null;
-    return reduceToSingleOrMaster(sumLetterValues(consonants));
+    const raw = sumLetterValues(consonants);
+    return { value: reduceToSingleOrMaster(raw), raw };
   }
 
   function calcMaturityNumber(lifePath, destiny) {
@@ -1618,6 +1647,21 @@
     document.querySelectorAll('[data-tier="paid"]').forEach((section) => {
       const grid = section.querySelector(".card-grid");
       if (!grid) return;
+      // カードが「あるかないか」自体が結果になっているグループ（カルミック
+      // デット）は、伏せたカードを並べるだけでも該当の有無が伝わってしまう
+      // ため、セクションごと隠す。
+      if (section.dataset.trialHide === "true") {
+        // 隠すだけでは値がDOMに残り、開発者ツールから読めてしまう。他の有料
+        // グループと同じく、中身そのものを消してから隠す。
+        grid.innerHTML = "";
+        section.classList.add("hidden");
+        return;
+      }
+      // 中身が無いグループを開くと、見出しだけが宙に浮いて残る。
+      if (grid.children.length === 0) {
+        section.classList.add("hidden");
+        return;
+      }
       const labels = [...grid.children].map((card) => {
         const el = card.querySelector(".result-label");
         return el ? el.textContent : "";
@@ -1794,23 +1838,35 @@
     groupPinnacleDetailEl.innerHTML = "";
     groupNameEl.innerHTML = "";
     groupCombinedEl.innerHTML = "";
+    groupKarmicEl.innerHTML = "";
 
     const allValues = [];
     const karmicHits = [];
 
-    function checkKarmic(raw) {
-      if (KARMIC_DEBT_NUMBERS.includes(raw)) karmicHits.push(raw);
+    // カルミックデットは「どのナンバーに出ているか」まで込みで意味を持つため、
+    // 値だけでなく出どころのラベルも一緒に持つ。判定するのは還元する前の
+    // 合計値であって、カードに表示している還元後の値ではない。
+    //
+    // 対象は、いわゆるコアナンバー（ライフパス／デスティニー／ソウル／
+    // パーソナリティ／バースデー）に絞っている。成熟数は「すでに還元済みの
+    // 数字どうしの和」で桁の合計ではないため、パーソナルイヤー系は毎日
+    // 変わってしまい生涯のテーマを表すこの数字の性質と合わないため、
+    // どちらも判定対象から外している。
+    function checkKarmic(label, raw) {
+      if (KARMIC_DEBT_NUMBERS.includes(raw)) karmicHits.push({ label, raw });
     }
 
     // Basic-3 group is displayed left to right as Birthday / Life Path
     // (main, emphasized) / Challenge.
     const birthday = calcBirthdayNumber(day);
     allValues.push(birthday);
+    // バースデーだけは合計ではなく、生まれた日そのもの（13・14・16・19日）で判定する。
+    checkKarmic("バースデーナンバー", day);
     groupBasic3El.appendChild(createResultCard("バースデーナンバー", birthday, NUMBER_MEANINGS, false, false, "birthday"));
 
     const lifePath = calcLifePathNumber(year, month, day);
     allValues.push(lifePath.value);
-    checkKarmic(lifePath.raw);
+    checkKarmic("ライフパスナンバー", lifePath.raw);
     groupBasic3El.appendChild(createResultCard("ライフパスナンバー", lifePath.value, NUMBER_MEANINGS, false, true, "lifePath"));
 
     const challengeNumber = calcChallengeNumber(month, day);
@@ -1861,19 +1917,21 @@
     } else {
       groupNameEl.parentElement.classList.remove("hidden");
       allValues.push(destiny);
-      checkKarmic(destinyResult.raw);
+      checkKarmic("デスティニーナンバー", destinyResult.raw);
       groupNameEl.appendChild(createResultCard("デスティニーナンバー", destiny, NUMBER_MEANINGS, true, false, "destiny"));
 
-      const soul = calcSoulNumber(letters);
-      if (soul !== null) {
-        allValues.push(soul);
-        groupNameEl.appendChild(createResultCard("ソウルナンバー", soul, NUMBER_MEANINGS, false, false, "soul"));
+      const soulResult = calcSoulNumber(letters);
+      if (soulResult !== null) {
+        allValues.push(soulResult.value);
+        checkKarmic("ソウルナンバー", soulResult.raw);
+        groupNameEl.appendChild(createResultCard("ソウルナンバー", soulResult.value, NUMBER_MEANINGS, false, false, "soul"));
       }
 
-      const personality = calcPersonalityNumber(letters);
-      if (personality !== null) {
-        allValues.push(personality);
-        groupNameEl.appendChild(createResultCard("パーソナリティナンバー", personality, NUMBER_MEANINGS, false, false, "personality"));
+      const personalityResult = calcPersonalityNumber(letters);
+      if (personalityResult !== null) {
+        allValues.push(personalityResult.value);
+        checkKarmic("パーソナリティナンバー", personalityResult.raw);
+        groupNameEl.appendChild(createResultCard("パーソナリティナンバー", personalityResult.value, NUMBER_MEANINGS, false, false, "personality"));
       }
 
       const lifeLessonNumbers = calcLifeLessonNumbers(letters);
@@ -1921,10 +1979,23 @@
     }
 
     if (karmicHits.length > 0) {
-      const notes = [...new Set(karmicHits)].map((n) => `${n}（${KARMIC_DEBT_MEANINGS[n]}）`).join(" ");
+      // 同じ13でもライフパスに出ているのかソウルに出ているのかで読み方が
+      // 変わるため、カードは出どころごとに1枚ずつ立てる（値では束ねない）。
+      karmicHits.forEach((hit) => {
+        const card = createResultCard(hit.label, hit.raw, KARMIC_DEBT_MEANINGS, false, false, "karmicDebt");
+        card.classList.add("karmic");
+        groupKarmicEl.appendChild(card);
+      });
+      groupKarmicWrapEl.classList.remove("hidden");
+
+      // 上部のサマリーは「何が出ているか」の一覧なので、こちらは値で束ねる。
+      const notes = [...new Set(karmicHits.map((hit) => hit.raw))]
+        .map((n) => `${n}（${KARMIC_DEBT_MEANINGS[n]}）`)
+        .join(" ");
       karmicSummaryEl.textContent = `カルミックデット・ナンバーが見られます：${notes}`;
       karmicSummaryEl.classList.remove("hidden");
     } else {
+      groupKarmicWrapEl.classList.add("hidden");
       karmicSummaryEl.classList.add("hidden");
     }
 
@@ -2163,9 +2234,18 @@
             {
               h3: "カルミックデット・ナンバー（13・14・16・19）",
               blocks: [
-                ["f", "ライフパスナンバー・デスティニーナンバーの「還元する前の合計値」が 13・14・16・19 のいずれかと一致したときに検出"],
-                ["f", "この例：ライフパスの合計値 29／デスティニーの合計値 36\n→ どちらも該当しないため、表示なし"],
-                ["n", "還元後の値ではなく、還元する前の合計値で判定します。"],
+                ["p", "コアナンバーと呼ばれる5つの数字について、「還元する前の合計値」が 13・14・16・19 のいずれかと一致したときに検出します。"],
+                ["t", ["判定するナンバー", "何を見るか"], [
+                  ["ライフパスナンバー", "生年月日の全桁の合計"],
+                  ["デスティニーナンバー", "名前の全文字の合計"],
+                  ["ソウルナンバー", "名前の母音の合計"],
+                  ["パーソナリティナンバー", "名前の子音の合計"],
+                  ["バースデーナンバー", "生まれた日そのもの"],
+                ]],
+                ["p", "バースデーナンバーだけは合計ではなく、生まれた日そのもので判定します。13日・14日・16日・19日生まれが該当します。"],
+                ["f", "この例：ライフパス 29／デスティニー 36／ソウル 10／パーソナリティ 26／生まれた日 23\n→ どれも該当しないため、表示なし"],
+                ["n", "還元後の値ではなく、還元する前の合計値で判定します。該当があったときは、結果の中に「カルミックデット・ナンバー」のグループが現れ、どのナンバーに出ているかがカードのラベルに表示されます。"],
+                ["n", "成熟数とパーソナルイヤー系は判定対象に含めていません。成熟数はすでに還元済みの数字どうしの和であって桁の合計ではないため、パーソナルイヤー系は毎日変わってしまい、生涯のテーマを表すこの数字の性質と合わないためです。"],
               ],
             },
           ],
@@ -2293,7 +2373,15 @@
               h3: "共通の考え方",
               blocks: [
                 ["p", "還元する前の合計値がこの4つのいずれかだったときに現れる数字です。「前世の借り」と説明されることが多いものですが、罰や不運を意味するものではなく、その分野を経験を通して学んでいく、という読み方をされます。"],
+                ["p", "この電卓では、ライフパス・デスティニー・ソウル・パーソナリティ・バースデーの5つ（コアナンバー）を判定対象にしています。該当があると、結果の中に専用のグループが現れます。"],
                 ["n", "この電卓では、断定的な吉凶の判断は行いません。出ていること自体を悪い知らせとして伝えないよう気をつけてください。"],
+              ],
+            },
+            {
+              h3: "どのナンバーに出ているかで読み方が変わる",
+              blocks: [
+                ["p", "同じ16でも、出どころによって読み方が変わります。結果のカードには出どころのラベルが付いているので、まずそこを確認してください。"],
+                ["p", "ライフパスに出ていれば人生全体を通じたテーマとして、デスティニーなら社会での役割の中で、ソウルなら本人の内側の欲求として、パーソナリティなら周囲との関わり方の中で表れやすい、という読み分けをします。バースデーに出ている場合は、生まれ持った資質の使い方にその色が出る、と読まれます。"],
               ],
             },
             {
