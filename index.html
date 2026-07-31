@@ -1082,8 +1082,11 @@
     gap: 16px;
   }
 
+  /* fieldset はブラウザ既定で min-width:min-content が効いており、これを外さないと
+     中の入力欄の最小幅の合計まで横に広がって画面外へはみ出す（スマホ幅で顕著）。 */
   .compat-person {
     margin: 0;
+    min-width: 0;
     padding: 14px;
     border: 1px solid var(--card-border);
     border-radius: 14px;
@@ -1100,10 +1103,17 @@
     color: var(--gold);
   }
 
+  /* グリッド項目の既定 min-width:auto（＝min-content）も同様に縮小を止めるため、
+     トラックを minmax(0,1fr) にして入力欄が列幅に収まるようにする。 */
   .compat-names {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     gap: 10px;
+  }
+
+  .compat-names .field,
+  .compat-names input {
+    min-width: 0;
   }
 
   #compat-btn {
@@ -4329,28 +4339,47 @@
     activeNameInput.focus();
   });
 
-  romajiCloseBtn.addEventListener("click", () => {
-    romajiTablePanel.classList.add("hidden");
-    romajiToggleBtn.textContent = "ヘボン式ローマ字表を見ながら入力する";
-    clearPendingSokuon();
-  });
+  // ローマ字表そのものが入力面なので、開いているあいだは端末のソフトキーボードを
+  // 出さない。スマホでは画面下半分をキーボードが占有し、名前欄の下に置いてある
+  // この表を丸ごと隠してしまうため、表を出しても打てないという状態になっていた。
+  // inputmode="none" はフォーカス・キャレットを保ったままキーボードだけを抑制する。
+  // insertRomaji() が毎回 focus() を呼ぶので、これが無いとタップのたびに
+  // キーボードが復帰して表が隠れ直す。
+  function setRomajiTableOpen(open) {
+    romajiTablePanel.classList.toggle("hidden", !open);
+    romajiToggleBtn.textContent = open
+      ? "ローマ字表を閉じる"
+      : "ヘボン式ローマ字表を見ながら入力する";
+    [lastNameInput, firstNameInput].forEach((el) => {
+      if (open) el.setAttribute("inputmode", "none");
+      else el.removeAttribute("inputmode");
+    });
+    if (!open) {
+      clearPendingSokuon();
+      return;
+    }
+    // 開く時点で名前欄にフォーカスが残っていると、既に出ているキーボードは
+    // inputmode を変えただけでは引っ込まない。いったん外して閉じさせる
+    // （以後のタップ入力は insertRomaji 側で focus し直される）。
+    const focused = document.activeElement;
+    if (focused === lastNameInput || focused === firstNameInput) focused.blur();
+    // 表は名前欄より下にあるため、開いた直後に画面内へ送っておく。
+    requestAnimationFrame(() => {
+      romajiTablePanel.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    });
+  }
+
+  romajiCloseBtn.addEventListener("click", () => setRomajiTableOpen(false));
 
   romajiToggleBtn.addEventListener("click", () => {
-    const isHidden = romajiTablePanel.classList.toggle("hidden");
-    romajiToggleBtn.textContent = isHidden
-      ? "ヘボン式ローマ字表を見ながら入力する"
-      : "ローマ字表を閉じる";
-    if (isHidden) clearPendingSokuon();
+    setRomajiTableOpen(romajiTablePanel.classList.contains("hidden"));
   });
 
   // 文章で例を並べる代わりに、実際にタップされる様子を1回再生して見せる
   // お試しボタン。「おおの→ono」で長音の省略を体感してもらうことで、他の
   // 名前でも同じ仕組みが働くことが（大野さん限定の説明ではなく）伝わる。
   romajiDemoBtn.addEventListener("click", () => {
-    if (romajiTablePanel.classList.contains("hidden")) {
-      romajiTablePanel.classList.remove("hidden");
-      romajiToggleBtn.textContent = "ローマ字表を閉じる";
-    }
+    if (romajiTablePanel.classList.contains("hidden")) setRomajiTableOpen(true);
     activeNameInput.value = "";
     romajiDemoBtn.disabled = true;
     const demoKana = ["お", "お", "の"];
