@@ -1,0 +1,11 @@
+# 改行コードはリポジトリ側を LF に統一する。
+# これが無いと Windows の autocrlf=true によって作業コピーが CRLF になり、
+# 中身が同じでも「全行が変更された」と表示されて差分が読めなくなる。
+* text=auto eol=lf
+
+# バイナリは変換対象から外す（壊れるため）。
+*.png binary
+*.pdf binary
+*.ico binary
+*.jpg binary
+*.jpeg binary
