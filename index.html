@@ -1683,6 +1683,7 @@
   // 自動変換は長音として1文字にまとめるため、松浦は MATSURA、井上は INOE に
   // なる。綴りが変われば出る数字も変わるので、疑わしいときはこれを出す。
   const BOUNDARY_WARNING = "同じ母音が続いたので、長音として1文字にまとめました。漢字の切れ目にあたる名字（松浦＝MATSUURA、福浦＝FUKUURA など）はこの綴りでは足りません。当てはまる場合は「ローマ字を手入力する」をオンにして直してください。";
+  const MANUAL_MODE_NOTICE = "手入力モードです。カナを入れても自動でローマ字に変換されません。自動変換に戻すには、上の「ローマ字を手入力する」をオフにしてください。";
   let nameInputMode = "kana";
   const romajiToggleBtn = document.getElementById("romaji-table-toggle");
   const romajiTablePanel = document.getElementById("romaji-table");
@@ -4197,9 +4198,15 @@
       nameWarningEl.classList.remove("hidden");
       return;
     }
-    // 手入力モードでは綴りを本人が決めているので、切れ目の注意は出さない。
-    const suspect = nameInputMode === "kana"
-      && (boundarySuspectByInput.get(lastNameInput) || boundarySuspectByInput.get(firstNameInput));
+    // 手入力モードはタブを閉じるまで残る。切り替えたことを忘れたまま
+    // カナを打つと「変換が壊れた」と受け取られるので、オンの間は理由を出す。
+    if (nameInputMode === "manual") {
+      nameWarningEl.textContent = MANUAL_MODE_NOTICE;
+      nameWarningEl.classList.remove("hidden");
+      return;
+    }
+    const suspect = boundarySuspectByInput.get(lastNameInput)
+      || boundarySuspectByInput.get(firstNameInput);
     if (suspect) {
       nameWarningEl.textContent = BOUNDARY_WARNING;
       nameWarningEl.classList.remove("hidden");
