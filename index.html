@@ -1574,15 +1574,22 @@
   // before the listener below is registered, the "扉を開く" button silently
   // stops responding — so both accesses are guarded and never allowed to
   // interrupt setup.
+  const KNOWN_ROLES = ["admin", "subscriber", "note", "trial", "guest", "buyer"];
+
+  // localStorage を先に見る。sessionStorage はタブ（ホーム画面から開いた場合は
+  // アプリ）を閉じると消えるため、購入者が開くたびにコードを求められていた。
+  // sessionStorage 側も読み続けるのは、以前のタブが開いたままでも解錠を保つため。
+  // "guest"／"buyer" は旧称。読み取り側だけ受け付ける。
   function getRememberedRole() {
-    try {
-      const role = sessionStorage.getItem(SESSION_KEY);
-      // "guest"／"buyer" は旧称。呼び方を変える前に解錠したタブが開いたままでも
-      // ロックし直さずに済むよう、読み取り側だけ受け付ける。
-      return ["admin", "subscriber", "note", "trial", "guest", "buyer"].includes(role) ? role : null;
-    } catch (err) {
-      return null;
+    for (const store of ["localStorage", "sessionStorage"]) {
+      try {
+        const role = window[store].getItem(SESSION_KEY);
+        if (KNOWN_ROLES.includes(role)) return role;
+      } catch (err) {
+        // Ignore: 次の保存先を試す。どちらも読めなければ扉から入り直すだけ。
+      }
     }
+    return null;
   }
 
   // 扉へ戻す。入力済みの生年月日・氏名はそのまま残し、コードだけを入れ直せる
@@ -1590,10 +1597,13 @@
   // 体験モードで伏せたカードは値そのものを消してあるため、解錠し直したあとに
   // 「計算する」を押してもらう必要がある。結果は一度たたんでおく。
   function relock() {
-    try {
-      sessionStorage.removeItem(SESSION_KEY);
-    } catch (err) {
-      // Ignore: hiding the app and showing the gate still works without storage.
+    // 両方消さないと、扉に戻したつもりで次回また解錠されてしまう。
+    for (const store of ["localStorage", "sessionStorage"]) {
+      try {
+        window[store].removeItem(SESSION_KEY);
+      } catch (err) {
+        // Ignore: hiding the app and showing the gate still works without storage.
+      }
     }
     currentRole = null;
     resultsEl.classList.add("hidden");
@@ -1604,11 +1614,15 @@
     passcodeInput.focus();
   }
 
+  // 端末に残す。ホーム画面に追加した購入者が、開くたびにコードを打たずに済む。
+  // 解錠を手放したいときは「コードを入れ直す」で両方消える。
   function rememberRole(role) {
-    try {
-      sessionStorage.setItem(SESSION_KEY, role);
-    } catch (err) {
-      // Ignore: unlocking for this page load still works without storage.
+    for (const store of ["localStorage", "sessionStorage"]) {
+      try {
+        window[store].setItem(SESSION_KEY, role);
+      } catch (err) {
+        // Ignore: unlocking for this page load still works without storage.
+      }
     }
   }
 
