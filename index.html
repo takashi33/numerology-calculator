@@ -652,7 +652,8 @@
     text-align: center;
   }
 
-  #admin-qr-btn {
+  #admin-qr-btn,
+  #relock-btn {
     display: block;
     margin: 18px auto 0;
     padding: 8px 12px;
@@ -668,7 +669,19 @@
     display: none;
   }
 
-  #admin-qr-btn:hover {
+  /* 扉へ戻るボタンは画面の最初に置くので、下部ボタンの余白は要らない。 */
+  .app-topbar {
+    display: flex;
+    justify-content: flex-end;
+    margin: 0 0 4px;
+  }
+
+  #relock-btn {
+    margin: 0;
+  }
+
+  #admin-qr-btn:hover,
+  #relock-btn:hover {
     color: var(--ink-soft);
     border-color: var(--gold);
   }
@@ -1321,6 +1334,13 @@
 </div>
 
 <div id="app" class="hidden">
+  <!-- 体験モードで解錠したタブは、再読み込みしても体験モードのまま開く
+       （役割が sessionStorage に残るため）。記事を買って購入者用コードを
+       受け取った人が、コードを入れる場所を見つけられなくなるので、扉へ
+       戻る道を最初に目に入る位置へ置く。 -->
+  <div class="app-topbar">
+    <button id="relock-btn" type="button">コードを入れ直す</button>
+  </div>
   <h1>数秘電卓<span class="subtitle">Numerology Calculator</span></h1>
   <p class="lead">生年月日と名前（カナ）から、現代数秘術のさまざまな数字を計算します。</p>
 
@@ -1565,6 +1585,25 @@
     }
   }
 
+  // 扉へ戻す。入力済みの生年月日・氏名はそのまま残し、コードだけを入れ直せる
+  // ようにする（体験のあとに購入者用コードへ切り替える人が、打ち直さずに済む）。
+  // 体験モードで伏せたカードは値そのものを消してあるため、解錠し直したあとに
+  // 「計算する」を押してもらう必要がある。結果は一度たたんでおく。
+  function relock() {
+    try {
+      sessionStorage.removeItem(SESSION_KEY);
+    } catch (err) {
+      // Ignore: hiding the app and showing the gate still works without storage.
+    }
+    currentRole = null;
+    resultsEl.classList.add("hidden");
+    appEl.classList.add("hidden");
+    gateEl.classList.remove("hidden");
+    gateError.textContent = "";
+    passcodeInput.value = "";
+    passcodeInput.focus();
+  }
+
   function rememberRole(role) {
     try {
       sessionStorage.setItem(SESSION_KEY, role);
@@ -1640,6 +1679,10 @@
       error: "名前にかな・漢字が残っています。手入力では自動変換されないため、ローマ字に直してから計算してください。",
     },
   };
+  // 漢字の切れ目をまたぐ母音の重なりは、かなだけでは長音と区別できない。
+  // 自動変換は長音として1文字にまとめるため、松浦は MATSURA、井上は INOE に
+  // なる。綴りが変われば出る数字も変わるので、疑わしいときはこれを出す。
+  const BOUNDARY_WARNING = "同じ母音が続いたので、長音として1文字にまとめました。漢字の切れ目にあたる名字（松浦＝MATSUURA、福浦＝FUKUURA など）はこの綴りでは足りません。当てはまる場合は「ローマ字を手入力する」をオンにして直してください。";
   let nameInputMode = "kana";
   const romajiToggleBtn = document.getElementById("romaji-table-toggle");
   const romajiTablePanel = document.getElementById("romaji-table");
@@ -3925,6 +3968,8 @@
     qrModal.classList.remove("hidden");
   });
 
+  document.getElementById("relock-btn").addEventListener("click", relock);
+
   qrModalClose.addEventListener("click", () => {
     qrModal.classList.add("hidden");
   });
@@ -4038,11 +4083,18 @@
   // タップ表（handleKanaKeyClick）と同じルールを、1文字ずつのクリックではなく
   // 文字列全体に対して適用する版。すでにローマ字化済みの部分（a-z等）はどの
   // キーにも一致しないため、そのまま素通りする。
+  // 直前の変換で「切れ目かもしれない省略」が起きたか。呼び出し側は変換の
+  // 直後に読む（入力欄の値は変換後のローマ字になり、かなが消えてしまうため、
+  // 後から判定し直すことはできない）。
+  let lastConversionBoundarySuspect = false;
+  const boundarySuspectByInput = new WeakMap();
+
   function convertKanaToRomaji(input) {
     const src = katakanaToHiragana(input);
     let out = "";
     let i = 0;
     let pendingSokuonLocal = false;
+    lastConversionBoundarySuspect = false;
     while (i < src.length) {
       const ch = src[i];
       if (ch === "っ") {
@@ -4087,6 +4139,38 @@
       if (!isTrailingLongO
           && VOWELS.has(romaji)
           && (romaji === lastChar || (romaji === "u" && lastChar === "o"))) {
+        // 省略した母音が、長音ではなく漢字の切れ目だったという場合がある
+        // （松浦＝まつ＋うら、井上＝い＋の＋うえ）。かなだけを見ても切れ目は
+        // 見えないので自動では直せないが、疑わしい並びのときは印を立てて
+        // 本人に知らせ、手入力へ誘導する。文字数が変われば出る数字も変わる。
+        //   ・u が続けて並ぶ … まつうら／ふくうら
+        //     ただし「ゆう（ゅう）」は長音として普通に出てくるので外す
+        //     （ゆうこ＝YUKO、きゅうた＝KYUTA は鳴らさない）
+        //   ・o の次の u の後ろが、さらに母音 … いのうえ
+        //     後ろに何も無いときは語末の長音なので外す（さとう＝SATO）
+        const prevKana = src[i - 1] || "";
+        const nextKana = src[i + consumed] || "";
+        const doubledU = romaji === "u" && lastChar === "u"
+          && prevKana !== "ゆ" && prevKana !== "ゅ";
+        const uBeforeVowel = romaji === "u" && lastChar === "o"
+          && nextKana !== "" && "あいうえお".includes(nextKana);
+        //   ・「おお」の後ろに続く u … おおうら（大浦）／おおうち（大内）
+        //     「お段＋う」の長音がここに重なることはまず無い
+        const uAfterLongO = romaji === "u" && lastChar === "o" && prevKana === "お";
+        // 「お」の側の2つは、切れ目だと判定できたらその場で直せる。省略を
+        // やめれば井上＝INOUE、大浦＝OURA、大内＝OUCHI と正しく綴れる。
+        // 直った以上、本人に知らせることは無いので警告は立てない。
+        if (uBeforeVowel || uAfterLongO) {
+          out += romaji;
+          i += consumed;
+          continue;
+        }
+        // doubledU は直せない。「まつうら＝MATSUURA（切れ目）」と
+        // 「ふうか＝FUKA（長音）」がかなの上で同じ形になり、直すと今度は
+        // 後者が壊れる。省略はそのままにして、本人に確かめてもらう。
+        if (doubledU) {
+          lastConversionBoundarySuspect = true;
+        }
         i += consumed;
         continue;
       }
@@ -4108,7 +4192,32 @@
   function checkNameWarning() {
     const pattern = /[぀-ヿ一-鿿]/;
     const hasUnconverted = pattern.test(lastNameInput.value) || pattern.test(firstNameInput.value);
-    nameWarningEl.classList.toggle("hidden", !hasUnconverted);
+    if (hasUnconverted) {
+      nameWarningEl.textContent = NAME_MODE_TEXT[nameInputMode].warning;
+      nameWarningEl.classList.remove("hidden");
+      return;
+    }
+    // 手入力モードでは綴りを本人が決めているので、切れ目の注意は出さない。
+    const suspect = nameInputMode === "kana"
+      && (boundarySuspectByInput.get(lastNameInput) || boundarySuspectByInput.get(firstNameInput));
+    if (suspect) {
+      nameWarningEl.textContent = BOUNDARY_WARNING;
+      nameWarningEl.classList.remove("hidden");
+      return;
+    }
+    nameWarningEl.classList.add("hidden");
+  }
+
+  // 変換の直後にだけ呼ぶ。かなが無い入力（すでにローマ字）で上書きすると、
+  // 一度出した注意書きが次の打鍵で消えてしまうため、そのときは触らない。
+  function recordBoundarySuspect(inputEl, kanaBefore) {
+    if (!inputEl.value) {
+      boundarySuspectByInput.delete(inputEl);
+      return;
+    }
+    if (/[぀-ヿ]/.test(kanaBefore)) {
+      boundarySuspectByInput.set(inputEl, lastConversionBoundarySuspect);
+    }
   }
 
   // かな入力の途中（拗音・ヴ行の2文字目や、モバイル特有の「小さい文字」への
@@ -4127,6 +4236,7 @@
     }
     const before = inputEl.value;
     const converted = convertKanaToRomaji(before);
+    recordBoundarySuspect(inputEl, before);
     inputEl.classList.remove("romaji-pending");
     if (converted !== before) {
       inputEl.value = converted;
@@ -4191,8 +4301,10 @@
     [lastNameInput, firstNameInput].forEach((el) => {
       clearTimeout(autoConvertTimers.get(el));
       el.classList.remove("romaji-pending");
-      const converted = convertKanaToRomaji(el.value);
-      if (converted !== el.value) el.value = converted;
+      const before = el.value;
+      const converted = convertKanaToRomaji(before);
+      recordBoundarySuspect(el, before);
+      if (converted !== before) el.value = converted;
     });
     checkNameWarning();
 
