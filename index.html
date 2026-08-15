@@ -1543,6 +1543,14 @@
   const ADMIN_PASSCODE = "523451";
   const NOTE_PASSCODE = "421589";
   const TRIAL_PASSCODE = "649096";
+  // 無料体験用（2026-08-15 追加）。できることは体験モードと同じで、
+  // 記事の中身にあたる資料メニューの解説2本と相性診断は開かない。
+  // 【note用と分けている理由】記事を買った方と同じコードを配ると、
+  // 無料体験だけを止めたいときに購入者まで巻き込むことになる。
+  // 【止め方】この配列を空にして公開し直す（他のコードは影響を受けない）。
+  const FREE_TRIAL_PASSCODES = [
+    "730627", // 2026-08-15 発行・3名へ配布
+  ];
   const SESSION_KEY = "numerology-gate-role";
   let currentRole = null;
 
@@ -1626,9 +1634,37 @@
     }
   }
 
+  // QRコードから開いたときは、コード入力を挟まずそのまま解錠する（2026-08-15 追加）。
+  // 読み取った人に6桁を打たせないためのもので、強固な保護ではない
+  // （コードは配布カードにも書いてあり、そもそも扉自体がブラウザ側の関所）。
+  // 止めるときは FREE_TRIAL_PASSCODES を空にすれば、このURLも通らなくなる。
+  function unlockFromUrl() {
+    let code = null;
+    try {
+      code = new URLSearchParams(window.location.search).get("t");
+    } catch (err) {
+      return false; // 読めない環境なら、扉からコードを入れてもらう
+    }
+    if (!code || !FREE_TRIAL_PASSCODES.includes(code)) return false;
+    rememberRole("trial");
+    unlock("trial");
+    // アドレス欄からコードを消す。画面を人に見せたり、URLをそのまま
+    // 共有したりしたときに、コードが一緒に渡らないようにするため。
+    try {
+      window.history.replaceState(null, "", window.location.pathname);
+    } catch (err) {
+      // Ignore: 消せなくても解錠は済んでいる。
+    }
+    return true;
+  }
+
+  // 端末の記憶を先に見る。すでにnote購入者などで解錠している人が体験用のQRを
+  // 読んでも、体験モードに引き下げないため。
   const rememberedRole = getRememberedRole();
   if (rememberedRole) {
     unlock(rememberedRole);
+  } else {
+    unlockFromUrl();
   }
 
   gateForm.addEventListener("submit", (e) => {
@@ -1641,6 +1677,8 @@
     } else if (passcodeInput.value === NOTE_PASSCODE) {
       role = "note";
     } else if (passcodeInput.value === TRIAL_PASSCODE) {
+      role = "trial";
+    } else if (FREE_TRIAL_PASSCODES.includes(passcodeInput.value)) {
       role = "trial";
     }
 
