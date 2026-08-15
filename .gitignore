@@ -1,0 +1,8 @@
+# このリポジトリは公開されている。アプリ本体だけを置く。
+# 企画・仕様・画面設計・テスト報告などの設計文書は、非公開リポジトリ側で管理する。
+#   → game/docs/numerology-calculator/
+# 価格の内訳・原価・販売方針が含まれるため、ここに戻さないこと。
+planning.md
+spec.md
+screen-design.md
+qa-report.md
