@@ -785,6 +785,55 @@
     line-height: 1.75;
     opacity: .85;
   }
+  /* 体験の人に、まだ見られていないもの（全機能）と毎朝のお便りを案内する。
+     上の .trial-notice はあえて控えめにしてあるが、こちらは結果を読み終えた
+     最後に置くので、見落とされないよう実線の金枠でしっかり出す。 */
+  .upgrade-panel {
+    margin: 2.25rem 0 .5rem;
+    padding: 1.4rem 1.25rem;
+    border: 1px solid var(--card-border);
+    border-radius: 14px;
+    background: var(--card);
+  }
+  .upgrade-panel h2 {
+    margin: 0 0 .6rem;
+    font-family: var(--font-display);
+    font-size: 1.08rem;
+    color: var(--gold);
+  }
+  .upgrade-panel > p {
+    margin: 0 0 .9rem;
+    font-size: .93rem;
+    line-height: 1.8;
+    color: var(--ink-soft);
+  }
+  .upgrade-panel ul {
+    margin: 0;
+    padding-left: 1.15rem;
+    font-size: .92rem;
+    line-height: 1.95;
+    color: var(--ink-soft);
+  }
+  .upgrade-panel li strong {
+    color: var(--ink);
+  }
+  .upgrade-coming {
+    margin-top: 1.35rem;
+    padding-top: 1.2rem;
+    border-top: 1px solid rgba(244, 217, 139, 0.18);
+  }
+  .upgrade-coming h3 {
+    margin: 0 0 .5rem;
+    font-family: var(--font-display);
+    font-size: 1rem;
+    color: var(--gold-deep);
+  }
+  .upgrade-coming p {
+    margin: 0;
+    font-size: .9rem;
+    line-height: 1.85;
+    color: var(--ink-soft);
+  }
   .qr-modal-code-value {
     font-family: var(--font-body);
     font-size: 24px;
@@ -1436,6 +1485,27 @@
       <h2>ステージ別のチャンス</h2>
       <div class="card-grid" id="group-pinnacle-detail"></div>
     </section>
+
+    <!-- 体験・無料体験の人にだけ出す案内（2026-08-15 追加）。
+         何がまだ見られていないか（全機能の中身）と、毎朝のお便りの予告。
+         画面設計「6. 有料への入口」に対応する位置＝結果を読み終えた直後。
+         ⚠️ data-tier="paid" を付けないこと。付けると lockPaidGroupsForTrial()
+         の対象になり、体験モードで中身を消される。 -->
+    <section id="upgrade-panel" class="upgrade-panel hidden">
+      <h2>お試しでご覧いただけるのは、ここまでです</h2>
+      <p>すべてお使いいただけるようになると、次のものが開きます。</p>
+      <ul>
+        <li><strong>17種類すべての数字</strong>　🔒の付いたカードが開きます</li>
+        <li><strong>各ナンバーの算出方法</strong>　その数字をどう計算しているかの解説</li>
+        <li><strong>各ナンバーの深堀解説</strong>　1〜9とマスターナンバーそれぞれの読み方</li>
+        <li><strong>相性診断</strong>　お二人の数字を並べて、役割の違いを読みます</li>
+      </ul>
+      <div class="upgrade-coming">
+        <h3>まもなく、毎朝のお便りが始まります</h3>
+        <p>その日のあなたの数字に合わせた短い文章を、毎朝7時にお届けする月ぎめのお便りを準備しています。<br>
+        まだお申し込みはできません。はじまりましたら、あらためてご案内いたします。</p>
+      </div>
+    </section>
   </div>
 
   <p class="footnote">※ 数秘術には複数の計算方法・流派があり、本アプリは一般的な現代数秘術の一例を採用しています。占いの結果は断定的なものではなく、参考としてお楽しみください。</p>
@@ -1757,6 +1827,7 @@
   const groupCombinedWrapEl = document.getElementById("group-combined-wrap");
   const groupCombinedEl = document.getElementById("group-combined");
   const karmicSummaryEl = document.getElementById("karmic-summary");
+  const upgradePanelEl = document.getElementById("upgrade-panel");
   const groupKarmicWrapEl = document.getElementById("group-karmic-wrap");
   const groupKarmicEl = document.getElementById("group-karmic");
 
@@ -2518,6 +2589,9 @@
     }
 
     if (currentRole === "trial") lockPaidGroupsForTrial();
+    // 体験の人にだけ、まだ見られていないもの（全機能）と毎朝のお便りを案内する。
+    // 購入者・管理者には出さない（すでに全部使えるため）。
+    upgradePanelEl.classList.toggle("hidden", currentRole !== "trial");
     resultsEl.classList.remove("hidden");
     stretchLonelyCards();
   });
