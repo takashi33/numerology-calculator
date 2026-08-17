@@ -162,8 +162,10 @@
 (function () {
   "use strict";
 
-  // 公開鍵。これは公開してよいもの（送る側の秘密鍵は手元にある）。
-  var VAPID_PUBLIC_KEY = "BJqwM6J9Y4RfaCJ4pllO72z9xpi9dG4u9z2zz7E8i8LmHAVbmIOtHep_QQuh-qsllgOg6ktkK3SZ4qsejyva--I";
+  // 公開鍵。これは公開してよいもの（対になる秘密鍵は GitHub Secrets にある）。
+  // 2026-08-17 に作り直した。前の鍵は秘密鍵を紛失したため使えない。
+  // 🚨 鍵を変えると既存の購読はすべて無効になる。変えたら登録し直してもらうこと。
+  var VAPID_PUBLIC_KEY = "BB9S3DceY4YVRxbU7IZG6D1j-CqeAwC2L6IaxLwReWHrui1Xy9Zpq3X0x3cddXmygGJFjt74fUhAHGIwioB-dxc";
 
   var statusEl   = document.getElementById("status");
   var btn        = document.getElementById("subscribe-btn");
