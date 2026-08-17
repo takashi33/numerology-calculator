@@ -190,6 +190,18 @@
     return out;
   }
 
+  // 既存の登録が、いまの公開鍵で作られたものかを確かめる。
+  // applicationServerKey は ArrayBuffer で返るため、バイト列で比べる。
+  function sameKey(stored, current) {
+    if (!stored) return false;
+    var a = new Uint8Array(stored);
+    if (a.length !== current.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (a[i] !== current[i]) return false;
+    }
+    return true;
+  }
+
   var isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
   var isStandalone =
     window.navigator.standalone === true ||
@@ -227,11 +239,21 @@
         return;
       }
 
+      var appKey = urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
+
+      // 🚨 既存の登録は、鍵を作り直しても自動では更新されない。
+      //    getSubscription() は古い鍵に紐づいたものをそのまま返すため、
+      //    そのまま使うと送信時に VapidPkHashMismatch(400) で弾かれる。
+      //    利用者側の操作では直せないので、ここで鍵を照合して作り直す。
       var sub = await reg.pushManager.getSubscription();
+      if (sub && !sameKey(sub.options && sub.options.applicationServerKey, appKey)) {
+        await sub.unsubscribe();
+        sub = null;
+      }
       if (!sub) {
         sub = await reg.pushManager.subscribe({
           userVisibleOnly: true,
-          applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+          applicationServerKey: appKey
         });
       }
 
