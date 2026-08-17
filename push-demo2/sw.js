@@ -17,29 +17,46 @@ self.addEventListener("activate", (event) => {
   event.waitUntil(self.clients.claim());
 });
 
+// 🚨 指定は最小限にとどめる。
+//
+// iOS が対応していない項目が混じると showNotification がそこで失敗し、
+// 通知が「1件も出ない」形になる。Apple 側は 201 を返して受理しているのに
+// 端末に何も出ない、という切り分けの難しい状態になる（2026-08-17 に発生）。
+//
+// icon / badge / tag / renotify / data は、いずれも iOS での扱いが確実ではない。
+// まず title と body だけで出し、それが通ってから足していく。
+//
+// ⚠️ 何があっても最低1件は出すこと。iOS は userVisibleOnly での購読を要求して
+//    おり、通知を出さない push を繰り返すと購読を取り消される。
 self.addEventListener("push", (event) => {
-  let payload = {};
-  if (event.data) {
-    try {
-      payload = event.data.json();
-    } catch (err) {
-      // JSON でなければ本文そのものとして扱う
-      payload = { body: event.data.text() };
-    }
-  }
+  event.waitUntil(
+    (async () => {
+      let title = "毎朝のお便り";
+      let body = "おはようございます。";
 
-  const title = payload.title || "数秘電卓";
-  const options = {
-    body: payload.body || "おはようございます。",
-    icon: "./icon-192.png",
-    badge: "./icon-192.png",
-    // 同じ tag の通知は上書きされる。毎朝1通なので積み上がらないようにする。
-    tag: "morning-message",
-    renotify: true,
-    data: { url: "./" },
-  };
+      try {
+        if (event.data) {
+          const payload = event.data.json();
+          if (payload.title) title = payload.title;
+          if (payload.body) body = payload.body;
+        }
+      } catch (err) {
+        // JSON でなければ本文そのものとして扱う
+        try {
+          if (event.data) body = event.data.text();
+        } catch (err2) {
+          /* 中身が読めなくても、下で必ず何かを出す */
+        }
+      }
 
-  event.waitUntil(self.registration.showNotification(title, options));
+      try {
+        await self.registration.showNotification(title, { body: body });
+      } catch (err) {
+        // ここまで来たら、出せるかたちで出し直す。無音で終わらせない。
+        await self.registration.showNotification("毎朝のお便り");
+      }
+    })()
+  );
 });
 
 self.addEventListener("notificationclick", (event) => {
@@ -52,7 +69,7 @@ self.addEventListener("notificationclick", (event) => {
       });
       // すでに開いていればそれを前に出す。無ければ開く。
       for (const client of all) {
-        if (client.url.includes("/push-demo/") && "focus" in client) {
+        if (client.url.includes("/push-demo2/") && "focus" in client) {
           return client.focus();
         }
       }
