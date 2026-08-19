@@ -1859,6 +1859,10 @@
   const FREE_TRIAL_PASSCODES = [
     "730627", // 2026-08-15 発行・3名へ配布
   ];
+  // 🚨 確認専用ページだけのコード。試作を1名へ渡すために発行した（2026-08-19）。
+  //    公開中のアプリには入れていない。渡す相手を止めるときは、この行を消して
+  //    確認用ページを作り直せばよい。
+  const PREVIEW_PASSCODES = ["482915"];
   const SESSION_KEY = "numerology-gate-role";
   let currentRole = null;
 
@@ -1953,9 +1957,12 @@
     } catch (err) {
       return false; // 読めない環境なら、扉からコードを入れてもらう
     }
-    if (!code || !FREE_TRIAL_PASSCODES.includes(code)) return false;
-    rememberRole("trial");
-    unlock("trial");
+    let urlRole = null;
+    if (code && PREVIEW_PASSCODES.includes(code)) urlRole = "subscriber";
+    else if (code && FREE_TRIAL_PASSCODES.includes(code)) urlRole = "trial";
+    if (!urlRole) return false;
+    rememberRole(urlRole);
+    unlock(urlRole);
     // アドレス欄からコードを消す。画面を人に見せたり、URLをそのまま
     // 共有したりしたときに、コードが一緒に渡らないようにするため。
     try {
@@ -1988,6 +1995,8 @@
       role = "trial";
     } else if (FREE_TRIAL_PASSCODES.includes(passcodeInput.value)) {
       role = "trial";
+    } else if (PREVIEW_PASSCODES.includes(passcodeInput.value)) {
+      role = "subscriber";   // 確認用ページのみ。有料と同じ範囲で試してもらう
     }
 
     if (role) {
