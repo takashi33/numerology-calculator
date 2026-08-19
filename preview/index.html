@@ -1498,10 +1498,25 @@
 
   .record-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
   .record-list li { padding: 11px 13px; background: var(--card); border: 1px solid var(--card-border); border-radius: 10px; }
-  .record-list .r-date { font-size: 11.5px; color: var(--ink-faint); }
-  .record-list .r-word { font-family: var(--font-display); font-size: 13.5px; color: var(--gold-deep); margin-top: 3px; }
-  .record-list .r-choice { font-family: var(--font-display); font-size: 15px; color: var(--gold); margin-top: 4px; }
-  .record-list .r-note { font-size: 12.5px; color: var(--ink-soft); margin-top: 5px; line-height: 1.7; }
+  .record-list .r-date {
+    display: flex; align-items: baseline; justify-content: space-between; gap: 8px;
+    font-size: 11.5px; color: var(--ink-faint);
+  }
+  .record-list .r-num { font-size: 10.5px; white-space: nowrap; }
+  .record-list .r-word {
+    font-family: var(--font-display); font-size: 13.5px; color: var(--gold-deep);
+    margin-top: 5px; line-height: 1.5;
+  }
+  .record-list .r-choice { margin-top: 8px; }
+  .record-list .r-choice span {
+    display: inline-block; padding: 4px 11px;
+    font-size: 12px; font-weight: 700; color: var(--input-ink);
+    background: var(--gold); border-radius: 999px;
+  }
+  .record-list .r-note {
+    font-size: 12.5px; color: var(--ink-soft); margin-top: 8px; line-height: 1.75;
+    padding-top: 8px; border-top: 1px solid rgba(255, 255, 255, 0.07);
+  }
 
   .record-empty {
     padding: 18px 16px; background: var(--card); border: 1px solid var(--card-border);
@@ -4578,7 +4593,13 @@
     const lockNums = sample && isFuture;
     const nrow = document.createElement("div");
     nrow.className = "day-nums";
-    [["今年の数字", nums.year], ["今月の数字", nums.month], ["今日の数字", nums.day]].forEach(([label, v]) => {
+    // 見ている日が今日でないときに「今年・今月・今日」と書くと、どの日の
+    // 数字なのか分からなくなる。今日かどうかで言い方を変える。
+    const isToday = key === recordToday;
+    const numLabels = isToday
+      ? ["今年の数字", "今月の数字", "今日の数字"]
+      : ["その年の数字", "その月の数字", "その日の数字"];
+    [[numLabels[0], nums.year], [numLabels[1], nums.month], [numLabels[2], nums.day]].forEach(([label, v]) => {
       const cellEl = document.createElement("div");
       cellEl.className = "day-num" + (lockNums ? " locked" : "");
       const s = document.createElement("span");
@@ -4609,7 +4630,7 @@
       w.className = "day-word";
       const wl = document.createElement("div");
       wl.className = "w-label";
-      wl.textContent = key === recordToday ? "今日の言葉" : "この日に届いた言葉";
+      wl.textContent = isToday ? "今日の言葉" : "この日に届いた言葉";
       const wh = document.createElement("div");
       wh.className = "w-head";
       wh.textContent = word[0];
@@ -4738,8 +4759,20 @@
       const dt = document.createElement("div");
       dt.className = "r-date";
       const nums = rec.nums || numbersOn(key);
-      dt.textContent = `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日（${DOW[d.getDay()]}）`
-        + (nums ? `　今日の数字 ${nums.day}` : "");
+      // 「今日」「昨日」は日付より先に目に入る言い方にする。年は、今年と違う
+      // ときだけ足す（並んだときに同じ年が延々と続くのを避けるため）。
+      const diff = Math.round((fromYmd(recordToday) - d) / 86400000);
+      const label = diff === 0 ? "今日"
+        : diff === 1 ? "昨日"
+        : (d.getFullYear() !== fromYmd(recordToday).getFullYear() ? `${d.getFullYear()}年` : "")
+          + `${d.getMonth() + 1}月${d.getDate()}日（${DOW[d.getDay()]}）`;
+      dt.textContent = label;
+      if (nums) {
+        const nb = document.createElement("span");
+        nb.className = "r-num";
+        nb.textContent = `その日の数字 ${nums.day}`;
+        dt.appendChild(nb);
+      }
       li.appendChild(dt);
       const word = rec.word || wordOn(key);
       if (word) {
@@ -4748,10 +4781,13 @@
         w.textContent = word[0];
         li.appendChild(w);
       }
+      // 選んだものは、届いた言葉と見分けがつくように囲って出す。
       if (rec.choice) {
         const c = document.createElement("div");
         c.className = "r-choice";
-        c.textContent = rec.choice;
+        const chip = document.createElement("span");
+        chip.textContent = rec.choice;
+        c.appendChild(chip);
         li.appendChild(c);
       }
       if (rec.note) {
