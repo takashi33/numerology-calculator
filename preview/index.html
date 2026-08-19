@@ -1516,6 +1516,13 @@
   }
   .day-choice[aria-pressed="true"] { color: var(--input-ink); background: var(--gold); border-color: var(--gold); }
   .day-note-label { display: block; font-size: 11.5px; color: var(--ink-faint); margin-top: 14px; }
+  /* 保存できたことの合図。書いたまま閉じても消えないと目で分かるようにする。 */
+  .day-saved {
+    margin-left: 8px; font-size: 11px; color: var(--gold-deep);
+    opacity: 0; transition: opacity 0.25s;
+  }
+  .day-saved.is-on { opacity: 1; }
+  @media (prefers-reduced-motion: reduce) { .day-saved { transition: none; } }
   .day-note {
     width: 100%; margin-top: 5px; padding: 9px 10px; box-sizing: border-box;
     font-family: var(--font-body); font-size: 13px; color: var(--input-ink);
@@ -4747,10 +4754,28 @@
     const ta = document.createElement("textarea");
     ta.className = "day-note";
     ta.value = (rec && rec.note) || "";
-    ta.addEventListener("change", () => {
+    const savedMsg = document.createElement("span");
+    savedMsg.className = "day-saved";
+    savedMsg.setAttribute("role", "status");
+    nl.appendChild(savedMsg);
+
+    // 🚨 「保存」ボタンは置かない。押し忘れという新しい失敗が生まれ、日記では
+    //    「書いたのに消えた」が最も起きてはいけないため。代わりに、
+    //    打鍵が止まったら自動で保存し、保存できたことを目で分かるようにする。
+    let savedTimer = null;
+    const showSaved = () => {
+      savedMsg.textContent = sample ? "見本のため残りません" : "保存しました";
+      savedMsg.classList.add("is-on");
+      clearTimeout(savedTimer);
+      savedTimer = setTimeout(() => savedMsg.classList.remove("is-on"), 2200);
+    };
+    const writeNote = () => {
+      clearTimeout(noteTimer);
+      pendingNote = null;
       const text = ta.value.trim();
       const store = sample ? sampleRecords : myRecords;
       const cur = store[key];
+      const unchanged = text === ((cur && cur.note) || "");
       if (!text && (!cur || !cur.choice)) { delete store[key]; }
       else {
         store[key] = Object.assign({}, cur, {
@@ -4762,8 +4787,15 @@
         });
       }
       if (!sample) saveRecords();
-      renderCalendar();
+      renderCalendar();   // ⚠️ renderDaySheet は呼ばない。打っている欄が消えるため
+      if (!unchanged) showSaved();
+    };
+    ta.addEventListener("input", () => {
+      clearTimeout(noteTimer);
+      pendingNote = writeNote;              // 閉じる・離れるときの取りこぼし用
+      noteTimer = setTimeout(writeNote, 700);
     });
+    ta.addEventListener("change", writeNote);   // 欄の外をタップしたとき
     nl.appendChild(ta);
     box.appendChild(nl);
 
@@ -4867,6 +4899,21 @@
 
   // 下から出すパネルの開け閉め。開いている間は裏の画面を動かさない
   // （スマホでパネルの中をスクロールしたとき、裏の月表まで一緒に動くのを防ぐ）。
+  // 書きかけの書き残しを、閉じる・画面を離れる直前に必ず書き込む。
+  // これが無いと、打ったまま × を押した分が消える。
+  let noteTimer = null;
+  let pendingNote = null;
+  function flushNote() {
+    if (!pendingNote) return;
+    const run = pendingNote;
+    pendingNote = null;
+    run();
+  }
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") flushNote();
+  });
+  window.addEventListener("pagehide", flushNote);
+
   let dayScrollY = 0;
   function openDaySheet() {
     renderDaySheet();
@@ -4877,6 +4924,7 @@
     dayCloseBtn.focus();
   }
   function closeDaySheet() {
+    flushNote();   // 打ったまま閉じても消えないようにする
     if (dayMaskEl.classList.contains("hidden")) return;
     dayMaskEl.classList.add("hidden");
     document.body.classList.remove("day-locked");
@@ -4928,6 +4976,7 @@
   });
 
   recordBackBtn.addEventListener("click", () => {
+    flushNote();
     closeDaySheet();
     recordEl.classList.add("hidden");
     appEl.classList.remove("hidden");
