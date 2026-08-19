@@ -1524,27 +1524,23 @@
   }
   .day-msg { margin: 12px 0 0; font-size: 12.5px; line-height: 1.8; color: var(--ink-soft); }
 
-  .record-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
-  .record-list li { padding: 11px 13px; background: var(--card); border: 1px solid var(--card-border); border-radius: 10px; }
-  .record-list .r-date {
-    display: flex; align-items: baseline; justify-content: space-between; gap: 8px;
-    font-size: 11.5px; color: var(--ink-faint);
+  /* 「あなたの過ごし方」。順位は付けない。並び順は選択肢の並びで固定し、
+     一度も選んでいないものは出さない（0が並ぶ画面にしないため）。 */
+  .sum-lead { margin: 0 0 4px; font-size: 13px; line-height: 1.8; color: var(--ink-soft); }
+  .sum-days { margin: 0 0 16px; font-size: 11.5px; color: var(--ink-faint); }
+  .sum-rows { display: flex; flex-direction: column; gap: 9px; }
+  .sum-row { display: grid; grid-template-columns: 1fr 34px; gap: 4px 8px; align-items: center; }
+  .sum-label { font-size: 12.5px; color: var(--ink); }
+  .sum-count { font-size: 12px; color: var(--gold); text-align: right; font-variant-numeric: tabular-nums; }
+  .sum-bar { grid-column: 1 / -1; height: 5px; background: rgba(255, 255, 255, 0.07); border-radius: 999px; overflow: hidden; }
+  .sum-bar span { display: block; height: 100%; background: var(--gold-deep); border-radius: 999px; }
+  .sum-plain { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+  .sum-plain span {
+    display: inline-block; padding: 5px 11px; font-size: 12px;
+    color: var(--ink); background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--card-border); border-radius: 999px;
   }
-  .record-list .r-num { font-size: 10.5px; white-space: nowrap; }
-  .record-list .r-word {
-    font-family: var(--font-display); font-size: 13.5px; color: var(--gold-deep);
-    margin-top: 5px; line-height: 1.5;
-  }
-  .record-list .r-choice { margin-top: 8px; }
-  .record-list .r-choice span {
-    display: inline-block; padding: 4px 11px;
-    font-size: 12px; font-weight: 700; color: var(--input-ink);
-    background: var(--gold); border-radius: 999px;
-  }
-  .record-list .r-note {
-    font-size: 12.5px; color: var(--ink-soft); margin-top: 8px; line-height: 1.75;
-    padding-top: 8px; border-top: 1px solid rgba(255, 255, 255, 0.07);
-  }
+  .sum-later { margin: 20px 0 0; font-size: 11.5px; line-height: 1.8; color: var(--ink-faint); }
 
   .record-empty {
     padding: 18px 16px; background: var(--card); border: 1px solid var(--card-border);
@@ -1785,7 +1781,7 @@
 
   <div class="record-tabs" role="tablist">
     <button type="button" class="record-tab" id="record-tab-cal" role="tab" aria-selected="true">カレンダー</button>
-    <button type="button" class="record-tab" id="record-tab-recent" role="tab" aria-selected="false">最近の記録</button>
+    <button type="button" class="record-tab" id="record-tab-summary" role="tab" aria-selected="false">あなたの過ごし方</button>
   </div>
 
   <div id="record-cal">
@@ -1798,7 +1794,7 @@
     <p class="cal-hint">日付をタップすると、その日の言葉と記録が出ます。</p>
   </div>
 
-  <div id="record-recent" class="hidden"></div>
+  <div id="record-summary" class="hidden"></div>
 
   <!-- 選んだ日の中身は下から出す。表の下に置くと画面の外に出てしまい、
        開いたことに気づけない（推し活カレンダーの #m-day と同じ作り）。 -->
@@ -4469,12 +4465,24 @@
   function buildSampleRecords() {
     const t = ymd(new Date());
     const mk = (choice, note) => ({ choice, note, sample: true });
+    // 「あなたの過ごし方」が集計として意味を持つ量まで入れてある。
+    // 少ないと、有料で何ができるようになるのかが伝わらないため。
+    // 日が飛んでいるのは、記録しなかった日があるという想定（記録は任意）。
     return {
       [addDays(t, -1)]: mk("休んだ・ゆるめた", "午後は家で映画を見た"),
-      [addDays(t, -3)]: mk("人の力になった", ""),
-      [addDays(t, -4)]: mk("決めた・進めた", "先延ばしにしていた連絡をした"),
-      [addDays(t, -8)]: mk("ひとりで考えた", ""),
-      [addDays(t, -13)]: mk("表した・話した", ""),
+      [addDays(t, -2)]: mk("こつこつ取り組んだ", ""),
+      [addDays(t, -4)]: mk("人の力になった", ""),
+      [addDays(t, -5)]: mk("決めた・進めた", "先延ばしにしていた連絡をした"),
+      [addDays(t, -6)]: mk("表した・話した", ""),
+      [addDays(t, -9)]: mk("ひとりで考えた", ""),
+      [addDays(t, -11)]: mk("動いた・変えた", ""),
+      [addDays(t, -12)]: mk("休んだ・ゆるめた", ""),
+      [addDays(t, -14)]: mk("人に合わせた", ""),
+      [addDays(t, -16)]: mk("決めた・進めた", ""),
+      [addDays(t, -18)]: mk("こつこつ取り組んだ", ""),
+      [addDays(t, -19)]: mk("休んだ・ゆるめた", "早めに切り上げて眠った"),
+      [addDays(t, -23)]: mk("ひとりで考えた", ""),
+      [addDays(t, -26)]: mk("人の力になった", ""),
     };
   }
 
@@ -4483,9 +4491,9 @@
   const recordBackBtn = document.getElementById("record-back-btn");
   const recordSampleEl = document.getElementById("record-sample");
   const recordTabCal = document.getElementById("record-tab-cal");
-  const recordTabRecent = document.getElementById("record-tab-recent");
+  const recordTabSummary = document.getElementById("record-tab-summary");
   const recordCalEl = document.getElementById("record-cal");
-  const recordRecentEl = document.getElementById("record-recent");
+  const recordSummaryEl = document.getElementById("record-summary");
   const calLabelEl = document.getElementById("cal-label");
   const calGridEl = document.getElementById("cal-grid");
   const daySheetEl = document.getElementById("day-sheet");
@@ -4766,11 +4774,16 @@
     p.textContent = "見本のため、ここには記録できません。お使いいただけるようになると、選んだ内容がこの端末に残ります。";
   }
 
-  function renderRecent() {
-    const recs = activeRecords();
-    const keys = Object.keys(recs).sort().reverse();
-    recordRecentEl.textContent = "";
+  // 集計を出しはじめる件数。これ未満のときは回数を出さず、選んだものを
+  // 並べるだけにする。少ない数から「傾向」を読ませないため。
+  const SUMMARY_MIN = 10;
 
+  function renderSummary() {
+    const recs = activeRecords();
+    const keys = Object.keys(recs).filter((k) => recs[k].choice);
+    recordSummaryEl.textContent = "";
+
+    // 何も無いときは、件数を出さない。やることを1つだけ示す。
     if (!keys.length) {
       const box = document.createElement("div");
       box.className = "record-empty";
@@ -4784,59 +4797,66 @@
       p.className = "day-msg";
       p.textContent = "「カレンダー」から、先の日付を選んでみてください。その日がご自身にとってどんな日かを、先に見ることができます。";
       box.appendChild(p);
-      recordRecentEl.appendChild(box);
+      recordSummaryEl.appendChild(box);
       return;
     }
 
-    const ul = document.createElement("ul");
-    ul.className = "record-list";
-    keys.slice(0, 60).forEach((key) => {
-      const rec = recs[key];
-      const d = fromYmd(key);
-      const li = document.createElement("li");
-      const dt = document.createElement("div");
-      dt.className = "r-date";
-      const nums = rec.nums || numbersOn(key);
-      // 「今日」「昨日」は日付より先に目に入る言い方にする。年は、今年と違う
-      // ときだけ足す（並んだときに同じ年が延々と続くのを避けるため）。
-      const diff = Math.round((fromYmd(recordToday) - d) / 86400000);
-      const label = diff === 0 ? "今日"
-        : diff === 1 ? "昨日"
-        : (d.getFullYear() !== fromYmd(recordToday).getFullYear() ? `${d.getFullYear()}年` : "")
-          + `${d.getMonth() + 1}月${d.getDate()}日（${DOW[d.getDay()]}）`;
-      dt.textContent = label;
-      if (nums) {
-        const nb = document.createElement("span");
-        nb.className = "r-num";
-        nb.textContent = `その日の数字 ${nums.day}`;
-        dt.appendChild(nb);
-      }
-      li.appendChild(dt);
-      const word = rec.word || wordOn(key);
-      if (word) {
-        const w = document.createElement("div");
-        w.className = "r-word";
-        w.textContent = word[0];
-        li.appendChild(w);
-      }
-      // 選んだものは、届いた言葉と見分けがつくように囲って出す。
-      if (rec.choice) {
-        const c = document.createElement("div");
-        c.className = "r-choice";
-        const chip = document.createElement("span");
-        chip.textContent = rec.choice;
-        c.appendChild(chip);
-        li.appendChild(c);
-      }
-      if (rec.note) {
-        const n = document.createElement("div");
-        n.className = "r-note";
-        n.textContent = rec.note;
-        li.appendChild(n);
-      }
-      ul.appendChild(li);
-    });
-    recordRecentEl.appendChild(ul);
+    const counts = {};
+    keys.forEach((k) => { counts[recs[k].choice] = (counts[recs[k].choice] || 0) + 1; });
+    // 並び順は選択肢の並びで固定する。多い順にすると順位付けになるため。
+    // 一度も選んでいないものは出さない（0が並ぶ画面にしない）。
+    const shown = RECORD_CHOICES.filter((c) => counts[c]);
+
+    const lead = document.createElement("p");
+    lead.className = "sum-lead";
+    lead.textContent = "これまでの記録の中で、こう過ごした日がありました。";
+    recordSummaryEl.appendChild(lead);
+
+    const days = document.createElement("p");
+    days.className = "sum-days";
+    days.textContent = `これまでに ${keys.length}日 記録しました。`;
+    recordSummaryEl.appendChild(days);
+
+    if (keys.length < SUMMARY_MIN) {
+      // まだ少ない。回数を出すと、偶然の揺れを傾向として読ませてしまう。
+      const wrap = document.createElement("div");
+      wrap.className = "sum-plain";
+      shown.forEach((c) => {
+        const s = document.createElement("span");
+        s.textContent = c;
+        wrap.appendChild(s);
+      });
+      recordSummaryEl.appendChild(wrap);
+    } else {
+      const max = Math.max(...shown.map((c) => counts[c]));
+      const rows = document.createElement("div");
+      rows.className = "sum-rows";
+      shown.forEach((c) => {
+        const row = document.createElement("div");
+        row.className = "sum-row";
+        const label = document.createElement("div");
+        label.className = "sum-label";
+        label.textContent = c;
+        const count = document.createElement("div");
+        count.className = "sum-count";
+        count.textContent = `${counts[c]}日`;
+        const bar = document.createElement("div");
+        bar.className = "sum-bar";
+        const fill = document.createElement("span");
+        fill.style.width = `${Math.round((counts[c] / max) * 100)}%`;
+        bar.appendChild(fill);
+        row.appendChild(label);
+        row.appendChild(count);
+        row.appendChild(bar);
+        rows.appendChild(row);
+      });
+      recordSummaryEl.appendChild(rows);
+
+      const later = document.createElement("p");
+      later.className = "sum-later";
+      later.textContent = "記録が重なってくると、数字ごとの見え方も出せるようになります。";
+      recordSummaryEl.appendChild(later);
+    }
   }
 
   // 下から出すパネルの開け閉め。開いている間は裏の画面を動かさない
@@ -4868,15 +4888,15 @@
   function showRecordTab(which) {
     const cal = which === "cal";
     recordTabCal.setAttribute("aria-selected", String(cal));
-    recordTabRecent.setAttribute("aria-selected", String(!cal));
+    recordTabSummary.setAttribute("aria-selected", String(!cal));
     recordCalEl.classList.toggle("hidden", !cal);
-    recordRecentEl.classList.toggle("hidden", cal);
+    recordSummaryEl.classList.toggle("hidden", cal);
     closeDaySheet();
-    if (cal) { renderCalendar(); } else { renderRecent(); }
+    if (cal) { renderCalendar(); } else { renderSummary(); }
   }
 
   recordTabCal.addEventListener("click", () => showRecordTab("cal"));
-  recordTabRecent.addEventListener("click", () => showRecordTab("recent"));
+  recordTabSummary.addEventListener("click", () => showRecordTab("summary"));
 
   document.getElementById("cal-prev").addEventListener("click", () => {
     calView = new Date(calView.getFullYear(), calView.getMonth() - 1, 1);
