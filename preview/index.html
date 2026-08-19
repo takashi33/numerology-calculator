@@ -1457,10 +1457,38 @@
   .cal-cell.sel { background: rgba(244, 217, 139, 0.18); border-color: var(--gold-deep); }
   .cal-mark { width: 5px; height: 5px; border-radius: 50%; background: var(--gold); }
 
-  .day-sheet {
-    margin-top: 16px; padding: 14px 14px 16px;
-    background: var(--card); border: 1px solid var(--card-border); border-radius: 12px;
+  .cal-hint { margin: 12px 0 0; font-size: 11.5px; color: var(--ink-faint); text-align: center; }
+
+  .day-mask {
+    position: fixed; inset: 0; z-index: 40;
+    display: flex; align-items: flex-end; justify-content: center;
+    background: rgba(18, 8, 31, 0.62);
   }
+  /* .hidden と同じ詳細度なので、明示しないと後勝ちで display:flex に戻る。 */
+  .day-mask.hidden { display: none; }
+  .day-panel {
+    position: relative;
+    width: 100%; max-width: 560px; max-height: 88vh; overflow-y: auto;
+    padding: 18px 16px calc(18px + env(safe-area-inset-bottom));
+    background: #1b1039; border: 1px solid var(--card-border);
+    border-radius: 18px 18px 0 0;
+    /* 中を最後までスクロールしたあと、裏の本体まで動き出さないようにする */
+    overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
+  }
+  @media (min-width: 560px) {
+    .day-mask { align-items: center; padding: 20px; }
+    .day-panel { border-radius: 18px; }
+  }
+  .day-close {
+    position: absolute; top: 10px; right: 10px;
+    width: 34px; height: 34px; font-size: 19px; line-height: 1;
+    color: var(--ink-soft); background: rgba(255, 255, 255, 0.07);
+    border: 1px solid var(--card-border); border-radius: 50%; cursor: pointer;
+  }
+  /* パネルを開いている間、裏の画面を動かさない。位置は JS が覚えて元に戻す。 */
+  body.day-locked { position: fixed; width: 100%; overflow: hidden; }
+
+  .day-sheet { padding-right: 34px; }
   .day-sheet h3 { margin: 0 0 12px; font-family: var(--font-display); font-size: 16px; color: var(--gold); font-weight: 400; }
   .day-sheet h3 .day-holi { font-size: 12px; color: #e8a8a8; margin-left: 8px; }
   .day-nums { display: flex; gap: 8px; margin: 0 0 14px; }
@@ -1767,10 +1795,19 @@
       <button type="button" class="cal-move" id="cal-next" aria-label="次の月へ">›</button>
     </div>
     <div class="cal-grid" id="cal-grid"></div>
-    <div id="day-sheet"></div>
+    <p class="cal-hint">日付をタップすると、その日の言葉と記録が出ます。</p>
   </div>
 
   <div id="record-recent" class="hidden"></div>
+
+  <!-- 選んだ日の中身は下から出す。表の下に置くと画面の外に出てしまい、
+       開いたことに気づけない（推し活カレンダーの #m-day と同じ作り）。 -->
+  <div id="day-mask" class="day-mask hidden">
+    <div class="day-panel" role="dialog" aria-modal="true" aria-label="選んだ日の記録">
+      <button type="button" id="day-close" class="day-close" aria-label="閉じる">×</button>
+      <div id="day-sheet"></div>
+    </div>
+  </div>
 
   <p class="record-save-note">いまは、この端末の中だけに保存します。今後の開発の状況によっては、この端末の外に控えを持つ形になる可能性があります。その場合は、事前にお知らせします。</p>
 </div>
@@ -4452,6 +4489,8 @@
   const calLabelEl = document.getElementById("cal-label");
   const calGridEl = document.getElementById("cal-grid");
   const daySheetEl = document.getElementById("day-sheet");
+  const dayMaskEl = document.getElementById("day-mask");
+  const dayCloseBtn = document.getElementById("day-close");
 
   let recordToday = ymd(new Date());
   let calView = fromYmd(recordToday);
@@ -4548,8 +4587,7 @@
         calSelected = key;
         if (d.getMonth() !== mo) calView = new Date(d.getFullYear(), d.getMonth(), 1);
         renderCalendar();
-        renderDaySheet();
-        daySheetEl.scrollIntoView({ block: "nearest" });
+        openDaySheet();
       });
       calGridEl.appendChild(cell);
     }
@@ -4801,13 +4839,40 @@
     recordRecentEl.appendChild(ul);
   }
 
+  // 下から出すパネルの開け閉め。開いている間は裏の画面を動かさない
+  // （スマホでパネルの中をスクロールしたとき、裏の月表まで一緒に動くのを防ぐ）。
+  let dayScrollY = 0;
+  function openDaySheet() {
+    renderDaySheet();
+    dayScrollY = window.scrollY;
+    dayMaskEl.classList.remove("hidden");
+    document.body.classList.add("day-locked");
+    document.body.style.top = `-${dayScrollY}px`;
+    dayCloseBtn.focus();
+  }
+  function closeDaySheet() {
+    if (dayMaskEl.classList.contains("hidden")) return;
+    dayMaskEl.classList.add("hidden");
+    document.body.classList.remove("day-locked");
+    document.body.style.top = "";
+    window.scrollTo(0, dayScrollY);
+  }
+  dayCloseBtn.addEventListener("click", closeDaySheet);
+  dayMaskEl.addEventListener("click", (e) => {
+    if (e.target === dayMaskEl) closeDaySheet();   // 背景をタップしたときだけ閉じる
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeDaySheet();
+  });
+
   function showRecordTab(which) {
     const cal = which === "cal";
     recordTabCal.setAttribute("aria-selected", String(cal));
     recordTabRecent.setAttribute("aria-selected", String(!cal));
     recordCalEl.classList.toggle("hidden", !cal);
     recordRecentEl.classList.toggle("hidden", cal);
-    if (cal) { renderCalendar(); renderDaySheet(); } else { renderRecent(); }
+    closeDaySheet();
+    if (cal) { renderCalendar(); } else { renderRecent(); }
   }
 
   recordTabCal.addEventListener("click", () => showRecordTab("cal"));
@@ -4837,6 +4902,7 @@
   });
 
   recordBackBtn.addEventListener("click", () => {
+    closeDaySheet();
     recordEl.classList.add("hidden");
     appEl.classList.remove("hidden");
     window.scrollTo(0, 0);
