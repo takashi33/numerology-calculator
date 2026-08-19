@@ -1776,7 +1776,8 @@
 
   <div id="record-sample" class="record-sample-banner hidden">
     <strong>これは見本です。あなたの記録ではありません。</strong>
-    お使いいただけるようになると、この画面にご自身の記録がたまっていきます。先の日付の数字も見られます。
+ここに並んでいるのは見本の記録です。ご自身でも押して試せますが、この端末には残りません。<br>
+    お使いいただけるようになると、記録はそのままたまり、先の日付の数字も見られます。
   </div>
 
   <div class="record-tabs" role="tablist">
@@ -4703,24 +4704,25 @@
       b.textContent = choice;
       b.setAttribute("aria-pressed", String(!!rec && rec.choice === choice));
       b.addEventListener("click", () => {
-        if (sample) {
-          renderSampleNotice(box);
-          return;
-        }
-        const cur = myRecords[key];
+        // 見本でも同じように押せるようにする。押しても案内が出るだけでは、
+        // 何が起きる機能なのかが手で分からないため。ただし保存はしない
+        // （見本の記録は画面を離れると作り直され、端末には何も残らない）。
+        const store = sample ? sampleRecords : myRecords;
+        const cur = store[key];
         if (cur && cur.choice === choice) {
           // 押し直しで取り消す。書き残しも無ければ、その日の記録ごと消す。
-          if (cur.note) { delete cur.choice; } else { delete myRecords[key]; }
+          if (cur.note) { delete cur.choice; } else { delete store[key]; }
         } else {
-          myRecords[key] = Object.assign({}, cur, {
+          store[key] = Object.assign({}, cur, {
             choice,
             note: (cur && cur.note) || "",
             at: new Date().toISOString(),   // 記録した時刻。後から遡って取れない
             nums: { year: nums.year, month: nums.month, day: nums.day },
             word: word || null,             // 文章を書き直しても過去は変わらない
+            sample: sample || undefined,
           });
         }
-        saveRecords();
+        if (!sample) saveRecords();
         renderCalendar();
         renderDaySheet();
       });
@@ -4734,25 +4736,32 @@
     const ta = document.createElement("textarea");
     ta.className = "day-note";
     ta.value = (rec && rec.note) || "";
-    ta.readOnly = sample;
     ta.addEventListener("change", () => {
-      if (sample) return;
       const text = ta.value.trim();
-      const cur = myRecords[key];
-      if (!text && (!cur || !cur.choice)) { delete myRecords[key]; }
+      const store = sample ? sampleRecords : myRecords;
+      const cur = store[key];
+      if (!text && (!cur || !cur.choice)) { delete store[key]; }
       else {
-        myRecords[key] = Object.assign({}, cur, {
+        store[key] = Object.assign({}, cur, {
           note: text,
           at: (cur && cur.at) || new Date().toISOString(),
           nums: { year: nums.year, month: nums.month, day: nums.day },
           word: (cur && cur.word) || word || null,
+          sample: sample || undefined,
         });
       }
-      saveRecords();
+      if (!sample) saveRecords();
       renderCalendar();
     });
     nl.appendChild(ta);
     box.appendChild(nl);
+
+    if (sample) {
+      const p = document.createElement("p");
+      p.className = "day-msg";
+      p.textContent = "見本のため、選んだ内容はこの端末に残りません。お使いいただけるようになると、そのまま残ります。";
+      box.appendChild(p);
+    }
 
     if (!recordStoreOK) {
       const p = document.createElement("p");
@@ -4763,20 +4772,6 @@
 
     daySheetEl.appendChild(box);
   }
-
-  function renderSampleNotice(box) {
-    let p = box.querySelector(".day-msg");
-    if (!p) {
-      p = document.createElement("p");
-      p.className = "day-msg";
-      box.appendChild(p);
-    }
-    p.textContent = "見本のため、ここには記録できません。お使いいただけるようになると、選んだ内容がこの端末に残ります。";
-  }
-
-  // 集計を出しはじめる件数。これ未満のときは回数を出さず、選んだものを
-  // 並べるだけにする。少ない数から「傾向」を読ませないため。
-  const SUMMARY_MIN = 10;
 
   function renderSummary() {
     const recs = activeRecords();
