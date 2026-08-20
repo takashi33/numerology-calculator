@@ -1562,6 +1562,22 @@
   }
   .help-panel p { margin: 0; font-size: 13px; line-height: 1.9; color: var(--ink-soft); }
   .help-panel p + p { margin-top: 12px; }
+  .tool-btn {
+    display: block; width: 100%; margin: 14px 0 0; padding: 11px 12px;
+    font-family: var(--font-body); font-size: 13.5px; font-weight: 700;
+    color: var(--gold); background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--card-border); border-radius: 10px; cursor: pointer;
+  }
+  .tool-note { margin: 6px 0 0; font-size: 11.5px; line-height: 1.8; color: var(--ink-faint); }
+  .tool-check {
+    display: flex; align-items: center; gap: 8px; margin: 18px 0 0;
+    font-size: 13px; color: var(--ink-soft); cursor: pointer;
+  }
+  .tool-check input { width: 18px; height: 18px; }
+  /* 推しごとカレンダーから読んだ予定。自分で書いたものと見分けが付くようにする。 */
+  .cal-plans .from-oshi { color: var(--ink-faint); }
+  .plan-readonly { display: flex; align-items: center; gap: 6px; margin-bottom: 5px; font-size: 12.5px; color: var(--ink-faint); }
+  .plan-readonly b { flex: none; width: 44px; font-weight: 400; }
 
   .day-mask {
     position: fixed; inset: 0; z-index: 40;
@@ -1890,6 +1906,7 @@
   <div class="record-title-row">
     <h1 class="library-h1">手帳</h1>
     <button type="button" id="record-help-btn" class="record-help-btn" aria-label="この画面の説明を見る">？</button>
+    <button type="button" id="record-tools-btn" class="record-help-btn" aria-label="控えと持ち出し">⚙</button>
   </div>
 
   <div id="record-sample" class="record-sample-banner hidden">
@@ -1913,6 +1930,26 @@
   </div>
 
   <div id="record-summary" class="hidden"></div>
+
+  <div id="record-tools" class="help-mask hidden">
+    <div class="help-panel" role="dialog" aria-modal="true" aria-labelledby="record-tools-title">
+      <button type="button" id="record-tools-close" class="day-close" aria-label="閉じる">×</button>
+      <h2 id="record-tools-title">控えと持ち出し</h2>
+
+      <button type="button" id="tool-ics" class="tool-btn">📱 いつものカレンダーに送る</button>
+      <p class="tool-note">予定をまとめたファイルを作ります。iPhoneやGoogleのカレンダーに取り込めます。<strong>取り込んだあとにこちらで直しても、向こうには伝わりません。</strong></p>
+
+      <button type="button" id="tool-backup" class="tool-btn">💾 控えを作る</button>
+      <p class="tool-note">予定と記録をまとめて1つのファイルにします。機種を変えるときや、消えてしまったときのために。</p>
+
+      <button type="button" id="tool-restore" class="tool-btn">📥 控えから戻す</button>
+      <input type="file" id="tool-file" accept="application/json,.json" hidden>
+      <p class="tool-note">控えのファイルを選ぶと、<strong>いま入っているものは消さずに</strong>、足りないぶんだけ戻します。</p>
+
+      <label class="tool-check"><input type="checkbox" id="tool-oshi"> 推しごとカレンダーの予定も並べる</label>
+      <p class="tool-note">同じ端末の推しごとカレンダーに入れた予定を、この手帳にも出します。<strong>読むだけで、書き換えません。</strong></p>
+    </div>
+  </div>
 
   <!-- 説明は普段は隠し、「？」を押したときだけ中央に出す。常に出しておくと
        カレンダーの入る高さがその分減るため。 -->
@@ -4777,10 +4814,12 @@
         + (holi ? " holi" : "")
         + (key === recordToday ? " today" : "") + (key === calSelected ? " sel" : "");
       const plans = plansOn(key);
+      // 推しごとカレンダーの予定は読むだけ。自分で書いたものの後ろに並べる。
+      const shownPlans = plans.concat(oshiPlansOn(key).map((o) => ({ t: o.t, s: o.s, oshi: true })));
       // 記録の無い日には何も出さない。「未記録」という言い方はしない。
       cell.setAttribute("aria-label",
         `${d.getMonth() + 1}月${d.getDate()}日${holi ? " " + holi : ""}`
-        + (plans.length ? ` 予定${plans.length}件` : "")
+        + (shownPlans.length ? ` 予定${shownPlans.length}件` : "")
         + (recs[key] ? " 記録あり" : ""));
       const dn = document.createElement("span");
       dn.className = "cal-date";
@@ -4803,19 +4842,20 @@
       }
 
       // 予定はいちばん下。手帳として最もよく見る情報なので、数字より前に出す。
-      if (plans.length) {
+      if (shownPlans.length) {
         cell.classList.add("has-plans");
         const pl = document.createElement("span");
         pl.className = "cal-plans";
-        plans.slice(0, 2).forEach((pn) => {
+        shownPlans.slice(0, 2).forEach((pn) => {
           const line = document.createElement("span");
+          if (pn.oshi) line.className = "from-oshi";
           line.textContent = pn.s;
           pl.appendChild(line);
         });
-        if (plans.length > 2) {
+        if (shownPlans.length > 2) {
           const more = document.createElement("span");
           more.className = "cal-more";
-          more.textContent = "＋" + (plans.length - 2);
+          more.textContent = "＋" + (shownPlans.length - 2);
           pl.appendChild(more);
         }
         cell.appendChild(pl);
@@ -4828,6 +4868,163 @@
       });
       calGridEl.appendChild(cell);
     }
+  }
+
+
+  // ---- 手帳の持ち出し（控え・いつものカレンダー） -------------------------
+  const LF = String.fromCharCode(10);
+  const CRLF = String.fromCharCode(13, 10);
+
+  function saveToFile(name, text, mime) {
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([text], { type: mime }));
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  }
+
+  // 逆斜線・記号・改行は、決まった形に置き換えないと読み込み側で壊れる。
+  const ICS_BS = String.fromCharCode(92);
+  function icsEscape(v) {
+    let out = String(v);
+    out = out.split(ICS_BS).join(ICS_BS + ICS_BS);
+    out = out.split(";").join(ICS_BS + ";");
+    out = out.split(",").join(ICS_BS + ",");
+    out = out.split(String.fromCharCode(13)).join("");
+    out = out.split(LF).join(ICS_BS + "n");
+    return out;
+  }
+  // 1行75オクテットの決まり。数え方は文字数ではなく**バイト数**。
+  // 日本語は1文字3バイトになるため、文字数で数えると折り返しが効かない。
+  function icsFold(line) {
+    const enc = new TextEncoder();
+    if (enc.encode(line).length <= 74) return line;
+    const out = [];
+    let cur = "";
+    for (const ch of line) {
+      if (enc.encode(cur + ch).length > 74) {
+        out.push(cur);
+        cur = " " + ch;   // 続きの行は空白で始める決まり
+      } else {
+        cur += ch;
+      }
+    }
+    if (cur) out.push(cur);
+    return out.join(CRLF);
+  }
+  function icsStamp(d) {
+    const p = (n) => String(n).padStart(2, "0");
+    return d.getUTCFullYear() + p(d.getUTCMonth() + 1) + p(d.getUTCDate()) + "T"
+      + p(d.getUTCHours()) + p(d.getUTCMinutes()) + p(d.getUTCSeconds()) + "Z";
+  }
+  function buildPlanICS() {
+    const L = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//numerology-calculator//techo//JA",
+      "CALSCALE:GREGORIAN", "METHOD:PUBLISH"];
+    const stamp = icsStamp(new Date());
+    let n = 0;
+    Object.keys(myPlans).sort().forEach((key) => {
+      plansOn(key).forEach((pn, i) => {
+        if (!pn.s) return;
+        const ymdPlain = key.replace(/-/g, "");
+        L.push("BEGIN:VEVENT");
+        L.push("UID:" + ymdPlain + "-" + i + "@numerology-calculator");
+        L.push("DTSTAMP:" + stamp);
+        L.push(icsFold("SUMMARY:" + icsEscape(pn.s)));
+        if (pn.t) {
+          // 時間帯は端末の時刻として扱わせる（TZIDを付けない書き方）。1時間で置く。
+          const hm = pn.t.replace(":", "");
+          const end = new Date(fromYmd(key));
+          end.setHours(Number(pn.t.slice(0, 2)) + 1, Number(pn.t.slice(3, 5)), 0, 0);
+          const p2 = (x) => String(x).padStart(2, "0");
+          L.push("DTSTART:" + ymdPlain + "T" + hm + "00");
+          L.push("DTEND:" + p2(end.getFullYear()) + p2(end.getMonth() + 1) + p2(end.getDate())
+            + "T" + p2(end.getHours()) + p2(end.getMinutes()) + "00");
+        } else {
+          // addDays は日付の文字列を受け取り、日付の文字列を返す
+          L.push("DTSTART;VALUE=DATE:" + ymdPlain);
+          L.push("DTEND;VALUE=DATE:" + addDays(key, 1).replace(/-/g, ""));
+        }
+        L.push("END:VEVENT");
+        n++;
+      });
+    });
+    L.push("END:VCALENDAR");
+    return { text: L.join(CRLF) + CRLF, count: n };
+  }
+
+  function buildBackup() {
+    return JSON.stringify({
+      app: "numerology-calculator",
+      kind: "techo-backup",
+      at: new Date().toISOString(),
+      plans: myPlans,
+      records: myRecords,
+    });
+  }
+  // 控えは足し合わせる。端末に残っているものは消さない。
+  function mergeBackup(data) {
+    let plans = 0, records = 0;
+    const bp = (data && data.plans) || {};
+    Object.keys(bp).forEach((key) => {
+      if (!/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(key)) return;
+      const cur = myPlans[key] || [];
+      (bp[key] || []).forEach((item) => {
+        if (!item || !item.s) return;
+        const t = String(item.t || ""), sv = String(item.s);
+        if (cur.some((x) => x.s === sv && (x.t || "") === t)) return;
+        cur.push({ t: t, s: sv });
+        plans++;
+      });
+      if (cur.length) myPlans[key] = cur;
+    });
+    const br = (data && data.records) || {};
+    Object.keys(br).forEach((key) => {
+      if (!/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(key)) return;
+      if (myRecords[key] || !br[key]) return;
+      myRecords[key] = br[key];
+      records++;
+    });
+    savePlans();
+    saveRecords();
+    return { plans: plans, records: records };
+  }
+
+  // ---- 推しごとカレンダー（同じ住所に置かれた別アプリ）の予定を読む -------
+  const OSHI_KEY = "oshi-cal-v1";
+  const OSHI_LINK_KEY = "numerology-oshi-link";
+  let oshiLink = false;
+  try { oshiLink = localStorage.getItem(OSHI_LINK_KEY) === "1"; } catch (err) { oshiLink = false; }
+  function readOshi() {
+    try {
+      const raw = localStorage.getItem(OSHI_KEY);
+      if (!raw) return null;
+      const o = JSON.parse(raw);
+      if (!o || !Array.isArray(o.events)) return null;
+      return o;
+    } catch (err) {
+      return null;
+    }
+  }
+  function oshiOccursOn(e, key) {
+    if (!e.date || key < e.date) return false;
+    if (!e.repeat) return key === e.date;
+    if (e.until && key > e.until) return false;
+    const a = fromYmd(e.date), b = fromYmd(key);
+    if (e.repeat === "daily") return true;
+    if (e.repeat === "weekly") return a.getDay() === b.getDay();
+    if (e.repeat === "monthly") return a.getDate() === b.getDate();
+    return false;
+  }
+  // 読むだけ。こちらから書き換えない。相手のアプリが正本。
+  function oshiPlansOn(key) {
+    if (!oshiLink) return [];
+    const o = readOshi();
+    if (!o) return [];
+    return o.events.filter((e) => oshiOccursOn(e, key))
+      .map((e) => ({ t: String(e.time || ""), s: String(e.title || "") }))
+      .sort((a, b) => (a.t || "").localeCompare(b.t || ""));
   }
 
   // 予定の1行。時刻と内容をその場で直せる。「保存」を押させない。
@@ -4915,6 +5112,26 @@
       }
     };
     draw();
+
+    // 推しごとカレンダーの予定は、読むだけ。ここでは直せない（向こうが正本）。
+    const oshiItems = oshiPlansOn(key);
+    if (oshiItems.length) {
+      const t2 = document.createElement("div");
+      t2.className = "plan-title";
+      t2.textContent = "推しごとカレンダーの予定";
+      wrap.appendChild(t2);
+      oshiItems.forEach((o) => {
+        const row = document.createElement("div");
+        row.className = "plan-readonly";
+        const b = document.createElement("b");
+        b.textContent = o.t || "終日";
+        const sp = document.createElement("span");
+        sp.textContent = o.s;
+        row.appendChild(b);
+        row.appendChild(sp);
+        wrap.appendChild(row);
+      });
+    }
 
     if (!planStoreOK) {
       const note = document.createElement("p");
@@ -5258,6 +5475,82 @@
   dayMaskEl.addEventListener("click", (e) => {
     if (e.target === dayMaskEl) closeDaySheet();   // 背景をタップしたときだけ閉じる
   });
+  const recordToolsBtn = document.getElementById("record-tools-btn");
+  const recordToolsMask = document.getElementById("record-tools");
+  const recordToolsCloseBtn = document.getElementById("record-tools-close");
+  const toolFileEl = document.getElementById("tool-file");
+  const toolOshiEl = document.getElementById("tool-oshi");
+
+  function closeRecordTools() {
+    if (recordToolsMask.classList.contains("hidden")) return;
+    recordToolsMask.classList.add("hidden");
+    recordToolsBtn.focus();
+  }
+  recordToolsBtn.addEventListener("click", () => {
+    toolOshiEl.checked = oshiLink;
+    recordToolsMask.classList.remove("hidden");
+    recordToolsCloseBtn.focus();
+  });
+  recordToolsCloseBtn.addEventListener("click", closeRecordTools);
+  recordToolsMask.addEventListener("click", (e) => {
+    if (e.target === recordToolsMask) closeRecordTools();
+  });
+
+  document.getElementById("tool-ics").addEventListener("click", () => {
+    const built = buildPlanICS();
+    if (!built.count) {
+      alert("送れる予定がまだありません。先に予定を書いてください。");
+      return;
+    }
+    saveToFile("数秘電卓の手帳-" + recordToday + ".ics", built.text, "text/calendar");
+    alert([built.count + "件の予定をまとめたファイルを作りました。", "",
+      "このあと出てくる案内から「カレンダー」を選ぶと、いつものカレンダーに並びます。"].join(LF));
+  });
+
+  document.getElementById("tool-backup").addEventListener("click", () => {
+    saveToFile("数秘電卓の手帳の控え-" + recordToday + ".json", buildBackup(), "application/json");
+    alert(["控えのファイルを作りました。", "",
+      "このファイルさえ残しておけば、端末が変わっても戻せます。",
+      "メールで自分宛に送るか、クラウドに置いておくと安心です。"].join(LF));
+  });
+
+  document.getElementById("tool-restore").addEventListener("click", () => toolFileEl.click());
+  toolFileEl.addEventListener("change", () => {
+    const file = toolFileEl.files && toolFileEl.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      let data = null;
+      try { data = JSON.parse(String(reader.result)); } catch (err) { data = null; }
+      if (!data || data.app !== "numerology-calculator") {
+        alert("このファイルは、この手帳の控えではないようです。別のファイルをお選びください。");
+        toolFileEl.value = "";
+        return;
+      }
+      const added = mergeBackup(data);
+      renderCalendar();
+      alert(["控えから戻しました。", "",
+        "予定 " + added.plans + "件、記録 " + added.records + "日ぶんを足しました。",
+        "もともと入っていたものは、そのまま残っています。"].join(LF));
+      toolFileEl.value = "";
+    };
+    reader.onerror = () => {
+      alert("ファイルを読めませんでした。もう一度お試しください。");
+      toolFileEl.value = "";
+    };
+    reader.readAsText(file);
+  });
+
+  toolOshiEl.addEventListener("change", () => {
+    oshiLink = toolOshiEl.checked;
+    try { localStorage.setItem(OSHI_LINK_KEY, oshiLink ? "1" : "0"); } catch (err) { /* 保存できなくても今回は効く */ }
+    if (oshiLink && !readOshi()) {
+      alert(["推しごとカレンダーの予定が見つかりませんでした。", "",
+        "同じ端末の同じブラウザで、一度そちらを開いてからお試しください。"].join(LF));
+    }
+    renderCalendar();
+  });
+
   function closeRecordHelp() {
     if (recordHelpMask.classList.contains("hidden")) return;
     recordHelpMask.classList.add("hidden");
@@ -5274,6 +5567,7 @@
   document.addEventListener("keydown", (e) => {
     if (e.key !== "Escape") return;
     closeRecordHelp();
+    closeRecordTools();
     closeDaySheet();
   });
 
