@@ -1522,6 +1522,8 @@
     opacity: 0; transition: opacity 0.25s;
   }
   .day-saved.is-on { opacity: 1; }
+  /* 保存できなかったとき。自動では消さない（消し方は JS 側）。 */
+  .day-saved.is-warn { color: #b3261e; font-weight: 700; }
   @media (prefers-reduced-motion: reduce) { .day-saved { transition: none; } }
   .day-note {
     width: 100%; margin-top: 5px; padding: 9px 10px; box-sizing: border-box;
@@ -4392,6 +4394,11 @@
   // ものを流用している（同じことを二度書かないため）。
   const RECORD_KEY = "numerology-records-v1";
 
+  // 回数と棒を出し始める件数。これ未満のうちは選択肢の名前だけを並べる。
+  // 数件ぶんの偏りは偶然でも出るため、それを傾向として読ませないための線。
+  // 仕様書「記録を見る画面」の表で、回数を出すのは10〜30件からと決めてある。
+  const SUMMARY_MIN = 10;
+
   // 「どう過ごしましたか？」の8つ。順序・語句とも仕様書のとおり。
   // ⚠️ 数字との対応表はここに持たせない。持つと「数字どおりでしたね」と
   // 言いたくなり、記録が数秘術を肯定するだけの装置になる（仕様書の決定）。
@@ -4465,16 +4472,20 @@
     }
     return {};
   }
+  // 🚨 成否を必ず返す。呼び出し側が「保存しました」を出すかどうかの判断に使う。
+  //    失敗を黙って飲み込むと、書いたのに消えたという最悪の形になる。
   function saveRecords() {
     try {
       localStorage.setItem(RECORD_KEY, JSON.stringify(myRecords));
+      return true;
     } catch (err) {
       // 保存の上限に当たったときだけ、原因が分かる案内を出す。
       if (err && (err.name === "QuotaExceededError" || err.code === 22)) {
         alert("保存できる量をこえました。\n\n書き残した文章が多いのかもしれません。\n古いものをいくつか消してみてください。");
-        return;
+        return false;
       }
       recordStoreOK = false;
+      return false;
     }
   }
   let myRecords = loadRecords();
@@ -4763,11 +4774,16 @@
     //    「書いたのに消えた」が最も起きてはいけないため。代わりに、
     //    打鍵が止まったら自動で保存し、保存できたことを目で分かるようにする。
     let savedTimer = null;
-    const showSaved = () => {
-      savedMsg.textContent = sample ? "見本のため残りません" : "保存しました";
+    const showSaved = (ok) => {
+      const failed = !sample && !ok;
+      savedMsg.textContent = sample ? "見本のため残りません"
+        : failed ? "保存できませんでした。画面を閉じると消えます。" : "保存しました";
+      savedMsg.classList.toggle("is-warn", failed);
       savedMsg.classList.add("is-on");
       clearTimeout(savedTimer);
-      savedTimer = setTimeout(() => savedMsg.classList.remove("is-on"), 2200);
+      // 失敗した表示は消さずに残す。目を離した隙に消えると、書いた人は
+      // 保存できたものと思い込んだまま画面を閉じてしまう。
+      if (!failed) savedTimer = setTimeout(() => savedMsg.classList.remove("is-on"), 2200);
     };
     const writeNote = () => {
       clearTimeout(noteTimer);
@@ -4786,9 +4802,9 @@
           sample: sample || undefined,
         });
       }
-      if (!sample) saveRecords();
+      const saved = sample ? true : saveRecords();
       renderCalendar();   // ⚠️ renderDaySheet は呼ばない。打っている欄が消えるため
-      if (!unchanged) showSaved();
+      if (!unchanged) showSaved(saved);
     };
     ta.addEventListener("input", () => {
       clearTimeout(noteTimer);

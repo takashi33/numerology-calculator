@@ -766,7 +766,9 @@
 
   /* 相性診断は同じ人を2回入れれば全ナンバーが読めてしまうため、体験モードでは
      入口ごと出さない（実際の計算も currentRole で止めている）。 */
-  body.is-trial #compat-open-btn { display: none !important; }
+  /* 2026-08-19 依頼者の決定で、体験モードでも入口を隠さなくなった。
+     押すと見本の結果が出る（計算は見本の値で行い、入力欄は読み取り専用にする）。
+     記録（カレンダー）と扱いを揃えるため。 */
   .result-card.locked { opacity: .72; }
   .result-card.locked .result-number {
     letter-spacing: .12em;
@@ -947,6 +949,41 @@
      算出方法・深堀解説・ローマ字の詳細は、どれも読み物としての長さがある。
      カード単位のⓘモーダルに入れると読みきれず、計算画面に並べると入力欄が
      下へ押し出されるため、別画面（メニュー→記事）として切り分けている。 */
+
+  /* トップ画面の入口。3つを横1列に置く。縦積みだと入力欄が画面外へ
+     押し出され、何をする画面かが分からなくなる。 */
+  .app-nav {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    margin: -4px 0 22px;
+  }
+  .app-nav-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    padding: 10px 4px 9px;
+    font-family: var(--font-body);
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.35;
+    color: var(--gold);
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    cursor: pointer;
+    text-align: center;
+  }
+  .app-nav-btn .nav-icon { font-size: 17px; line-height: 1.1; }
+  .app-nav-btn small {
+    display: block;
+    font-size: 9.5px;
+    font-weight: 400;
+    color: var(--ink-faint);
+    letter-spacing: 0.02em;
+  }
 
   .library-open-btn {
     display: block;
@@ -1366,6 +1403,159 @@
     font-weight: 700;
     background: rgba(255, 255, 255, 0.05);
   }
+  /* ---------------- 記録（カレンダー） ----------------
+     画面の作りは相性診断（#compat）に合わせてある。保存先は端末の
+     localStorage だけで、サーバーへは何も送らない。日付・祝日・月表の
+     描き方は、推し活カレンダーで実機に載っているものを流用している。 */
+  #record.hidden { display: none; }
+
+  .record-tabs { display: flex; gap: 6px; margin: 4px 0 16px; }
+  .record-tab {
+    flex: 1; padding: 9px 4px;
+    font-family: var(--font-body); font-size: 12.5px; font-weight: 700;
+    color: var(--ink-soft); background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--card-border); border-radius: 9px;
+    cursor: pointer; line-height: 1.4;
+  }
+  .record-tab[aria-selected="true"] {
+    color: var(--input-ink); background: var(--gold); border-color: var(--gold);
+  }
+
+  /* 見本の帯。体験の人が自分の記録と取り違えないよう、出したままにする。 */
+  .record-sample-banner {
+    margin: 0 0 14px; padding: 11px 13px;
+    font-size: 12.5px; line-height: 1.75;
+    color: var(--input-ink); background: var(--gold); border-radius: 9px;
+  }
+  .record-sample-banner strong { display: block; margin-bottom: 2px; }
+
+  .cal-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+  .cal-label { font-family: var(--font-display); font-size: 19px; color: var(--gold); }
+  .cal-label small { font-size: 12px; color: var(--ink-faint); margin-left: 6px; }
+  .cal-move {
+    width: 40px; height: 34px; font-size: 16px; color: var(--gold);
+    background: rgba(255, 255, 255, 0.06); border: 1px solid var(--card-border);
+    border-radius: 8px; cursor: pointer;
+  }
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+  .cal-dow { text-align: center; font-size: 10.5px; color: var(--ink-faint); padding: 2px 0 4px; }
+  .cal-dow.sun { color: #e8a8a8; }
+  .cal-dow.sat { color: #a8bfe8; }
+  .cal-cell {
+    position: relative; aspect-ratio: 1 / 1; min-height: 38px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+    font-family: var(--font-body); font-size: 13px; color: var(--ink);
+    background: rgba(255, 255, 255, 0.04); border: 1px solid transparent;
+    border-radius: 7px; cursor: pointer; padding: 0;
+  }
+  .cal-cell.out { opacity: 0.3; }
+  .cal-cell.sun, .cal-cell.holi { color: #e8a8a8; }
+  .cal-cell.sat { color: #a8bfe8; }
+  .cal-cell.today { border-color: var(--gold); }
+  .cal-cell.sel { background: rgba(244, 217, 139, 0.18); border-color: var(--gold-deep); }
+  .cal-mark { width: 5px; height: 5px; border-radius: 50%; background: var(--gold); }
+
+  .cal-hint { margin: 12px 0 0; font-size: 11.5px; color: var(--ink-faint); text-align: center; }
+
+  .day-mask {
+    position: fixed; inset: 0; z-index: 40;
+    display: flex; align-items: flex-end; justify-content: center;
+    background: rgba(18, 8, 31, 0.62);
+  }
+  /* .hidden と同じ詳細度なので、明示しないと後勝ちで display:flex に戻る。 */
+  .day-mask.hidden { display: none; }
+  .day-panel {
+    position: relative;
+    width: 100%; max-width: 560px; max-height: 88vh; overflow-y: auto;
+    padding: 18px 16px calc(18px + env(safe-area-inset-bottom));
+    background: #1b1039; border: 1px solid var(--card-border);
+    border-radius: 18px 18px 0 0;
+    /* 中を最後までスクロールしたあと、裏の本体まで動き出さないようにする */
+    overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
+  }
+  @media (min-width: 560px) {
+    .day-mask { align-items: center; padding: 20px; }
+    .day-panel { border-radius: 18px; }
+  }
+  .day-close {
+    position: absolute; top: 10px; right: 10px;
+    width: 34px; height: 34px; font-size: 19px; line-height: 1;
+    color: var(--ink-soft); background: rgba(255, 255, 255, 0.07);
+    border: 1px solid var(--card-border); border-radius: 50%; cursor: pointer;
+  }
+  /* パネルを開いている間、裏の画面を動かさない。位置は JS が覚えて元に戻す。 */
+  body.day-locked { position: fixed; width: 100%; overflow: hidden; }
+
+  .day-sheet { padding-right: 34px; }
+  .day-sheet h3 { margin: 0 0 12px; font-family: var(--font-display); font-size: 16px; color: var(--gold); font-weight: 400; }
+  .day-sheet h3 .day-holi { font-size: 12px; color: #e8a8a8; margin-left: 8px; }
+  .day-nums { display: flex; gap: 8px; margin: 0 0 14px; }
+  .day-num { flex: 1; text-align: center; padding: 8px 4px; background: rgba(255, 255, 255, 0.05); border-radius: 8px; }
+  .day-num span { display: block; font-size: 10.5px; color: var(--ink-faint); }
+  .day-num strong { font-family: var(--font-display); font-size: 21px; color: var(--gold); font-weight: 400; }
+  .day-num.locked strong { color: var(--ink-faint); }
+
+  /* その日に届いた言葉。記録と並べて見えることに意味があるので、同じ欄に置く。 */
+  .day-word {
+    margin: 0 0 16px; padding: 12px 13px;
+    background: rgba(244, 217, 139, 0.08);
+    border-left: 2px solid var(--gold-deep); border-radius: 0 8px 8px 0;
+  }
+  .day-word .w-label { font-size: 10.5px; color: var(--ink-faint); }
+  .day-word .w-head { font-family: var(--font-display); font-size: 16px; color: var(--gold); margin-top: 4px; line-height: 1.5; }
+  .day-word .w-body { font-size: 12.5px; color: var(--ink-soft); margin-top: 6px; line-height: 1.85; }
+
+  .day-q { font-size: 13px; color: var(--ink-soft); margin: 0 0 8px; }
+  .day-choices { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
+  .day-choice {
+    padding: 10px 6px; font-family: var(--font-body); font-size: 12px; font-weight: 700;
+    color: var(--ink-soft); background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--card-border); border-radius: 8px; cursor: pointer; line-height: 1.4;
+  }
+  .day-choice[aria-pressed="true"] { color: var(--input-ink); background: var(--gold); border-color: var(--gold); }
+  .day-note-label { display: block; font-size: 11.5px; color: var(--ink-faint); margin-top: 14px; }
+  /* 保存できたことの合図。書いたまま閉じても消えないと目で分かるようにする。 */
+  .day-saved {
+    margin-left: 8px; font-size: 11px; color: var(--gold-deep);
+    opacity: 0; transition: opacity 0.25s;
+  }
+  .day-saved.is-on { opacity: 1; }
+  /* 保存できなかったとき。自動では消さない（消し方は JS 側）。 */
+  .day-saved.is-warn { color: #b3261e; font-weight: 700; }
+  @media (prefers-reduced-motion: reduce) { .day-saved { transition: none; } }
+  .day-note {
+    width: 100%; margin-top: 5px; padding: 9px 10px; box-sizing: border-box;
+    font-family: var(--font-body); font-size: 13px; color: var(--input-ink);
+    background: var(--input-bg); border: 1px solid var(--card-border);
+    border-radius: 8px; resize: vertical; min-height: 58px;
+  }
+  .day-msg { margin: 12px 0 0; font-size: 12.5px; line-height: 1.8; color: var(--ink-soft); }
+
+  /* 「あなたの過ごし方」。順位は付けない。並び順は選択肢の並びで固定し、
+     一度も選んでいないものは出さない（0が並ぶ画面にしないため）。 */
+  .sum-lead { margin: 0 0 4px; font-size: 13px; line-height: 1.8; color: var(--ink-soft); }
+  .sum-days { margin: 0 0 16px; font-size: 11.5px; color: var(--ink-faint); }
+  .sum-rows { display: flex; flex-direction: column; gap: 9px; }
+  .sum-row { display: grid; grid-template-columns: 1fr 34px; gap: 4px 8px; align-items: center; }
+  .sum-label { font-size: 12.5px; color: var(--ink); }
+  .sum-count { font-size: 12px; color: var(--gold); text-align: right; font-variant-numeric: tabular-nums; }
+  .sum-bar { grid-column: 1 / -1; height: 5px; background: rgba(255, 255, 255, 0.07); border-radius: 999px; overflow: hidden; }
+  .sum-bar span { display: block; height: 100%; background: var(--gold-deep); border-radius: 999px; }
+  .sum-plain { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+  .sum-plain span {
+    display: inline-block; padding: 5px 11px; font-size: 12px;
+    color: var(--ink); background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--card-border); border-radius: 999px;
+  }
+  .sum-later { margin: 20px 0 0; font-size: 11.5px; line-height: 1.8; color: var(--ink-faint); }
+
+  .record-empty {
+    padding: 18px 16px; background: var(--card); border: 1px solid var(--card-border);
+    border-radius: 12px; font-size: 13px; line-height: 1.9; color: var(--ink-soft);
+  }
+  .record-empty strong { display: block; font-family: var(--font-display); font-size: 16px; color: var(--gold); margin-bottom: 8px; font-weight: 400; }
+  .record-save-note { margin-top: 18px; font-size: 11.5px; line-height: 1.8; color: var(--ink-faint); }
+
 </style>
 
 <div id="gate">
@@ -1393,8 +1583,22 @@
   <h1>数秘電卓<span class="subtitle">Numerology Calculator</span></h1>
   <p class="lead">生年月日と名前（カナ）から、現代数秘術のさまざまな数字を計算します。</p>
 
-  <button type="button" id="library-open-btn" class="library-open-btn">📖 資料メニュー（算出方法・深堀解説・ローマ字）</button>
-  <button type="button" id="compat-open-btn" class="library-open-btn">💞 相性診断（お二人の数字を並べて読む）</button>
+  <!-- 入口は横1列にまとめる。縦に3つ並べると、計算の入力欄が画面の外へ
+       押し出されて「何をする画面か」が分からなくなるため（2026-08-19 依頼者の指摘）。
+       記録は、相性診断とは扱いを変えて体験モードでも隠さない。押すと見本が
+       開き、有料で何ができるようになるかを見せる。書き込みは currentRole 側で
+       止めてあるので、見えても保存はされない。 -->
+  <nav class="app-nav" aria-label="ほかの画面">
+    <button type="button" id="library-open-btn" class="app-nav-btn">
+      <span class="nav-icon">📖</span>資料メニュー<small>算出方法・解説</small>
+    </button>
+    <button type="button" id="compat-open-btn" class="app-nav-btn">
+      <span class="nav-icon">💞</span>相性診断<small>お二人を並べる</small>
+    </button>
+    <button type="button" id="record-open-btn" class="app-nav-btn">
+      <span class="nav-icon">📅</span>あなたの記録<small>カレンダー</small>
+    </button>
+  </nav>
 
   <form id="calc-form">
     <label class="field">
@@ -1499,6 +1703,7 @@
         <li><strong>各ナンバーの算出方法</strong>　その数字をどう計算しているかの解説</li>
         <li><strong>各ナンバーの深堀解説</strong>　1〜9とマスターナンバーそれぞれの読み方</li>
         <li><strong>相性診断</strong>　お二人の数字を並べて、役割の違いを読みます</li>
+        <li><strong>あなたの記録</strong>　その日届いた言葉と、どう過ごしたかをカレンダーに残せます</li>
       </ul>
       <div class="upgrade-coming">
         <h3>まもなく、毎朝のお便りが始まります</h3>
@@ -1569,6 +1774,46 @@
   <p id="compat-error" class="error hidden"></p>
   <div id="compat-result" class="hidden"></div>
   <div id="compat-guide"></div>
+</div>
+
+<div id="record" class="hidden">
+  <button type="button" id="record-back-btn" class="library-back">← 戻る</button>
+  <h1 class="library-h1">あなたの記録</h1>
+  <p class="library-sub">その日に届いた言葉と、どう過ごしたかを並べて残します。<br>選ぶのはひとつだけ。書きたい日は、文章も残せます。</p>
+
+  <div id="record-sample" class="record-sample-banner hidden">
+    <strong>これは見本です。あなたの記録ではありません。</strong>
+ここに並んでいるのは見本の記録です。ご自身でも押して試せますが、この端末には残りません。<br>
+    お使いいただけるようになると、記録はそのままたまり、先の日付の数字も見られます。
+  </div>
+
+  <div class="record-tabs" role="tablist">
+    <button type="button" class="record-tab" id="record-tab-cal" role="tab" aria-selected="true">カレンダー</button>
+    <button type="button" class="record-tab" id="record-tab-summary" role="tab" aria-selected="false">あなたの過ごし方</button>
+  </div>
+
+  <div id="record-cal">
+    <div class="cal-head">
+      <button type="button" class="cal-move" id="cal-prev" aria-label="前の月へ">‹</button>
+      <div class="cal-label" id="cal-label"></div>
+      <button type="button" class="cal-move" id="cal-next" aria-label="次の月へ">›</button>
+    </div>
+    <div class="cal-grid" id="cal-grid"></div>
+    <p class="cal-hint">日付をタップすると、その日の言葉と記録が出ます。</p>
+  </div>
+
+  <div id="record-summary" class="hidden"></div>
+
+  <!-- 選んだ日の中身は下から出す。表の下に置くと画面の外に出てしまい、
+       開いたことに気づけない（推し活カレンダーの #m-day と同じ作り）。 -->
+  <div id="day-mask" class="day-mask hidden">
+    <div class="day-panel" role="dialog" aria-modal="true" aria-label="選んだ日の記録">
+      <button type="button" id="day-close" class="day-close" aria-label="閉じる">×</button>
+      <div id="day-sheet"></div>
+    </div>
+  </div>
+
+  <p class="record-save-note">いまは、この端末の中だけに保存します。今後の開発の状況によっては、この端末の外に控えを持つ形になる可能性があります。その場合は、事前にお知らせします。</p>
 </div>
 
 <div id="qr-modal" class="hidden">
@@ -3900,6 +4145,7 @@
   const compatForm = document.getElementById("compat-form");
   const compatErrorEl = document.getElementById("compat-error");
   const compatResultEl = document.getElementById("compat-result");
+  const compatSubmitBtn = document.getElementById("compat-btn");
   const compatGuideEl = document.getElementById("compat-guide");
   const compatOpenBtn = document.getElementById("compat-open-btn");
   const compatBackBtn = document.getElementById("compat-back-btn");
@@ -3988,41 +4234,63 @@
     return { year, month, day };
   }
 
+  // 体験モードで見せる見本の2人分。実在の人物ではない。
+  // 生年月日だけだと比べられる項目が2つしか出ないので、名前も入れてある。
+  const COMPAT_SAMPLE = {
+    a: { date: { year: 1978, month: 12, day: 14 }, name: ["yamada", "taro"] },
+    b: { date: { year: 1990, month: 5, day: 3 }, name: ["suzuki", "hanako"] },
+  };
+
   compatForm.addEventListener("submit", (e) => {
     e.preventDefault();
     compatErrorEl.classList.add("hidden");
     compatResultEl.classList.add("hidden");
 
-    // 体験モードでは計算そのものを行わない。ボタンをCSSで隠すだけでは、
-    // 同じ人を2回入力して全ナンバーを読み取る抜け道が残るため。
-    if (currentRole === "trial") {
-      compatErrorEl.textContent = "相性診断は、記事のコードでご利用いただけます。";
-      compatErrorEl.classList.remove("hidden");
-      return;
-    }
+    // 🚨 体験モードでは、入力された値ではなく見本の2人分で計算する。
+    // 入力欄も読み取り専用にしてあるが、ここでも入力値を一切使わないことで
+    // 「同じ人を2回入力して全ナンバーを読み取る」抜け道を塞いでいる。
+    const isCompatSample = currentRole === "trial";
+    let dateA;
+    let dateB;
+    let nameValues;
 
-    compatFlushers.forEach((flush) => flush());
+    if (isCompatSample) {
+      dateA = COMPAT_SAMPLE.a.date;
+      dateB = COMPAT_SAMPLE.b.date;
+      nameValues = [...COMPAT_SAMPLE.a.name, ...COMPAT_SAMPLE.b.name];
+    } else {
+      compatFlushers.forEach((flush) => flush());
 
-    const dateA = readCompatDate("a");
-    const dateB = readCompatDate("b");
-    if (!dateA || !dateB) {
-      compatErrorEl.textContent = "お二人分の生年月日を正しく入力してください。";
-      compatErrorEl.classList.remove("hidden");
-      return;
-    }
+      dateA = readCompatDate("a");
+      dateB = readCompatDate("b");
+      if (!dateA || !dateB) {
+        compatErrorEl.textContent = "お二人分の生年月日を正しく入力してください。";
+        compatErrorEl.classList.remove("hidden");
+        return;
+      }
 
-    const UNCONVERTED = /[぀-ヿ一-鿿]/;
-    const nameValues = [compatFields.a[3], compatFields.a[4], compatFields.b[3], compatFields.b[4]].map((el) => el.value);
-    if (nameValues.some((v) => UNCONVERTED.test(v))) {
-      compatErrorEl.textContent = NAME_MODE_TEXT[nameInputMode].error;
-      compatErrorEl.classList.remove("hidden");
-      return;
+      const UNCONVERTED = /[぀-ヿ一-鿿]/;
+      nameValues = [compatFields.a[3], compatFields.a[4], compatFields.b[3], compatFields.b[4]].map((el) => el.value);
+      if (nameValues.some((v) => UNCONVERTED.test(v))) {
+        compatErrorEl.textContent = NAME_MODE_TEXT[nameInputMode].error;
+        compatErrorEl.classList.remove("hidden");
+        return;
+      }
     }
 
     const profileA = compatProfile(dateA.year, dateA.month, dateA.day, nameLetters(`${nameValues[0]} ${nameValues[1]}`));
     const profileB = compatProfile(dateB.year, dateB.month, dateB.day, nameLetters(`${nameValues[2]} ${nameValues[3]}`));
 
     compatResultEl.innerHTML = "";
+
+    if (isCompatSample) {
+      const banner = document.createElement("p");
+      banner.className = "record-sample-banner";
+      banner.innerHTML = "<strong>これは見本です。お二人の相性ではありません。</strong>"
+        + "見本のお二人（1978年12月14日 と 1990年5月3日）を並べた結果です。";
+      compatResultEl.appendChild(banner);
+    }
+
     const rows = [];
     COMPAT_ITEMS.forEach(([key, label]) => {
       const x = profileA[key];
@@ -4062,6 +4330,14 @@
       compatResultEl.appendChild(card);
     });
 
+    if (isCompatSample) {
+      const note = document.createElement("p");
+      note.className = "compat-summary";
+      note.textContent = "お使いいただけるようになると、ここにご自身とお相手の数字が並びます。"
+        + "お名前を入れると、名前から出る数字も比べられます。";
+      compatResultEl.appendChild(note);
+    }
+
     compatResultEl.classList.remove("hidden");
   });
 
@@ -4072,6 +4348,24 @@
   });
 
   compatOpenBtn.addEventListener("click", () => {
+    // 体験モードでは、何を入れても見本しか出ない。入力欄を空のままにすると
+    // 「入れたのに自分の結果が出ない」と受け取られるので、先に見本で埋めて
+    // 読み取り専用にし、ボタンの文言も変える。
+    const sample = currentRole === "trial";
+    const cells = [
+      [compatFields.a, COMPAT_SAMPLE.a],
+      [compatFields.b, COMPAT_SAMPLE.b],
+    ];
+    cells.forEach(([fields, src]) => {
+      const values = [String(src.date.year), String(src.date.month), String(src.date.day), src.name[0], src.name[1]];
+      fields.forEach((el, i) => {
+        if (sample) el.value = values[i];
+        el.readOnly = sample;
+      });
+    });
+    compatSubmitBtn.textContent = sample ? "見本を見る" : "相性を見る";
+    if (sample) compatResultEl.classList.add("hidden");
+
     appEl.classList.add("hidden");
     compatEl.classList.remove("hidden");
     window.scrollTo(0, 0);
@@ -4079,6 +4373,617 @@
 
   compatBackBtn.addEventListener("click", () => {
     compatEl.classList.add("hidden");
+    appEl.classList.remove("hidden");
+    window.scrollTo(0, 0);
+  });
+
+  // ---------------- 記録（カレンダー） ----------------
+  // 保存先は端末の localStorage だけ。サーバーへは何も送らない。
+  // 日付の計算・祝日・月表の描き方は、推し活カレンダーで実機に載っている
+  // ものを流用している（同じことを二度書かないため）。
+  const RECORD_KEY = "numerology-records-v1";
+
+  // 回数と棒を出し始める件数。これ未満のうちは選択肢の名前だけを並べる。
+  // 数件ぶんの偏りは偶然でも出るため、それを傾向として読ませないための線。
+  // 仕様書「記録を見る画面」の表で、回数を出すのは10〜30件からと決めてある。
+  const SUMMARY_MIN = 10;
+
+  // 「どう過ごしましたか？」の8つ。順序・語句とも仕様書のとおり。
+  // ⚠️ 数字との対応表はここに持たせない。持つと「数字どおりでしたね」と
+  // 言いたくなり、記録が数秘術を肯定するだけの装置になる（仕様書の決定）。
+  const RECORD_CHOICES = [
+    "決めた・進めた", "人に合わせた", "表した・話した", "こつこつ取り組んだ",
+    "動いた・変えた", "人の力になった", "ひとりで考えた", "休んだ・ゆるめた",
+  ];
+
+  // 毎朝の言葉（ライフパス × パーソナルデイ ＝ 144通）。
+  // 2026-08-19、たたき台から完成稿へ差し替えた。
+  // 原本は docs/numerology-calculator/無料配信144通_完成稿.txt。
+  // 🚨 文章を直したら、必ず原本の側を直してからここへ入れ直すこと。
+  //    ここだけ直すと、次の差し替えで元に戻る。
+  const MORNING_WORDS = {"1":{"1":["最初の一歩は小さくていい","新しいことに目が向く朝。全部を決めてからでなくていいので、まず一つだけ手をつけてみてください。"],"2":["一拍ぶん、隣を見る","速さを少しゆるめると、隣を歩く人の呼吸が伝わってきます。今日は相手の話を、最後まで聞いてみる。"],"3":["口にして分かる本音","胸の内にあった考えが、すっと言葉になる朝。まだ誰にも言っていないことを、一つ口に出してみてください。"],"4":["勢いに順番という味方","勢いに順番が加わる日。動き出す前に、やることを三つだけ書き出しておく。"],"5":["選び直すのも前進","予定どおりでなくても、その場で選び直せるのがあなたの強み。気が変わったら、迷わず変えてかまいません。"],"6":["引き受ける量は選べる","誰かのためなら、もうひと踏ん張りできそう。引き受ける前に、どこまでなら持てるかを決めておく。"],"7":["白黒の前に静かな間","白黒は、まだつけなくていい日。今日は決めずに、ひとりで考える時間を取ってみてください。"],"8":["一点に注ぐ強さ","ここぞという場面で、持ち前の強さがよく働きます。力を注ぐ先を、一つに絞ってみる。"],"9":["手を離せば次の余白","やり切ったものを手から離すと、次へ向かう余白が生まれます。終わったことを、今日で閉じてしまう。"],"11":["最初の感覚に耳を澄ます","理由を並べるより先に、「こちらだ」と感じる瞬間があります。その最初の感覚のほうを選んでみてください。"],"22":["遠くを見て、足元から始める","目の前の一歩と、その先の景色を同時に見渡せる朝。遠くの目標に向けて、今日できることを一つだけ。"],"33":["勇気は分けても減らない","前へ出るだけでなく、後ろの人に渡せるものもあります。迷っている人に「行けるよ」と声をかけてみる。"]},"2":{"1":["自分から小さな合図を出す","待つのが得意な人にも、こちらから合図を出したい朝。小さなひと言でいいので、先に声をかけてみてください。"],"2":["言葉のいらない安心","言葉を尽くさなくても、気持ちの向きが重なる静けさがあります。説明したくなっても、今日は黙って隣にいてみる。"],"3":["会話のあいだにぬくもり","受け取った話に、こちらの思いを返す。やり取りを一往復だけ、多くしてみてください。"],"4":["無理のない約束が決まる","曖昧だった話に、互いが無理なく守れる形が見えてきます。いつまでにやるかを、今日のうちに決めてしまう。"],"5":["しなやかさは弱さじゃない","急な変更にも、相手の様子を見ながら合わせられます。振り回されたとは思わず、合わせた自分をねぎらってください。"],"6":["頼られる理由、背負わない選択","「話を聞いて」と声をかけられることも。受けるものと、今は受けないものを、口に出して分けておく。"],"7":["自分の感覚へ戻る時間","人の気持ちを受け取りやすい日ほど、ひとりの時間が効きます。予定を一つ空けて、誰にも会わない時間を取ってください。"],"8":["やわらかな言葉に芯を通す","譲る前に、自分の考えを確かめる余裕があります。やわらかい言い方のまま、思っていることを伝えてみる。"],"9":["間に立つ人の橋渡し","それぞれの言い分を聞けるあなたが、間に立てる日。両方の話を、一度そのまま繰り返してみてください。"],"11":["言葉になる前の気配","言葉がなくても、相手の小さな変化に気づく朝。気づいたことを、そっと一言たずねてみる。"],"22":["つないだ縁のその先","引き合わせた二人の話が、一歩先へ進みます。紹介したあとの様子を、一度聞いてみてください。"],"33":["そばにいるという支え","気の利いた答えがなくてもかまいません。今日は何も解決しようとせず、ただ隣にいる。"]},"3":{"1":["ひと言が話の入口をひらく","ふと口にしたひと言から、思いがけない話が始まります。楽しそうだと思ったことを、声に出してみてください。"],"2":["聞く時間も表現の種","話すことを少し休むと、相手の中の面白さに出会えます。今日は聞き役に回って、拾った話を書き留めておく。"],"3":["言葉が軽くほどける朝","頭と口の間にあった扉が、軽くひらくような日。浮かんだことを、直す前にそのまま出してみてください。"],"4":["ひらめきの置き場所","気ままに浮かぶ発想も、置き場所があると育ちます。今日思いついたことを、一か所にまとめておく。"],"5":["会話の先に新しい予定","一つの話題から、次の予定や新しい出会いへ。行き先を決めずに、話が広がるほうへ乗ってみてください。"],"6":["いつもの笑顔が届く","いつもの笑顔を待っていた人がいる。そんなこともあります。張りつめている人に、先に笑いかけてみる。"],"7":["にぎやかさを離れて","にぎやかさから離れると、まだ形にならない気持ちが顔を出します。今日は誰にも見せず、自分の中に置いておく。"],"8":["言葉が場を動かすとき","思いを言葉にすると、周りも何に応えればよいか分かります。言いそびれていたことを、今日のうちに伝えてください。"],"9":["話の結びが心にも届く","長く続いた話に、納得できる結びがつきます。「ここまでにしよう」と、こちらから言ってみる。"],"11":["整える前の一行","整える前の言葉にこそ、きらりと光るものがあります。忘れないうちに、一行だけ書き残してください。"],"22":["頭の中の景色を人に見せる","あなたにしか見えていなかった景色が、人に伝わる形を持ち始めます。思い描いていることを、誰か一人に話してみる。"],"33":["飲み込んだ思いに光を当てる","誰かが飲み込んだ気持ちに、あなたのひと言が明かりを当てます。代わりに決めず、見えるように言葉にしてあげてください。"]},"4":{"1":["土台があるから試せる","いつものやり方を守りながら、別の一手も試せる日。戻れる土台があるうちに、新しい方法を一度だけ試してみる。"],"2":["任せるのも段取りのうち","一人で持っていた役目を、誰かと分けられます。今日は一つだけ、人に渡してみてください。"],"3":["説明して気づくこと","慣れている手順を言葉にすると、新しい発見が生まれます。当たり前にやっていることを、誰かに説明してみる。"],"4":["今日の一段を確かに積む","一つずつ片づけた分だけ、確かな形が残ります。今日の一段を、途中で止めずに終わらせてください。"],"5":["順番を変えても土台は残る","決めた順番を入れ替えても、土台まで崩れるわけではありません。やりにくい手順は、いまのうちに変えておく。"],"6":["続けてきたことの温度","何気なく守ってきた習慣が、周りの目印にもなっています。続けていることを、そのまま続けてかまいません。"],"7":["見落としていた一か所","静かに向き合うほど、見落としていた一か所が目に入ります。気になった箇所を、そのまま直しておく。"],"8":["努力が輪郭を持つころ","重ねた努力に、目に見える手応えが追いついてきます。受け取った成果を、今日は素直に喜んでください。"],"9":["机に次の場所をつくる","途中だったものを仕上げると、次を迎える場所ができます。あと少しで終わるものから、片づけてしまう。"],"11":["手が覚えている答え","考え込むより、慣れた手を動かすほうが早い場面もあります。迷ったら、まず手を動かしてみてください。"],"22":["基礎の上に大きな構想","目の前の一段と、その先の全体像を同時に見られる日。遠くの完成形を、一度紙に描いてみる。"],"33":["目立たない仕事の支え","目立たない役目ほど、なくなったときに大切さが分かります。続けてきた自分を、少しねぎらってください。"]},"5":{"1":["「面白そう」が始まりの合図","面白そう、と心が動いたら、もう始まりの合図。行き先を決めないまま、一歩だけ出てみてください。"],"2":["誰かの歩幅で見る景色","いつもと違う速さで歩くと、見慣れた道にも発見があります。今日は相手の歩幅に合わせてみる。"],"3":["会話が予定を連れてくる","話が弾むうち、行きたい場所や会いたい人が増えていきます。出てきた予定を、その場で一つ決めてしまう。"],"4":["小さな枠が自由を守る","枠があるからこそ、迷わず動けることもあります。最低限の段取りだけ決めて、あとは自由に。"],"5":["寄り道からの持ち帰り","予定から少し外れた先で、思わぬものに目が留まります。今日は寄り道を一つ、自分に許してください。"],"6":["付き添った先の楽しさ","付き添った先、手伝った途中。自分の予定になかった誘いに、一度乗ってみる。"],"7":["立ち止まって見えるもの","動かない一日は、何もない一日ではありません。今日は出かけず、じっくり味わってください。"],"8":["思い切りが手応えに変わる","ここぞという瞬間に、迷わず動ける軽さがあります。思い切ったほうを、そのまま選んでみる。"],"9":["荷物を置いて身軽になる","もう使わないものを手放すと、動ける範囲が広がります。手元の荷物を一つ、今日で減らしてください。"],"11":["理由より先に動く心","なぜか気になる。まずはそれで十分です。理由を探さず、気になったほうへ行ってみる。"],"22":["選び直した道がつながる","選び直してきた道のりが、一つの構想としてつながります。これまでの寄り道を、順に並べてみてください。"],"33":["「別の道もある」という風","窮屈そうな人に「そんな道もある」と伝わるだけで、心はゆるみます。別のやり方を、一つ教えてあげる。"]},"6":{"1":["自分のための一つを先に選ぶ","誰かの用事より先に、自分のための一つを選べる朝。今日は自分の用事から先に済ませてください。"],"2":["説明のいらない安心","大切にしたいものが身近な人と重なると、安心が静かに広がります。説明のいらない相手と、少し話してみる。"],"3":["短いひと言に思いやり","心にしまっていた優しさが、素直な言葉になります。長く説明せず、短いひと言で伝えてください。"],"4":["無理なく続く支え方","気持ちだけで頑張らず、続けられる形を考えられる日。無理なく続くやり方に、一つ変えておく。"],"5":["いつもと違う景色に出る","人に誘われて出かけた先で、気分までふっと変わることがあります。誘われたら、今日は行ってみてください。"],"6":["優しさにも持てる量がある","相談やお願いが重なる朝。できることと、今は持てないこと。どちらもそのまま口に出してかまいません。"],"7":["自分にも同じ気遣いを向ける","いつも人に向けている気遣いを、今日は自分にも。何もしない時間を、少しだけ取ってみる。"],"8":["守りたいものから湧く力","守りたい人や場所を思うと、ためらう場面でも一歩が出ます。言おうか迷っていたことを、今日は言ってください。"],"9":["手を開くという支え方","つないでいた手を開くことも、相手を信じる支え方です。任せると決めたら、口を出さずに見守る。"],"11":["声になる前の「助けて」","声になる前の「助けて」に気づける日。様子が違う人に、こちらから一言かけてみてください。"],"22":["優しさを長く働かせる形","その場だけでなく、これからも役立つ支え方が思い浮かびます。毎回している手助けを、形にして残しておく。"],"33":["言葉より先に伝わるもの","うまく励ませなくても心配はいりません。言葉が出なければ、そばにいるだけで十分です。"]},"7":{"1":["考え抜いた先の一歩","頭の中で何度も確かめてきたこと。そろそろ、手を動かし始めてください。"],"2":["何気ない話の中の答え","何気ない話の一節が、抱えていた問いと重なります。今日は聞く側に回ってみる。"],"3":["声にすると見える輪郭","考えていたことを声にすると、曖昧だった部分がはっきりします。まとまっていなくても、誰かに話してみてください。"],"4":["点が一本の線になる","集めてきた情報を並べると、ばらばらだった点が一本の線になります。手元の資料を、今日いちど並べ直してみる。"],"5":["机を離れて出会う答え","机の前を離れた途端、考えがまとまることがあります。煮詰まったら、外へ出てください。"],"6":["積み重ねた知恵を分ける","長くかけて得た知識は、人に説明すると自分の中も整います。知っていることを、誰かに教えてあげる。"],"7":["深くもぐる静かな時間","誰にも急かされない時間を、心地よく感じられる日。予定を入れず、ひとりで過ごしてください。"],"8":["静かな確信が人を動かす","積み重ねた根拠があるから、声を張らなくても届きます。言葉数を増やさず、静かに伝えてみる。"],"9":["今の自分なりの結論","ずっと考えてきたことに、いまの答えが出せます。完璧でなくていいので、いったん結論を出してください。"],"11":["探すのをやめた瞬間につながる","考えるのをやめた瞬間、ばらばらだったものがつながります。行き詰まったら、今日は頭を休める。"],"22":["深く掘った先の広い景色","目の前の問いを深く掘ると、思いがけず大きなテーマにつながります。掘る途中で見えたことを、書き留めておいてください。"],"33":["落ち着きを渡すひと言","よく考えて選んだひと言は、迷っている人の手がかりになります。急がず言葉を選んで、一言だけ渡す。"]},"8":{"1":["はっきりした合図を出す","誰かが動くのを待つより、こちらから合図を出す日。何を始めるのかを、はっきり口に出してください。"],"2":["任せることで育つ力","一人で背負うより、得意な人と分けたほうが遠くへ行けます。今日は一つ、人に任せてみる。"],"3":["声に乗る本気の理由","伝えたい理由がはっきりしていると、本気の熱がまっすぐ届きます。飾らずに、そのまま伝えてください。"],"4":["一段ずつが近道になる","大きく動かす力に、確かな手順が加わります。急がず、一段ずつ進めていく。"],"5":["力を入れる場所を変える","同じ目標へ向かう道は、いくつもあります。うまくいかないやり方は、そろそろ変えてください。"],"6":["頼もしさが誰かの盾になる","守りたい人のためなら、いつもより強い声を出せます。言うべきことを、言ってしまう。"],"7":["立ち止まって無駄を知る","走り続ける力がある人ほど、立ち止まったときの発見は大きいもの。いったん手を止めて、見直してください。"],"8":["積んだ力を惜しみなく","積んできたものを、出し惜しみせず使える日。持っている力を、今日は全部出してみる。"],"9":["終止符のあとに空く手","終えるべきことに終止符を打てば、手も時間も空きます。引きずっていたものを、今日で終わらせてください。"],"11":["経験が先に出す答え","数字や理屈を確かめる前に、方向が見えることがあります。説明はあとにして、まず動く。"],"22":["先まで残る仕事を描く","目先の成果だけでなく、その先まで残るものに目が向きます。十年後も残っていてほしいものを、一つ選んでください。"],"33":["得た力を必要な場所へ回す","手にしたものを必要な場所へ回すと、次の意欲が返ってきます。得たものを、ひとつ誰かへ渡す。"]},"9":{"1":["自分の望みにも順番が回る","周りを受け止めてきた人が、自分の思いから動き出せる朝。後回しにしていた望みを、一つ叶えてください。"],"2":["違う立場のあいだに橋をかける","違う立場の人たちにも、重なる部分はあります。両方に共通することを、言葉にしてみる。"],"3":["少し離れて見えること","一つの出来事を、少し離れた場所から語れる日。詰まっている人に、別の見方を渡してあげてください。"],"4":["思いやりに持てる枠を決める","何もかも抱えなくても、思いやりは失われません。今日は引き受ける量を、先に決めておく。"],"5":["遠い世界に触れる","普段は接点のない場所や考え方に触れられます。知らない世界のものに、一つ触れてみてください。"],"6":["いちばん近くの小さな変化","広いところへ向いていた目を、足元に戻せる日。いちばん近くにいる人に、声をかけてみる。"],"7":["肩から下ろす人の思い","人の思いまで抱えてきた肩を、少し休ませられます。今日は誰の相談も受けず、休んでください。"],"8":["全体を見る目を生かす","全体を見渡せるから、目の前の勝ち負けに寄らない判断ができます。急がず、広いほうの答えを選ぶ。"],"9":["空いた場所に入る光","役目を終えたものを手放せば、空いた場所ができます。もう戻らないものを、今日で見送ってください。"],"11":["出来事のその先を感じる","目の前の出来事を少し遠くから見ると、先の筋道が浮かびます。浮かんだ予感を、書き留めておく。"],"22":["願いと現実をつなぐ道","心にあった願いへ、「まず何からできるか」が加わります。その最初の一つを、今日決めてください。"],"33":["ただ役に立てたら、という心","ただ役に立てたらうれしい。見返りを考えず、手を差し出してみる。"]},"11":{"1":["ひらめきの続きを手元で書く","ふと浮かんだことへ小さく手を動かすと、直感に続きが書けます。浮かんだことを、一つだけ試してみてください。"],"2":["感じすぎた心の戻り道","相手の声の奥まで受け取った日は、こちらへ戻る間も同じくらい大切です。人と会ったあと、静かな時間を取っておく。"],"3":["感覚にぴたりと合う言葉","うまく説明できなかった感覚に、ぴたりと合う言い方が見つかります。しっくりきた言い方を、覚えておいてください。"],"4":["一瞬の気づきを残す","一瞬の気づきも、文字に残すと使える知恵になります。今日浮かんだことを、その場で書き留める。"],"5":["「何かありそう」を追ってみる","「何かありそう」という感覚が、新しい場所へ心を向けます。理由が分からなくても、行ってみてください。"],"6":["言葉になる前の困りごと","本人もまだ言葉にできない困りごとに、そっと触れられる日。言い当てず、隣で聞いていてあげる。"],"7":["何も入れない時間","音や情報から少し離れると、聞こえなかった心の声が戻ります。今日は何も入れない時間を作ってください。"],"8":["頭の景色を現実に置く","頭に浮かんだ景色を、今日は手元の行動へ。メモを一行、連絡を一本。それだけで十分です。"],"9":["手放して澄む心","もう要らない思いや情報が離れると、大事なものが際立ちます。抱えている情報を、今日ひとつ手放してください。"],"11":["心に残る小さな気配","普段なら通り過ぎる気配が、ふと心に残ります。意味は分からなくていいので、覚えておく。"],"22":["イメージに輪郭がつく","心の中だけにあったイメージへ、日付や手順を書き足せます。思い描いていることに、期日を一つ入れてください。"],"33":["正しさより言葉の温度","見えていることに温度を添えると、心まで届く言い方になります。正しさより、あたたかい伝え方を選ぶ。"]},"22":{"1":["設計図に最初の一本を引く","頭の中の設計図へ、まず一本。壮大な構想でも、今日できる一手から始めてください。"],"2":["大きな仕事を仲間と分ける","大きな仕事は、信頼できる人と分けるほど進めやすくなります。抱えている役割を、一つ手放してみる。"],"3":["同じ景色を言葉にする","思い描いていることを言葉にすると、相手も意見を返せます。頭の中にあるものを、誰かに話してください。"],"4":["夢を支える小さな部品","大きな構想ほど、日付や担当、必要な道具がものを言います。いつ・誰が、を今日決めてしまう。"],"5":["目指す場所は変えない","計画の一部を変えても、目指す場所まで変える必要はありません。合わない手順だけ、直しておく。"],"6":["思いやりを仕組みに残す","一人を助けた方法の中に、多くの人へ届く芽が隠れています。その助け方を、手順に書き起こしてください。"],"7":["急がず引き直す線","前へ進む手をいったん止め、図面を見直せる日。急がず、一度全体を引き直してみる。"],"8":["準備がかみ合う瞬間","準備してきたものがかみ合い、止まっていた仕事が動きます。迷わず、進めてください。"],"9":["完成の隣に次の芽","長く作ってきたものが形になります。仕上げたら、次に作りたいものを一つ書いておく。"],"11":["一瞬で見える完成形","考え続けてきたものの完成形が、ふっと浮かびます。浮かんだ全体像を、忘れないうちに描いてください。"],"22":["遠くへ届き、長く残る形","自分だけで終わらず、長く残り、多くの人へ届く仕事。十年後も使われているものを一つ選んで、今日から手をつける。"],"33":["必要な人が使える形にする","積み上げてきたものを、必要な人が使える形にできます。自分がいなくても回るよう、渡し方を決めてください。"]},"33":{"1":["合図を待たず差し出す手","相手の合図を待つ前に、自然と手が動く日。気になった人に、こちらから声をかけてみてください。"],"2":["解決しなくてもそばにいる","答えを出せなくても、そばにいることはできます。解決しようとせず、話を聞く。"],"3":["伝えそびれた優しさ","伝えそびれていた思いが、やわらかな言葉になります。言えずにいたことを、今日伝えてください。"],"4":["自分を休ませる支え方","頑張り続けなくても回る支え方を、考えられる日。続かないやり方は、そろそろ変えてしまう。"],"5":["思いを少し遠くまで届ける","身近な人にしてきたことを、もう少し外側へ。まだ話したことのない人に、声をかけてみる。"],"6":["頼られても選んでいい","頼りにされる場面が重なる朝。できることだけを選んで、あとは断ってかまいません。"],"7":["自分の疲れにも気づく","人の痛みに気づくのと同じ目で、自分の疲れも見られる日。今日は早めに休んでください。"],"8":["あたたかさと頼もしさ","思うだけでなく、時間を取る、手を動かす、連絡する。具体的な助けを一つ、実際にやってみる。"],"9":["果たした役目を手放す","十分に果たした役目なら、そっと手放しても大丈夫。続けてきたことを、今日で一つ終わらせてください。"],"11":["声を上げない人に気づく","人の輪の中で、声を上げずにいる人へ目が向きます。その人に、一言だけ話しかけてみる。"],"22":["一人への思いを手順に残す","一人ひとりにしてきたことを、誰でも使える手順に置き換えられます。繰り返している手助けを、書き出してください。"],"33":["あたたかさの輪に自分も入る","差し出した親切が、別の親切へつながります。受け取る側にも、回ってみる。"]}};
+
+  // 日付はすべてローカル時刻で扱う。UTCへ直すと日本の朝が前日にずれる。
+  const pad2 = (n) => String(n).padStart(2, "0");
+  const ymd = (d) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+  const fromYmd = (s) => { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d); };
+  const addDays = (s, n) => { const d = fromYmd(s); d.setDate(d.getDate() + n); return ymd(d); };
+  const DOW = ["日", "月", "火", "水", "木", "金", "土"];
+
+  // 祝日（祝日法にもとづく計算。春分・秋分の近似式が有効な1980〜2099年が対象）。
+  // ⚠️ 式典などの臨時の祝日、法改正による移動は含まない。
+  const holidayCache = {};
+  function holidaysOf(year) {
+    if (holidayCache[year]) return holidayCache[year];
+    const map = {};
+    const key = (m, d) => `${year}-${pad2(m)}-${pad2(d)}`;
+    const nthMonday = (m, n) => 1 + ((8 - new Date(year, m - 1, 1).getDay()) % 7) + (n - 1) * 7;
+    const y = year - 1980;
+    const leap = Math.floor(y / 4);
+    const shunbun = Math.floor(20.8431 + 0.242194 * y - leap);
+    const shubun = Math.floor(23.2488 + 0.242194 * y - leap);
+    [
+      [1, 1, "元日"], [1, nthMonday(1, 2), "成人の日"],
+      [2, 11, "建国記念の日"], [2, 23, "天皇誕生日"],
+      [3, shunbun, "春分の日"],
+      [4, 29, "昭和の日"], [5, 3, "憲法記念日"], [5, 4, "みどりの日"], [5, 5, "こどもの日"],
+      [7, nthMonday(7, 3), "海の日"], [8, 11, "山の日"],
+      [9, nthMonday(9, 3), "敬老の日"], [9, shubun, "秋分の日"],
+      [10, nthMonday(10, 2), "スポーツの日"],
+      [11, 3, "文化の日"], [11, 23, "勤労感謝の日"],
+    ].forEach(([m, d, name]) => { map[key(m, d)] = name; });
+    // 振替休日：日曜と重なった祝日の、次にくる休日でない日
+    Object.keys(map).sort().forEach((k) => {
+      if (fromYmd(k).getDay() !== 0) return;
+      let d = addDays(k, 1);
+      while (map[d]) d = addDays(d, 1);
+      map[d] = "振替休日";
+    });
+    // 国民の休日：祝日と祝日に挟まれた日（日曜を除く）
+    Object.keys(map).sort().forEach((k) => {
+      const mid = addDays(k, 1);
+      if (map[addDays(k, 2)] && !map[mid] && fromYmd(mid).getDay() !== 0) map[mid] = "国民の休日";
+    });
+    holidayCache[year] = map;
+    return map;
+  }
+  const holidayName = (date) => holidaysOf(+date.slice(0, 4))[date] || "";
+
+  // localStorage は端末の設定によっては例外を投げる。ここで止まると記録画面
+  // ごと動かなくなるので、必ず握りつぶして続行する。
+  let recordStoreOK = true;
+  function loadRecords() {
+    try {
+      const raw = localStorage.getItem(RECORD_KEY);
+      if (raw) return JSON.parse(raw) || {};
+    } catch (err) {
+      recordStoreOK = false;
+    }
+    return {};
+  }
+  // 🚨 成否を必ず返す。呼び出し側が「保存しました」を出すかどうかの判断に使う。
+  //    失敗を黙って飲み込むと、書いたのに消えたという最悪の形になる。
+  function saveRecords() {
+    try {
+      localStorage.setItem(RECORD_KEY, JSON.stringify(myRecords));
+      return true;
+    } catch (err) {
+      // 保存の上限に当たったときだけ、原因が分かる案内を出す。
+      if (err && (err.name === "QuotaExceededError" || err.code === 22)) {
+        alert("保存できる量をこえました。\n\n書き残した文章が多いのかもしれません。\n古いものをいくつか消してみてください。");
+        return false;
+      }
+      recordStoreOK = false;
+      return false;
+    }
+  }
+  let myRecords = loadRecords();
+
+  // 体験・無料の方に見せる見本。今日を起点に作るので、いつ開いても
+  // 「最近つけた記録」に見える。保存はしない。
+  function buildSampleRecords() {
+    const t = ymd(new Date());
+    const mk = (choice, note) => ({ choice, note, sample: true });
+    // 「あなたの過ごし方」が集計として意味を持つ量まで入れてある。
+    // 少ないと、有料で何ができるようになるのかが伝わらないため。
+    // 日が飛んでいるのは、記録しなかった日があるという想定（記録は任意）。
+    return {
+      [addDays(t, -1)]: mk("休んだ・ゆるめた", "午後は家で映画を見た"),
+      [addDays(t, -2)]: mk("こつこつ取り組んだ", ""),
+      [addDays(t, -4)]: mk("人の力になった", ""),
+      [addDays(t, -5)]: mk("決めた・進めた", "先延ばしにしていた連絡をした"),
+      [addDays(t, -6)]: mk("表した・話した", ""),
+      [addDays(t, -9)]: mk("ひとりで考えた", ""),
+      [addDays(t, -11)]: mk("動いた・変えた", ""),
+      [addDays(t, -12)]: mk("休んだ・ゆるめた", ""),
+      [addDays(t, -14)]: mk("人に合わせた", ""),
+      [addDays(t, -16)]: mk("決めた・進めた", ""),
+      [addDays(t, -18)]: mk("こつこつ取り組んだ", ""),
+      [addDays(t, -19)]: mk("休んだ・ゆるめた", "早めに切り上げて眠った"),
+      [addDays(t, -23)]: mk("ひとりで考えた", ""),
+      [addDays(t, -26)]: mk("人の力になった", ""),
+    };
+  }
+
+  const recordEl = document.getElementById("record");
+  const recordOpenBtn = document.getElementById("record-open-btn");
+  const recordBackBtn = document.getElementById("record-back-btn");
+  const recordSampleEl = document.getElementById("record-sample");
+  const recordTabCal = document.getElementById("record-tab-cal");
+  const recordTabSummary = document.getElementById("record-tab-summary");
+  const recordCalEl = document.getElementById("record-cal");
+  const recordSummaryEl = document.getElementById("record-summary");
+  const calLabelEl = document.getElementById("cal-label");
+  const calGridEl = document.getElementById("cal-grid");
+  const daySheetEl = document.getElementById("day-sheet");
+  const dayMaskEl = document.getElementById("day-mask");
+  const dayCloseBtn = document.getElementById("day-close");
+
+  let recordToday = ymd(new Date());
+  let calView = fromYmd(recordToday);
+  let calSelected = recordToday;
+  let sampleRecords = buildSampleRecords();
+
+  // 見本モードかどうか。体験の人には入口を見せるが、書き込みはここで止める。
+  // 画面を薄くするだけでは、書き込める抜け道が残るため。
+  const isSampleMode = () => currentRole === "trial";
+  const activeRecords = () => (isSampleMode() ? sampleRecords : myRecords);
+
+  // 生年月日が入っていないと、その日の数字も言葉も出せない。
+  function birthReduced() {
+    const y = parseInt(birthYearInput.value, 10);
+    const m = parseInt(birthMonthInput.value, 10);
+    const d = parseInt(birthDayInput.value, 10);
+    if (!Number.isInteger(y) || !Number.isInteger(m) || !Number.isInteger(d)) return null;
+    if (y < 1900 || y > 2100 || m < 1 || m > 12 || d < 1 || d > 31) return null;
+    return calcLifePathNumber(y, m, d);
+  }
+
+  // その日の3つの数字。計算式はメイン画面と同じ関数をそのまま使う
+  // （片方だけ直すと、表示と記録で数字が食い違う）。
+  function numbersOn(dateStr) {
+    const lp = birthReduced();
+    if (!lp) return null;
+    const d = fromYmd(dateStr);
+    const py = calcPersonalYearNumber(lp.rMonth, lp.rDay, d.getFullYear());
+    const pm = calcPersonalMonthNumber(py, d.getMonth() + 1);
+    const pd = calcPersonalDayNumber(pm, d.getDate());
+    return { lifePath: lp.value, year: py, month: pm, day: pd };
+  }
+
+  // その日に届いた（届く）言葉。記録に残っていればそれを優先する。
+  // 文章を後から書き直しても、過去の記録に出ていた言葉が変わらないようにするため。
+  function wordOn(dateStr) {
+    const saved = activeRecords()[dateStr];
+    if (saved && saved.word) return saved.word;
+    const nums = numbersOn(dateStr);
+    if (!nums) return null;
+    const row = MORNING_WORDS[String(nums.lifePath)];
+    if (!row) return null;
+    return row[String(nums.day)] || null;
+  }
+
+  function renderCalendar() {
+    const y = calView.getFullYear();
+    const mo = calView.getMonth();
+    calLabelEl.textContent = `${mo + 1}月`;
+    const small = document.createElement("small");
+    small.textContent = `${y}年`;
+    calLabelEl.appendChild(small);
+
+    const first = new Date(y, mo, 1);
+    const start = new Date(first);
+    start.setDate(1 - first.getDay());
+    const last = new Date(y, mo + 1, 0);
+    const cells = Math.ceil((first.getDay() + last.getDate()) / 7) * 7;
+
+    calGridEl.textContent = "";
+    DOW.forEach((name, i) => {
+      const h = document.createElement("div");
+      h.className = "cal-dow" + (i === 0 ? " sun" : "") + (i === 6 ? " sat" : "");
+      h.textContent = name;
+      calGridEl.appendChild(h);
+    });
+
+    const recs = activeRecords();
+    for (let i = 0; i < cells; i++) {
+      const d = new Date(start);
+      d.setDate(start.getDate() + i);
+      const key = ymd(d);
+      const holi = holidayName(key);
+      const cell = document.createElement("button");
+      cell.type = "button";
+      cell.className = "cal-cell"
+        + (d.getMonth() !== mo ? " out" : "")
+        + (d.getDay() === 0 ? " sun" : "") + (d.getDay() === 6 ? " sat" : "")
+        + (holi ? " holi" : "")
+        + (key === recordToday ? " today" : "") + (key === calSelected ? " sel" : "");
+      // 記録の無い日には何も出さない。「未記録」という言い方はしない。
+      cell.setAttribute("aria-label",
+        `${d.getMonth() + 1}月${d.getDate()}日${holi ? " " + holi : ""}`
+        + (recs[key] ? " 記録あり" : ""));
+      const dn = document.createElement("span");
+      dn.textContent = String(d.getDate());
+      cell.appendChild(dn);
+      if (recs[key]) {
+        const mark = document.createElement("span");
+        mark.className = "cal-mark";
+        cell.appendChild(mark);
+      }
+      cell.addEventListener("click", () => {
+        calSelected = key;
+        if (d.getMonth() !== mo) calView = new Date(d.getFullYear(), d.getMonth(), 1);
+        renderCalendar();
+        openDaySheet();
+      });
+      calGridEl.appendChild(cell);
+    }
+  }
+
+  function renderDaySheet() {
+    const key = calSelected;
+    const d = fromYmd(key);
+    const isFuture = key > recordToday;
+    const sample = isSampleMode();
+    const nums = numbersOn(key);
+    const recs = activeRecords();
+    const rec = recs[key];
+
+    daySheetEl.textContent = "";
+    const box = document.createElement("div");
+    box.className = "day-sheet";
+
+    const h = document.createElement("h3");
+    h.textContent = `${d.getMonth() + 1}月${d.getDate()}日（${DOW[d.getDay()]}）`
+      + (key === recordToday ? "・今日" : "");
+    const holi = holidayName(key);
+    if (holi) {
+      const hs = document.createElement("span");
+      hs.className = "day-holi";
+      hs.textContent = holi;
+      h.appendChild(hs);
+    }
+    box.appendChild(h);
+
+    if (!nums) {
+      const p = document.createElement("p");
+      p.className = "day-msg";
+      p.textContent = "生年月日を入れていただくと、この日の数字と、この日の言葉が出ます。「← 戻る」から入力してください。";
+      box.appendChild(p);
+      daySheetEl.appendChild(box);
+      return;
+    }
+
+    // 先の日付の数字は、見本では伏せる。ここが有料の核のため。
+    const lockNums = sample && isFuture;
+    const nrow = document.createElement("div");
+    nrow.className = "day-nums";
+    // 見ている日が今日でないときに「今年・今月・今日」と書くと、どの日の
+    // 数字なのか分からなくなる。今日かどうかで言い方を変える。
+    const isToday = key === recordToday;
+    const numLabels = isToday
+      ? ["今年の数字", "今月の数字", "今日の数字"]
+      : ["その年の数字", "その月の数字", "その日の数字"];
+    [[numLabels[0], nums.year], [numLabels[1], nums.month], [numLabels[2], nums.day]].forEach(([label, v]) => {
+      const cellEl = document.createElement("div");
+      cellEl.className = "day-num" + (lockNums ? " locked" : "");
+      const s = document.createElement("span");
+      s.textContent = label;
+      const st = document.createElement("strong");
+      st.textContent = lockNums ? "—" : String(v);
+      cellEl.appendChild(s);
+      cellEl.appendChild(st);
+      nrow.appendChild(cellEl);
+    });
+    box.appendChild(nrow);
+
+    if (isFuture) {
+      const p = document.createElement("p");
+      p.className = "day-msg";
+      p.textContent = sample
+        ? "この日の数字は、お使いいただけるようになるとご覧いただけます。先の予定に合わせて、その日がご自身にとってどんな日かを先に知ることができます。"
+        : "この日はまだ来ていません。どう過ごしたかは、その日が来てから残せます。";
+      box.appendChild(p);
+      daySheetEl.appendChild(box);
+      return;
+    }
+
+    // その日に届いた言葉。記録と並べて見えることに意味がある。
+    const word = wordOn(key);
+    if (word) {
+      const w = document.createElement("div");
+      w.className = "day-word";
+      const wl = document.createElement("div");
+      wl.className = "w-label";
+      wl.textContent = isToday ? "今日の言葉" : "この日に届いた言葉";
+      const wh = document.createElement("div");
+      wh.className = "w-head";
+      wh.textContent = word[0];
+      const wb = document.createElement("div");
+      wb.className = "w-body";
+      wb.textContent = word[1];
+      w.appendChild(wl);
+      w.appendChild(wh);
+      w.appendChild(wb);
+      box.appendChild(w);
+    }
+
+    const q = document.createElement("p");
+    q.className = "day-q";
+    q.textContent = "この日はどう過ごしましたか？";
+    box.appendChild(q);
+
+    const grid = document.createElement("div");
+    grid.className = "day-choices";
+    RECORD_CHOICES.forEach((choice) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "day-choice";
+      b.textContent = choice;
+      b.setAttribute("aria-pressed", String(!!rec && rec.choice === choice));
+      b.addEventListener("click", () => {
+        // 見本でも同じように押せるようにする。押しても案内が出るだけでは、
+        // 何が起きる機能なのかが手で分からないため。ただし保存はしない
+        // （見本の記録は画面を離れると作り直され、端末には何も残らない）。
+        const store = sample ? sampleRecords : myRecords;
+        const cur = store[key];
+        if (cur && cur.choice === choice) {
+          // 押し直しで取り消す。書き残しも無ければ、その日の記録ごと消す。
+          if (cur.note) { delete cur.choice; } else { delete store[key]; }
+        } else {
+          store[key] = Object.assign({}, cur, {
+            choice,
+            note: (cur && cur.note) || "",
+            at: new Date().toISOString(),   // 記録した時刻。後から遡って取れない
+            nums: { year: nums.year, month: nums.month, day: nums.day },
+            word: word || null,             // 文章を書き直しても過去は変わらない
+            sample: sample || undefined,
+          });
+        }
+        if (!sample) saveRecords();
+        renderCalendar();
+        renderDaySheet();
+      });
+      grid.appendChild(b);
+    });
+    box.appendChild(grid);
+
+    const nl = document.createElement("label");
+    nl.className = "day-note-label";
+    nl.textContent = "書き残しておきたいこと（任意）";
+    const ta = document.createElement("textarea");
+    ta.className = "day-note";
+    ta.value = (rec && rec.note) || "";
+    const savedMsg = document.createElement("span");
+    savedMsg.className = "day-saved";
+    savedMsg.setAttribute("role", "status");
+    nl.appendChild(savedMsg);
+
+    // 🚨 「保存」ボタンは置かない。押し忘れという新しい失敗が生まれ、日記では
+    //    「書いたのに消えた」が最も起きてはいけないため。代わりに、
+    //    打鍵が止まったら自動で保存し、保存できたことを目で分かるようにする。
+    let savedTimer = null;
+    const showSaved = (ok) => {
+      const failed = !sample && !ok;
+      savedMsg.textContent = sample ? "見本のため残りません"
+        : failed ? "保存できませんでした。画面を閉じると消えます。" : "保存しました";
+      savedMsg.classList.toggle("is-warn", failed);
+      savedMsg.classList.add("is-on");
+      clearTimeout(savedTimer);
+      // 失敗した表示は消さずに残す。目を離した隙に消えると、書いた人は
+      // 保存できたものと思い込んだまま画面を閉じてしまう。
+      if (!failed) savedTimer = setTimeout(() => savedMsg.classList.remove("is-on"), 2200);
+    };
+    const writeNote = () => {
+      clearTimeout(noteTimer);
+      pendingNote = null;
+      const text = ta.value.trim();
+      const store = sample ? sampleRecords : myRecords;
+      const cur = store[key];
+      const unchanged = text === ((cur && cur.note) || "");
+      if (!text && (!cur || !cur.choice)) { delete store[key]; }
+      else {
+        store[key] = Object.assign({}, cur, {
+          note: text,
+          at: (cur && cur.at) || new Date().toISOString(),
+          nums: { year: nums.year, month: nums.month, day: nums.day },
+          word: (cur && cur.word) || word || null,
+          sample: sample || undefined,
+        });
+      }
+      const saved = sample ? true : saveRecords();
+      renderCalendar();   // ⚠️ renderDaySheet は呼ばない。打っている欄が消えるため
+      if (!unchanged) showSaved(saved);
+    };
+    ta.addEventListener("input", () => {
+      clearTimeout(noteTimer);
+      pendingNote = writeNote;              // 閉じる・離れるときの取りこぼし用
+      noteTimer = setTimeout(writeNote, 700);
+    });
+    ta.addEventListener("change", writeNote);   // 欄の外をタップしたとき
+    nl.appendChild(ta);
+    box.appendChild(nl);
+
+    if (sample) {
+      const p = document.createElement("p");
+      p.className = "day-msg";
+      p.textContent = "見本のため、選んだ内容はこの端末に残りません。お使いいただけるようになると、そのまま残ります。";
+      box.appendChild(p);
+    }
+
+    if (!recordStoreOK) {
+      const p = document.createElement("p");
+      p.className = "day-msg";
+      p.textContent = "この端末では記録を保存できない設定になっています。書いた内容は、画面を閉じると消えます。";
+      box.appendChild(p);
+    }
+
+    daySheetEl.appendChild(box);
+  }
+
+  function renderSummary() {
+    const recs = activeRecords();
+    const keys = Object.keys(recs).filter((k) => recs[k].choice);
+    recordSummaryEl.textContent = "";
+
+    // 何も無いときは、件数を出さない。やることを1つだけ示す。
+    if (!keys.length) {
+      const box = document.createElement("div");
+      box.className = "record-empty";
+      const s = document.createElement("strong");
+      s.textContent = "ここから、あなたの記録が始まります。";
+      box.appendChild(s);
+      box.appendChild(document.createTextNode(
+        "その日をどう過ごしたかを、ひとつ選ぶだけ。書きたい日は、文章も残せます。記録する日は、あなたの自由です。"
+      ));
+      const p = document.createElement("p");
+      p.className = "day-msg";
+      p.textContent = "「カレンダー」から、先の日付を選んでみてください。その日がご自身にとってどんな日かを、先に見ることができます。";
+      box.appendChild(p);
+      recordSummaryEl.appendChild(box);
+      return;
+    }
+
+    const counts = {};
+    keys.forEach((k) => { counts[recs[k].choice] = (counts[recs[k].choice] || 0) + 1; });
+    // 並び順は選択肢の並びで固定する。多い順にすると順位付けになるため。
+    // 一度も選んでいないものは出さない（0が並ぶ画面にしない）。
+    const shown = RECORD_CHOICES.filter((c) => counts[c]);
+
+    const lead = document.createElement("p");
+    lead.className = "sum-lead";
+    lead.textContent = "これまでの記録の中で、こう過ごした日がありました。";
+    recordSummaryEl.appendChild(lead);
+
+    const days = document.createElement("p");
+    days.className = "sum-days";
+    days.textContent = `これまでに ${keys.length}日 記録しました。`;
+    recordSummaryEl.appendChild(days);
+
+    if (keys.length < SUMMARY_MIN) {
+      // まだ少ない。回数を出すと、偶然の揺れを傾向として読ませてしまう。
+      const wrap = document.createElement("div");
+      wrap.className = "sum-plain";
+      shown.forEach((c) => {
+        const s = document.createElement("span");
+        s.textContent = c;
+        wrap.appendChild(s);
+      });
+      recordSummaryEl.appendChild(wrap);
+    } else {
+      const max = Math.max(...shown.map((c) => counts[c]));
+      const rows = document.createElement("div");
+      rows.className = "sum-rows";
+      shown.forEach((c) => {
+        const row = document.createElement("div");
+        row.className = "sum-row";
+        const label = document.createElement("div");
+        label.className = "sum-label";
+        label.textContent = c;
+        const count = document.createElement("div");
+        count.className = "sum-count";
+        count.textContent = `${counts[c]}日`;
+        const bar = document.createElement("div");
+        bar.className = "sum-bar";
+        const fill = document.createElement("span");
+        fill.style.width = `${Math.round((counts[c] / max) * 100)}%`;
+        bar.appendChild(fill);
+        row.appendChild(label);
+        row.appendChild(count);
+        row.appendChild(bar);
+        rows.appendChild(row);
+      });
+      recordSummaryEl.appendChild(rows);
+
+      const later = document.createElement("p");
+      later.className = "sum-later";
+      later.textContent = "記録が重なってくると、数字ごとの見え方も出せるようになります。";
+      recordSummaryEl.appendChild(later);
+    }
+  }
+
+  // 下から出すパネルの開け閉め。開いている間は裏の画面を動かさない
+  // （スマホでパネルの中をスクロールしたとき、裏の月表まで一緒に動くのを防ぐ）。
+  // 書きかけの書き残しを、閉じる・画面を離れる直前に必ず書き込む。
+  // これが無いと、打ったまま × を押した分が消える。
+  let noteTimer = null;
+  let pendingNote = null;
+  function flushNote() {
+    if (!pendingNote) return;
+    const run = pendingNote;
+    pendingNote = null;
+    run();
+  }
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") flushNote();
+  });
+  window.addEventListener("pagehide", flushNote);
+
+  let dayScrollY = 0;
+  function openDaySheet() {
+    renderDaySheet();
+    dayScrollY = window.scrollY;
+    dayMaskEl.classList.remove("hidden");
+    document.body.classList.add("day-locked");
+    document.body.style.top = `-${dayScrollY}px`;
+    dayCloseBtn.focus();
+  }
+  function closeDaySheet() {
+    flushNote();   // 打ったまま閉じても消えないようにする
+    if (dayMaskEl.classList.contains("hidden")) return;
+    dayMaskEl.classList.add("hidden");
+    document.body.classList.remove("day-locked");
+    document.body.style.top = "";
+    window.scrollTo(0, dayScrollY);
+  }
+  dayCloseBtn.addEventListener("click", closeDaySheet);
+  dayMaskEl.addEventListener("click", (e) => {
+    if (e.target === dayMaskEl) closeDaySheet();   // 背景をタップしたときだけ閉じる
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeDaySheet();
+  });
+
+  function showRecordTab(which) {
+    const cal = which === "cal";
+    recordTabCal.setAttribute("aria-selected", String(cal));
+    recordTabSummary.setAttribute("aria-selected", String(!cal));
+    recordCalEl.classList.toggle("hidden", !cal);
+    recordSummaryEl.classList.toggle("hidden", cal);
+    closeDaySheet();
+    if (cal) { renderCalendar(); } else { renderSummary(); }
+  }
+
+  recordTabCal.addEventListener("click", () => showRecordTab("cal"));
+  recordTabSummary.addEventListener("click", () => showRecordTab("summary"));
+
+  document.getElementById("cal-prev").addEventListener("click", () => {
+    calView = new Date(calView.getFullYear(), calView.getMonth() - 1, 1);
+    renderCalendar();
+  });
+  document.getElementById("cal-next").addEventListener("click", () => {
+    calView = new Date(calView.getFullYear(), calView.getMonth() + 1, 1);
+    renderCalendar();
+  });
+
+  recordOpenBtn.addEventListener("click", () => {
+    // 開きっぱなしで日をまたぐことがあるので、開くたびに今日を取り直す。
+    recordToday = ymd(new Date());
+    calView = fromYmd(recordToday);
+    calView.setDate(1);
+    calSelected = recordToday;
+    if (isSampleMode()) sampleRecords = buildSampleRecords();
+    recordSampleEl.classList.toggle("hidden", !isSampleMode());
+    appEl.classList.add("hidden");
+    recordEl.classList.remove("hidden");
+    showRecordTab("cal");
+    window.scrollTo(0, 0);
+  });
+
+  recordBackBtn.addEventListener("click", () => {
+    flushNote();
+    closeDaySheet();
+    recordEl.classList.add("hidden");
     appEl.classList.remove("hidden");
     window.scrollTo(0, 0);
   });
