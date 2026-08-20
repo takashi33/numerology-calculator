@@ -1416,7 +1416,8 @@
   #record {
     max-width: 460px;
     margin: 0 auto;
-    padding: calc(28px + env(safe-area-inset-top)) 20px 24px;
+    /* 左右と下は詰める。空いた分はすべてカレンダーの枠に回る。 */
+    padding: calc(24px + env(safe-area-inset-top)) 10px 12px;
     animation: fadeIn 0.4s ease;
     /* 画面の高さいっぱいに積み、余った高さはカレンダーへ渡す。
        枠の大きさを横幅から決めていたため、下に大きく余白が残っていた。 */
@@ -1435,7 +1436,7 @@
   }
   #record.hidden { display: none; }
 
-  .record-tabs { display: flex; gap: 6px; margin: 4px 0 16px; }
+  .record-tabs { display: flex; gap: 6px; margin: 2px 0 10px; }
   .record-tab {
     flex: 1; padding: 9px 4px;
     font-family: var(--font-body); font-size: 12.5px; font-weight: 700;
@@ -1455,7 +1456,7 @@
   }
   .record-sample-banner strong { display: block; margin-bottom: 2px; }
 
-  .cal-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+  .cal-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
   .cal-label { font-family: var(--font-display); font-size: 19px; color: var(--gold); }
   .cal-label small { font-size: 12px; color: var(--ink-faint); margin-left: 6px; }
   .cal-move {
@@ -1464,21 +1465,23 @@
     border-radius: 8px; cursor: pointer;
   }
   .cal-grid {
-    display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px;
+    display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px;
     /* 1行目は曜日なので伸ばさない。2行目から下が均等に高さを分け合う。 */
     grid-template-rows: auto; grid-auto-rows: 1fr;
     flex: 1 1 auto; min-height: 0;
   }
-  .cal-dow { text-align: center; font-size: 10.5px; color: var(--ink-faint); padding: 2px 0 4px; }
+  .cal-dow { text-align: center; font-size: 12px; color: var(--ink-faint); padding: 2px 0 4px; }
   .cal-dow.sun { color: #e8a8a8; }
   .cal-dow.sat { color: #a8bfe8; }
   .cal-cell {
     /* 高さは行から受け取る。横幅に縛ると、画面の下が余ってしまう。 */
     position: relative; min-height: 46px;
-    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
-    font-family: var(--font-body); font-size: 14px; color: var(--ink);
+    /* 枠が縦に伸びるので、数字は上に寄せる。真ん中だと枠の中で浮いて見え、
+       記録の印を置く余地も無くなる。 */
+    display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 3px;
+    font-family: var(--font-body); font-size: 17px; color: var(--ink);
     background: rgba(255, 255, 255, 0.04); border: 1px solid transparent;
-    border-radius: 7px; cursor: pointer; padding: 0;
+    border-radius: 7px; cursor: pointer; padding: 7px 0 0;
   }
   .cal-cell.out { opacity: 0.3; }
   .cal-cell.sun, .cal-cell.holi { color: #e8a8a8; }
@@ -1492,7 +1495,7 @@
   /* 題名と「？」を横に並べる。説明を隠したぶん、カレンダーを大きくしている。 */
   .record-title-row {
     display: flex; align-items: center; justify-content: center; gap: 8px;
-    margin: 0 0 14px;
+    margin: 0 0 10px;
   }
   .record-title-row .library-h1 { margin: 0; }
   .record-help-btn {
@@ -1510,6 +1513,7 @@
   .help-mask.hidden { display: none; }
   .help-panel {
     position: relative; width: 100%; max-width: 420px;
+    max-height: 80vh; overflow-y: auto; overscroll-behavior: contain;
     padding: 20px 18px; background: #1b1039;
     border: 1px solid var(--card-border); border-radius: 18px;
   }
@@ -1518,6 +1522,7 @@
     font-family: var(--font-display); font-size: 16px; font-weight: 400; color: var(--gold);
   }
   .help-panel p { margin: 0; font-size: 13px; line-height: 1.9; color: var(--ink-soft); }
+  .help-panel p + p { margin-top: 12px; }
 
   .day-mask {
     position: fixed; inset: 0; z-index: 40;
@@ -1866,7 +1871,6 @@
       <button type="button" class="cal-move" id="cal-next" aria-label="次の月へ">›</button>
     </div>
     <div class="cal-grid" id="cal-grid"></div>
-    <p class="cal-hint">日付をタップすると、その日の言葉と記録が出ます。</p>
   </div>
 
   <div id="record-summary" class="hidden"></div>
@@ -1878,6 +1882,8 @@
       <button type="button" id="record-help-close" class="day-close" aria-label="閉じる">×</button>
       <h2 id="record-help-title">この画面でできること</h2>
       <p>その日に届いた言葉と、どう過ごしたかを並べて残します。<br>選ぶのはひとつだけ。書きたい日は、文章も残せます。</p>
+      <p>日付をタップすると、その日の言葉と記録が出ます。</p>
+      <p>いまは、この端末の中だけに保存します。今後の開発の状況によっては、この端末の外に控えを持つ形になる可能性があります。その場合は、事前にお知らせします。</p>
     </div>
   </div>
 
@@ -1890,7 +1896,6 @@
     </div>
   </div>
 
-  <p class="record-save-note">いまは、この端末の中だけに保存します。今後の開発の状況によっては、この端末の外に控えを持つ形になる可能性があります。その場合は、事前にお知らせします。</p>
 </div>
 
 <div id="qr-modal" class="hidden">
