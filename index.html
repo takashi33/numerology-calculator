@@ -1452,9 +1452,10 @@
   .cal-dow.sun { color: #e8a8a8; }
   .cal-dow.sat { color: #a8bfe8; }
   .cal-cell {
-    position: relative; aspect-ratio: 1 / 1; min-height: 38px;
+    /* 説明文を隠して空いた高さを、日付の枠に回している。 */
+    position: relative; aspect-ratio: 1 / 1.14; min-height: 46px;
     display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
-    font-family: var(--font-body); font-size: 13px; color: var(--ink);
+    font-family: var(--font-body); font-size: 14px; color: var(--ink);
     background: rgba(255, 255, 255, 0.04); border: 1px solid transparent;
     border-radius: 7px; cursor: pointer; padding: 0;
   }
@@ -1466,6 +1467,36 @@
   .cal-mark { width: 5px; height: 5px; border-radius: 50%; background: var(--gold); }
 
   .cal-hint { margin: 12px 0 0; font-size: 11.5px; color: var(--ink-faint); text-align: center; }
+
+  /* 題名と「？」を横に並べる。説明を隠したぶん、カレンダーを大きくしている。 */
+  .record-title-row {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    margin: 0 0 14px;
+  }
+  .record-title-row .library-h1 { margin: 0; }
+  .record-help-btn {
+    flex: none; width: 24px; height: 24px; padding: 0;
+    font-family: var(--font-body); font-size: 12px; line-height: 1;
+    color: var(--ink-soft); background: rgba(255, 255, 255, 0.07);
+    border: 1px solid var(--card-border); border-radius: 50%; cursor: pointer;
+  }
+  .help-mask {
+    position: fixed; inset: 0; z-index: 45;
+    display: flex; align-items: center; justify-content: center; padding: 20px;
+    background: rgba(18, 8, 31, 0.62);
+  }
+  /* .hidden と同じ詳細度なので、明示しないと後勝ちで display:flex に戻る。 */
+  .help-mask.hidden { display: none; }
+  .help-panel {
+    position: relative; width: 100%; max-width: 420px;
+    padding: 20px 18px; background: #1b1039;
+    border: 1px solid var(--card-border); border-radius: 18px;
+  }
+  .help-panel h2 {
+    margin: 0 0 10px; padding-right: 34px;
+    font-family: var(--font-display); font-size: 16px; font-weight: 400; color: var(--gold);
+  }
+  .help-panel p { margin: 0; font-size: 13px; line-height: 1.9; color: var(--ink-soft); }
 
   .day-mask {
     position: fixed; inset: 0; z-index: 40;
@@ -1788,8 +1819,10 @@
 
 <div id="record" class="hidden">
   <button type="button" id="record-back-btn" class="library-back">← 戻る</button>
-  <h1 class="library-h1">あなたの記録</h1>
-  <p class="library-sub">その日に届いた言葉と、どう過ごしたかを並べて残します。<br>選ぶのはひとつだけ。書きたい日は、文章も残せます。</p>
+  <div class="record-title-row">
+    <h1 class="library-h1">あなたの記録</h1>
+    <button type="button" id="record-help-btn" class="record-help-btn" aria-label="この画面の説明を見る">？</button>
+  </div>
 
   <div id="record-sample" class="record-sample-banner hidden">
     <strong>これは見本です。あなたの記録ではありません。</strong>
@@ -1813,6 +1846,16 @@
   </div>
 
   <div id="record-summary" class="hidden"></div>
+
+  <!-- 説明は普段は隠し、「？」を押したときだけ中央に出す。常に出しておくと
+       カレンダーの入る高さがその分減るため（2026-08-20 依頼者の指示）。 -->
+  <div id="record-help" class="help-mask hidden">
+    <div class="help-panel" role="dialog" aria-modal="true" aria-labelledby="record-help-title">
+      <button type="button" id="record-help-close" class="day-close" aria-label="閉じる">×</button>
+      <h2 id="record-help-title">この画面でできること</h2>
+      <p>その日に届いた言葉と、どう過ごしたかを並べて残します。<br>選ぶのはひとつだけ。書きたい日は、文章も残せます。</p>
+    </div>
+  </div>
 
   <!-- 選んだ日の中身は下から出す。表の下に置くと画面の外に出てしまい、
        開いたことに気づけない（推し活カレンダーの #m-day と同じ作り）。 -->
@@ -4528,6 +4571,9 @@
   const daySheetEl = document.getElementById("day-sheet");
   const dayMaskEl = document.getElementById("day-mask");
   const dayCloseBtn = document.getElementById("day-close");
+  const recordHelpBtn = document.getElementById("record-help-btn");
+  const recordHelpMask = document.getElementById("record-help");
+  const recordHelpCloseBtn = document.getElementById("record-help-close");
 
   let recordToday = ymd(new Date());
   let calView = fromYmd(recordToday);
@@ -4950,8 +4996,23 @@
   dayMaskEl.addEventListener("click", (e) => {
     if (e.target === dayMaskEl) closeDaySheet();   // 背景をタップしたときだけ閉じる
   });
+  function closeRecordHelp() {
+    if (recordHelpMask.classList.contains("hidden")) return;
+    recordHelpMask.classList.add("hidden");
+    recordHelpBtn.focus();
+  }
+  recordHelpBtn.addEventListener("click", () => {
+    recordHelpMask.classList.remove("hidden");
+    recordHelpCloseBtn.focus();
+  });
+  recordHelpCloseBtn.addEventListener("click", closeRecordHelp);
+  recordHelpMask.addEventListener("click", (e) => {
+    if (e.target === recordHelpMask) closeRecordHelp();   // 背景をタップしたときだけ閉じる
+  });
   document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") closeDaySheet();
+    if (e.key !== "Escape") return;
+    closeRecordHelp();
+    closeDaySheet();
   });
 
   function showRecordTab(which) {
