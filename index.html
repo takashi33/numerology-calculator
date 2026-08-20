@@ -179,7 +179,9 @@
   #app {
     max-width: 460px;
     margin: 0 auto;
-    padding: 32px 20px 48px;
+    /* viewport-fit=cover で画面の端まで描くため、上は時計や電池の帯を避ける。
+       帯が無い端末では env() が 0 になるので、見た目は変わらない。 */
+    padding: calc(32px + env(safe-area-inset-top)) 20px 48px;
     animation: fadeIn 0.5s ease;
   }
 
@@ -1008,7 +1010,7 @@
   #library {
     max-width: 460px;
     margin: 0 auto;
-    padding: 28px 20px 56px;
+    padding: calc(28px + env(safe-area-inset-top)) 20px 56px;
     animation: fadeIn 0.4s ease;
   }
 
@@ -1171,7 +1173,7 @@
   #compat {
     max-width: 460px;
     margin: 0 auto;
-    padding: 28px 20px 56px;
+    padding: calc(28px + env(safe-area-inset-top)) 20px 56px;
     animation: fadeIn 0.4s ease;
   }
 
@@ -1407,6 +1409,14 @@
      画面の作りは相性診断（#compat）に合わせてある。保存先は端末の
      localStorage だけで、サーバーへは何も送らない。日付・祝日・月表の
      描き方は、推し活カレンダーで実機に載っているものを流用している。 */
+  /* 🚨 資料メニュー・相性診断と同じ土台を与える。ここが抜けていたため、
+     記録画面だけ余白が無く、「← 戻る」がiPhoneの時計に潜り込んで押せなかった。 */
+  #record {
+    max-width: 460px;
+    margin: 0 auto;
+    padding: calc(28px + env(safe-area-inset-top)) 20px 56px;
+    animation: fadeIn 0.4s ease;
+  }
   #record.hidden { display: none; }
 
   .record-tabs { display: flex; gap: 6px; margin: 4px 0 16px; }
