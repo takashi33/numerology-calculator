@@ -768,7 +768,7 @@
 
   /* 相性診断は同じ人を2回入れれば全ナンバーが読めてしまうため、体験モードでは
      入口ごと出さない（実際の計算も currentRole で止めている）。 */
-  /* 2026-08-19 依頼者の決定で、体験モードでも入口を隠さなくなった。
+  /* 体験モードでも入口は隠さない。
      押すと見本の結果が出る（計算は見本の値で行い、入力欄は読み取り専用にする）。
      記録（カレンダー）と扱いを揃えるため。 */
   .result-card.locked { opacity: .72; }
@@ -1486,7 +1486,46 @@
   .cal-cell.sat { color: #a8bfe8; }
   .cal-cell.today { border-color: var(--gold); }
   .cal-cell.sel { background: rgba(244, 217, 139, 0.18); border-color: var(--gold-deep); }
-  .cal-mark { width: 5px; height: 5px; border-radius: 50%; background: var(--gold); }
+  /* 記録の印。マスの中身が増えたので、右上へ逃がす。 */
+  .cal-mark { position: absolute; top: 6px; right: 5px; width: 5px; height: 5px; border-radius: 50%; background: var(--gold); }
+  .cal-date { position: relative; z-index: 1; }
+  /* その日の数字を、マスの地の模様として敷く。月を開くだけで数字の流れが見える。 */
+  .cal-num {
+    position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-54%);
+    text-align: center; font-family: var(--font-display); font-size: 30px;
+    color: var(--gold); opacity: 0.2; pointer-events: none;
+  }
+  /* 予定のある日は、数字を少し上げて小さくする。文字と重なって読みにくくなるため。 */
+  .cal-cell.has-plans .cal-num { top: 40%; font-size: 23px; opacity: 0.17; }
+  .cal-plans {
+    position: absolute; left: 3px; right: 3px; bottom: 4px; z-index: 1;
+    display: flex; flex-direction: column; gap: 1px;
+  }
+  .cal-plans span {
+    font-size: 10px; line-height: 1.35; color: var(--ink); text-align: left;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .cal-plans .cal-more { color: var(--ink-faint); }
+
+  /* 予定の入力。時刻と内容をその場で直せるようにし、保存ボタンは置かない。 */
+  .plan-block { margin: 14px 0 2px; }
+  .plan-title { font-size: 11.5px; color: var(--ink-faint); margin-bottom: 6px; }
+  .plan-row { display: flex; align-items: center; gap: 6px; margin-bottom: 5px; }
+  .plan-time { flex: none; width: 84px; }
+  .plan-text { flex: 1 1 auto; min-width: 0; }
+  .plan-time, .plan-text {
+    padding: 7px 8px; box-sizing: border-box;
+    /* 🚨 16px を下回らせない。iPhoneは小さい文字の欄に触れると画面ごと拡大する。 */
+    font-family: var(--font-body); font-size: 16px; color: var(--input-ink);
+    background: var(--input-bg); border: 1px solid var(--card-border); border-radius: 8px;
+  }
+  .plan-row.is-new .plan-time, .plan-row.is-new .plan-text { opacity: 0.75; }
+  .plan-del {
+    flex: none; width: 30px; height: 30px; font-size: 15px; line-height: 1;
+    color: var(--ink-soft); background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--card-border); border-radius: 50%; cursor: pointer;
+  }
+  .plan-note { margin: 4px 0 0; font-size: 11.5px; line-height: 1.7; color: var(--ink-faint); }
 
   .cal-hint { margin: 12px 0 0; font-size: 11.5px; color: var(--ink-faint); text-align: center; }
 
@@ -1652,9 +1691,9 @@
   <p class="lead">生年月日と名前（カナ）から、現代数秘術のさまざまな数字を計算します。</p>
 
   <!-- 入口は横1列にまとめる。縦に3つ並べると、計算の入力欄が画面の外へ
-       押し出されて「何をする画面か」が分からなくなるため（2026-08-19 依頼者の指摘）。
+       押し出されて「何をする画面か」が分からなくなるため。
        記録は、相性診断とは扱いを変えて体験モードでも隠さない。押すと見本が
-       開き、有料で何ができるようになるかを見せる。書き込みは currentRole 側で
+       開き、続けて使うと何ができるかを見せる。書き込みは currentRole 側で
        止めてあるので、見えても保存はされない。 -->
   <nav class="app-nav" aria-label="ほかの画面">
     <button type="button" id="library-open-btn" class="app-nav-btn">
@@ -1664,7 +1703,7 @@
       <span class="nav-icon">💞</span>相性診断<small>お二人を並べる</small>
     </button>
     <button type="button" id="record-open-btn" class="app-nav-btn">
-      <span class="nav-icon">📅</span>あなたの記録<small>カレンダー</small>
+      <span class="nav-icon">📔</span>手帳<small>予定と数字</small>
     </button>
   </nav>
 
@@ -1760,7 +1799,7 @@
 
     <!-- 体験・無料体験の人にだけ出す案内（2026-08-15 追加）。
          何がまだ見られていないか（全機能の中身）と、毎朝のお便りの予告。
-         画面設計「6. 有料への入口」に対応する位置＝結果を読み終えた直後。
+         案内を出す位置＝結果を読み終えた直後。
          ⚠️ data-tier="paid" を付けないこと。付けると lockPaidGroupsForTrial()
          の対象になり、体験モードで中身を消される。 -->
     <section id="upgrade-panel" class="upgrade-panel hidden">
@@ -1771,7 +1810,7 @@
         <li><strong>各ナンバーの算出方法</strong>　その数字をどう計算しているかの解説</li>
         <li><strong>各ナンバーの深堀解説</strong>　1〜9とマスターナンバーそれぞれの読み方</li>
         <li><strong>相性診断</strong>　お二人の数字を並べて、役割の違いを読みます</li>
-        <li><strong>あなたの記録</strong>　その日届いた言葉と、どう過ごしたかをカレンダーに残せます</li>
+        <li><strong>手帳</strong>　予定と、その日の数字が同じ場所に並びます。どう過ごしたかも残せます</li>
       </ul>
       <div class="upgrade-coming">
         <h3>まもなく、毎朝のお便りが始まります</h3>
@@ -1847,14 +1886,14 @@
 <div id="record" class="hidden">
   <button type="button" id="record-back-btn" class="library-back">← 戻る</button>
   <div class="record-title-row">
-    <h1 class="library-h1">あなたの記録</h1>
+    <h1 class="library-h1">手帳</h1>
     <button type="button" id="record-help-btn" class="record-help-btn" aria-label="この画面の説明を見る">？</button>
   </div>
 
   <div id="record-sample" class="record-sample-banner hidden">
-    <strong>これは見本です。あなたの記録ではありません。</strong>
-ここに並んでいるのは見本の記録です。ご自身でも押して試せますが、この端末には残りません。<br>
-    お使いいただけるようになると、記録はそのままたまり、先の日付の数字も見られます。
+    <strong>予定は、ご自身のものとして残ります。</strong>
+「どう過ごしたか」の記録だけが見本です。押して試せますが、この端末には残りません。<br>
+    お使いいただけるようになると、記録もそのままたまり、先の日付の数字も見られます。
   </div>
 
   <div class="record-tabs" role="tablist">
@@ -1874,13 +1913,14 @@
   <div id="record-summary" class="hidden"></div>
 
   <!-- 説明は普段は隠し、「？」を押したときだけ中央に出す。常に出しておくと
-       カレンダーの入る高さがその分減るため（2026-08-20 依頼者の指示）。 -->
+       カレンダーの入る高さがその分減るため。 -->
   <div id="record-help" class="help-mask hidden">
     <div class="help-panel" role="dialog" aria-modal="true" aria-labelledby="record-help-title">
       <button type="button" id="record-help-close" class="day-close" aria-label="閉じる">×</button>
       <h2 id="record-help-title">この画面でできること</h2>
-      <p>その日に届いた言葉と、どう過ごしたかを並べて残します。<br>選ぶのはひとつだけ。書きたい日は、文章も残せます。</p>
-      <p>日付をタップすると、その日の言葉と記録が出ます。</p>
+      <p>日付をタップすると、その日を開きます。予定は時刻と内容を書くだけで残ります。保存ボタンはありません。</p>
+      <p>マスの後ろに薄く出ている数字が、その日のあなたの数字です。予定を置くときの目安にしてください。</p>
+      <p>その日に届いた言葉と、どう過ごしたかも並べて残せます。選ぶのはひとつだけ。書きたい日は文章も残せます。</p>
       <p>いまは、この端末の中だけに保存します。今後の開発の状況によっては、この端末の外に控えを持つ形になる可能性があります。その場合は、事前にお知らせします。</p>
     </div>
   </div>
@@ -2536,7 +2576,7 @@
       // デット）は、伏せたカードを並べるだけでも該当の有無が伝わってしまう
       // ため、セクションごと隠す。
       if (section.dataset.trialHide === "true") {
-        // 隠すだけでは値がDOMに残り、開発者ツールから読めてしまう。他の有料
+        // 隠すだけでは値がDOMに残り、開発者ツールから読めてしまう。他の
         // グループと同じく、中身そのものを消してから隠す。
         grid.innerHTML = "";
         section.classList.add("hidden");
@@ -4020,7 +4060,7 @@
     return nav;
   }
 
-  // 体験モードでは、有料記事側の中身にあたる「算出方法」「深堀解説」を伏せる。
+  // 体験モードでは「算出方法」「深堀解説」を伏せる。
   // ローマ字の説明だけは開けておく（記事の無料部分で体験してもらう機能その
   // ものの説明であり、ここを閉じると体験の意味がなくなるため）。
   function isDocLocked(doc) {
@@ -4463,14 +4503,57 @@
   // ものを流用している（同じことを二度書かないため）。
   const RECORD_KEY = "numerology-records-v1";
 
+  // 手帳の予定。記録とは別に持ち、役割にかかわらず書ける。
+  // かたち: { "2026-08-20": [ { t: "14:00", s: "面接" }, ... ] }
+  const PLAN_KEY = "numerology-plans-v1";
+  let planStoreOK = true;
+  function loadPlans() {
+    try {
+      const raw = localStorage.getItem(PLAN_KEY);
+      return raw ? JSON.parse(raw) : {};
+    } catch (err) {
+      planStoreOK = false;
+      return {};
+    }
+  }
+  function savePlans() {
+    try {
+      localStorage.setItem(PLAN_KEY, JSON.stringify(myPlans));
+      return true;
+    } catch (err) {
+      if (err && (err.name === "QuotaExceededError" || err.code === 22)) {
+        alert(["保存できる量をこえました。", "", "古い予定をいくつか消してみてください。"].join(String.fromCharCode(10)));
+        return false;
+      }
+      planStoreOK = false;
+      return false;
+    }
+  }
+  let myPlans = loadPlans();
+  // 時刻の無い予定（終日）を先に、あとは時刻の早い順。手帳の並びに合わせる。
+  function plansOn(key) {
+    return (myPlans[key] || []).slice().sort((a, b) => (a.t || "").localeCompare(b.t || ""));
+  }
+  function addPlan(key, plan) {
+    if (!myPlans[key]) myPlans[key] = [];
+    myPlans[key].push(plan);
+    return savePlans();
+  }
+  function removePlan(key, plan) {
+    const arr = myPlans[key] || [];
+    const i = arr.indexOf(plan);
+    if (i >= 0) arr.splice(i, 1);
+    if (!arr.length) delete myPlans[key];
+    return savePlans();
+  }
+
   // 回数と棒を出し始める件数。これ未満のうちは選択肢の名前だけを並べる。
   // 数件ぶんの偏りは偶然でも出るため、それを傾向として読ませないための線。
-  // 仕様書「記録を見る画面」の表で、回数を出すのは10〜30件からと決めてある。
   const SUMMARY_MIN = 10;
 
-  // 「どう過ごしましたか？」の8つ。順序・語句とも仕様書のとおり。
+  // 「どう過ごしましたか？」の8つ。順序も語句も変えない。
   // ⚠️ 数字との対応表はここに持たせない。持つと「数字どおりでしたね」と
-  // 言いたくなり、記録が数秘術を肯定するだけの装置になる（仕様書の決定）。
+  // 言いたくなり、記録が数秘術を肯定するだけの装置になる。
   const RECORD_CHOICES = [
     "決めた・進めた", "人に合わせた", "表した・話した", "こつこつ取り組んだ",
     "動いた・変えた", "人の力になった", "ひとりで考えた", "休んだ・ゆるめた",
@@ -4565,7 +4648,7 @@
     const t = ymd(new Date());
     const mk = (choice, note) => ({ choice, note, sample: true });
     // 「あなたの過ごし方」が集計として意味を持つ量まで入れてある。
-    // 少ないと、有料で何ができるようになるのかが伝わらないため。
+    // 少ないと、続けたときに何ができるのかが伝わらないため。
     // 日が飛んでいるのは、記録しなかった日があるという想定（記録は任意）。
     return {
       [addDays(t, -1)]: mk("休んだ・ゆるめた", "午後は家で映画を見た"),
@@ -4669,6 +4752,7 @@
     });
 
     const recs = activeRecords();
+    const sampleMode = isSampleMode();
     for (let i = 0; i < cells; i++) {
       const d = new Date(start);
       d.setDate(start.getDate() + i);
@@ -4681,17 +4765,49 @@
         + (d.getDay() === 0 ? " sun" : "") + (d.getDay() === 6 ? " sat" : "")
         + (holi ? " holi" : "")
         + (key === recordToday ? " today" : "") + (key === calSelected ? " sel" : "");
+      const plans = plansOn(key);
       // 記録の無い日には何も出さない。「未記録」という言い方はしない。
       cell.setAttribute("aria-label",
         `${d.getMonth() + 1}月${d.getDate()}日${holi ? " " + holi : ""}`
+        + (plans.length ? ` 予定${plans.length}件` : "")
         + (recs[key] ? " 記録あり" : ""));
       const dn = document.createElement("span");
+      dn.className = "cal-date";
       dn.textContent = String(d.getDate());
       cell.appendChild(dn);
       if (recs[key]) {
         const mark = document.createElement("span");
         mark.className = "cal-mark";
         cell.appendChild(mark);
+      }
+
+      // その日の数字を、薄く大きく敷く。月を開くだけで数字の流れが見える。
+      // 先の日付は見本では伏せる。
+      const cnums = numbersOn(key);
+      if (cnums && !(sampleMode && key > recordToday)) {
+        const wm = document.createElement("span");
+        wm.className = "cal-num";
+        wm.textContent = String(cnums.day);
+        cell.appendChild(wm);
+      }
+
+      // 予定はいちばん下。手帳として最もよく見る情報なので、数字より前に出す。
+      if (plans.length) {
+        cell.classList.add("has-plans");
+        const pl = document.createElement("span");
+        pl.className = "cal-plans";
+        plans.slice(0, 2).forEach((pn) => {
+          const line = document.createElement("span");
+          line.textContent = pn.s;
+          pl.appendChild(line);
+        });
+        if (plans.length > 2) {
+          const more = document.createElement("span");
+          more.className = "cal-more";
+          more.textContent = "＋" + (plans.length - 2);
+          pl.appendChild(more);
+        }
+        cell.appendChild(pl);
       }
       cell.addEventListener("click", () => {
         calSelected = key;
@@ -4701,6 +4817,101 @@
       });
       calGridEl.appendChild(cell);
     }
+  }
+
+  // 予定の1行。時刻と内容をその場で直せる。「保存」を押させない。
+  function planRow(key, plan, redraw) {
+    const row = document.createElement("div");
+    row.className = "plan-row";
+
+    const time = document.createElement("input");
+    time.type = "time";
+    time.className = "plan-time";
+    time.value = plan ? (plan.t || "") : "";
+    time.setAttribute("aria-label", "時刻（入れなくても構いません）");
+
+    const text = document.createElement("input");
+    text.type = "text";
+    text.className = "plan-text";
+    text.value = plan ? (plan.s || "") : "";
+    text.placeholder = plan ? "" : "予定を書く";
+    text.setAttribute("aria-label", "予定の内容");
+
+    const commit = () => {
+      const sv = text.value.trim();
+      const tv = time.value;
+      if (plan) {
+        // 内容を空にしたら、消したものとして扱う（時刻だけの予定は作らない）
+        if (!sv) { removePlan(key, plan); redraw(); renderCalendar(); return; }
+        plan.s = sv; plan.t = tv;
+        savePlans();
+        renderCalendar();
+        return;
+      }
+      // 🚨 内容が入るまでは増やさない。時刻から先に入れる人が多く、そこで行が
+      //    増えてしまうと、続けて書いた内容が別の予定になってしまう。
+      if (!sv) return;
+      addPlan(key, { t: tv, s: sv });
+      redraw(true);
+      renderCalendar();
+    };
+    text.addEventListener("change", commit);
+    time.addEventListener("change", commit);
+
+    row.appendChild(time);
+    row.appendChild(text);
+
+    if (plan) {
+      const del = document.createElement("button");
+      del.type = "button";
+      del.className = "plan-del";
+      del.textContent = "×";
+      del.setAttribute("aria-label", "この予定を消す");
+      del.addEventListener("click", () => {
+        removePlan(key, plan);
+        redraw();
+        renderCalendar();
+      });
+      row.appendChild(del);
+    } else {
+      row.classList.add("is-new");
+    }
+    return row;
+  }
+
+  // 予定は誰でも書ける。数字が出ない日でも、先の日でも書ける。
+  function buildPlanBlock(key) {
+    const wrap = document.createElement("div");
+    wrap.className = "plan-block";
+
+    const title = document.createElement("div");
+    title.className = "plan-title";
+    title.textContent = "予定";
+    wrap.appendChild(title);
+
+    const list = document.createElement("div");
+    list.className = "plan-list";
+    wrap.appendChild(list);
+
+    const draw = (focusNew) => {
+      list.textContent = "";
+      plansOn(key).forEach((pn) => list.appendChild(planRow(key, pn, draw)));
+      // 末尾は常に空の1行。「追加」を押させない ＝ 手が止まらない。
+      list.appendChild(planRow(key, null, draw));
+      if (focusNew) {
+        const next = list.querySelector(".plan-row.is-new .plan-text");
+        if (next) next.focus();
+      }
+    };
+    draw();
+
+    if (!planStoreOK) {
+      const note = document.createElement("p");
+      note.className = "plan-note";
+      note.textContent = "この端末では予定を保存できない設定になっています。書いた内容は、画面を閉じると消えます。";
+      wrap.appendChild(note);
+    }
+    return wrap;
   }
 
   function renderDaySheet() {
@@ -4728,6 +4939,10 @@
     }
     box.appendChild(h);
 
+    // 🚨 予定は数字より前、かつ下の早期リターンより前に置く。
+    //    生年月日が未入力でも、先の日付でも、予定だけは書けるようにするため。
+    box.appendChild(buildPlanBlock(key));
+
     if (!nums) {
       const p = document.createElement("p");
       p.className = "day-msg";
@@ -4737,7 +4952,7 @@
       return;
     }
 
-    // 先の日付の数字は、見本では伏せる。ここが有料の核のため。
+    // 先の日付の数字は、見本では伏せる。
     const lockNums = sample && isFuture;
     const nrow = document.createElement("div");
     nrow.className = "day-nums";
