@@ -1416,8 +1416,22 @@
   #record {
     max-width: 460px;
     margin: 0 auto;
-    padding: calc(28px + env(safe-area-inset-top)) 20px 56px;
+    padding: calc(28px + env(safe-area-inset-top)) 20px 24px;
     animation: fadeIn 0.4s ease;
+    /* 画面の高さいっぱいに積み、余った高さはカレンダーへ渡す。
+       枠の大きさを横幅から決めていたため、下に大きく余白が残っていた。 */
+    display: flex;
+    flex-direction: column;
+    min-height: 100dvh;
+    box-sizing: border-box;
+  }
+  /* 縦に積む作りにしたため、放っておくと戻るボタンが横いっぱいに伸びる。 */
+  #record > .library-back { align-self: flex-start; }
+  #record-cal {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;   /* これが無いと、中身の分だけ縮まなくなる */
   }
   #record.hidden { display: none; }
 
@@ -1449,13 +1463,18 @@
     background: rgba(255, 255, 255, 0.06); border: 1px solid var(--card-border);
     border-radius: 8px; cursor: pointer;
   }
-  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+  .cal-grid {
+    display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px;
+    /* 1行目は曜日なので伸ばさない。2行目から下が均等に高さを分け合う。 */
+    grid-template-rows: auto; grid-auto-rows: 1fr;
+    flex: 1 1 auto; min-height: 0;
+  }
   .cal-dow { text-align: center; font-size: 10.5px; color: var(--ink-faint); padding: 2px 0 4px; }
   .cal-dow.sun { color: #e8a8a8; }
   .cal-dow.sat { color: #a8bfe8; }
   .cal-cell {
-    /* 説明文を隠して空いた高さを、日付の枠に回している。 */
-    position: relative; aspect-ratio: 1 / 1.14; min-height: 46px;
+    /* 高さは行から受け取る。横幅に縛ると、画面の下が余ってしまう。 */
+    position: relative; min-height: 46px;
     display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
     font-family: var(--font-body); font-size: 14px; color: var(--ink);
     background: rgba(255, 255, 255, 0.04); border: 1px solid transparent;
@@ -1568,10 +1587,13 @@
   @media (prefers-reduced-motion: reduce) { .day-saved { transition: none; } }
   .day-note {
     width: 100%; margin-top: 5px; padding: 9px 10px; box-sizing: border-box;
-    font-family: var(--font-body); font-size: 13px; color: var(--input-ink);
+    /* 🚨 16px を下回らせない。iPhoneは小さい文字の欄に触れると画面ごと拡大する。
+       他の入力欄（.field input）は16pxにしてあり、ここだけ漏れていた。 */
+    font-family: var(--font-body); font-size: 16px; color: var(--input-ink);
     background: var(--input-bg); border: 1px solid var(--card-border);
     border-radius: 8px; resize: vertical; min-height: 58px;
   }
+  .day-note-hint { margin: 6px 0 0; font-size: 11.5px; line-height: 1.7; color: var(--ink-faint); }
   .day-msg { margin: 12px 0 0; font-size: 12.5px; line-height: 1.8; color: var(--ink-soft); }
 
   /* 「あなたの過ごし方」。順位は付けない。並び順は選択肢の並びで固定し、
@@ -4869,6 +4891,15 @@
     });
     ta.addEventListener("change", writeNote);   // 欄の外をタップしたとき
     nl.appendChild(ta);
+
+    // 保存ボタンを置いていないので、押さなくてよいことをその場に書く。
+    // 書いてあると分かっていないと、閉じるのが怖くて手が止まる。
+    const noteHint = document.createElement("p");
+    noteHint.className = "day-note-hint";
+    noteHint.textContent = sample
+      ? "見本のため、閉じると消えます。"
+      : "書いたものは自動で残ります。そのまま閉じて大丈夫です。";
+    nl.appendChild(noteHint);
     box.appendChild(nl);
 
     if (sample) {
