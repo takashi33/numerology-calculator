@@ -2527,15 +2527,25 @@
     return reduceToSingleOrMaster(rMonth + rDay + rTargetYear);
   }
 
-  // Personal Month/Day build on top of Personal Year by adding the current
-  // calendar month/day as-is (not pre-reduced) and reducing again — each one
-  // narrows the "theme" from the year down to the month, then the day.
+  // 🚨 マスターナンバー（11・22・33）を残すのは「年周り」＝パーソナルイヤーだけ。
+  //    パーソナルマンスとパーソナルデイは、必ず1桁まで還元する。
+  //    足す前の月・日も還元する。
+  //    （2026-08-22 依頼者に確認。それ以前は月・日を還元せず、マンス・デイにも
+  //     マスターを残していたため、パーソナルデイが年間の約13.6%の日で違っていた）
+  function reduceToSingleDigit(n) {
+    let value = Math.abs(n);
+    while (value > 9) {
+      value = sumDigits(value);
+    }
+    return value;
+  }
+
   function calcPersonalMonthNumber(personalYear, targetMonth) {
-    return reduceToSingleOrMaster(personalYear + targetMonth);
+    return reduceToSingleDigit(personalYear + reduceToSingleDigit(targetMonth));
   }
 
   function calcPersonalDayNumber(personalMonth, targetDay) {
-    return reduceToSingleOrMaster(personalMonth + targetDay);
+    return reduceToSingleDigit(personalMonth + reduceToSingleDigit(targetDay));
   }
 
   function calcDestinyNumber(letters) {
