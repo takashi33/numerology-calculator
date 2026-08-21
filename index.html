@@ -1567,12 +1567,7 @@
     border: 1px solid var(--card-border); border-radius: 10px; cursor: pointer;
   }
   .tool-note { margin: 6px 0 0; font-size: 11.5px; line-height: 1.8; color: var(--ink-faint); }
-  .tool-check {
-    display: flex; align-items: center; gap: 8px; margin: 18px 0 0;
-    font-size: 13px; color: var(--ink-soft); cursor: pointer;
-  }
-  .tool-check input { width: 18px; height: 18px; }
-  /* 推しごとカレンダーから読んだ予定。自分で書いたものと見分けが付くようにする。 */
+  /* 推しごとカレンダーから受け取った予定。自分で書いたものと見分けが付くようにする。 */
   .cal-plans .from-oshi { color: var(--ink-faint); }
   .plan-readonly { display: flex; align-items: center; gap: 6px; margin-bottom: 5px; font-size: 12.5px; color: var(--ink-faint); }
   .plan-readonly b { flex: none; width: 44px; font-weight: 400; }
@@ -1944,8 +1939,10 @@
       <input type="file" id="tool-file" accept="application/json,.json" hidden>
       <p class="tool-note">控えのファイルを選ぶと、<strong>いま入っているものは消さずに</strong>、足りないぶんだけ戻します。</p>
 
-      <label class="tool-check"><input type="checkbox" id="tool-oshi"> 推しごとカレンダーの予定も並べる</label>
-      <p class="tool-note">同じ端末の推しごとカレンダーに入れた予定を、この手帳にも出します。<strong>読むだけで、書き換えません。</strong></p>
+      <button type="button" id="tool-oshi" class="tool-btn">📤 推しごとカレンダーの予定を受け取る</button>
+      <input type="file" id="tool-oshi-file" accept="application/json,.json" hidden>
+      <p class="tool-note">推しごとカレンダーの ⚙️ で「数秘電卓に送る」を押すと、この手帳にも予定が並びます。<strong>ここでは読むだけで、直すのは推しごとカレンダーです。</strong><span id="tool-oshi-state"></span></p>
+      <button type="button" id="tool-oshi-clear" class="tool-btn hidden">🧹 受け取った予定を消す</button>
     </div>
   </div>
 
@@ -4981,25 +4978,37 @@
   }
 
   // ---- 推しごとカレンダー（同じ住所に置かれた別アプリ）の予定を読む -------
-  const OSHI_KEY = "oshi-cal-v1";
-  const OSHI_LINK_KEY = "numerology-oshi-link";
-  let oshiLink = false;
-  try { oshiLink = localStorage.getItem(OSHI_LINK_KEY) === "1"; } catch (err) { oshiLink = false; }
+  // 推しごとカレンダーの ⚙️「数秘電卓に送る」で渡されたものを、ここに預かる。
+  // 🚨 同じ住所にあるので相手の保存場所を直接覗くこともできるが、それはやらない。
+  //    ホーム画面にアイコンを2つ置くと、iPhoneでは互いの保存場所が見えなくなり、
+  //    「予定が1件も出ない」が起きる。受け取る形にすれば開き方によらず必ず届く。
+  const OSHI_RECV_KEY = "numerology-oshi-recv";
+  // ひと月を描くだけで42マス分の問い合わせが来る。毎回読み直すと目に見えて重くなるので、
+  // 文字列が同じ間は前回の解析結果を使い回す。
+  let oshiCacheRaw = null;
+  let oshiCacheVal = null;
   function readOshi() {
     try {
-      const raw = localStorage.getItem(OSHI_KEY);
-      if (!raw) return null;
+      const raw = localStorage.getItem(OSHI_RECV_KEY);
+      if (!raw) { oshiCacheRaw = null; oshiCacheVal = null; return null; }
+      if (raw === oshiCacheRaw) return oshiCacheVal;
       const o = JSON.parse(raw);
-      if (!o || !Array.isArray(o.events)) return null;
-      return o;
+      const val = (o && Array.isArray(o.events)) ? o : null;
+      oshiCacheRaw = raw;
+      oshiCacheVal = val;
+      return val;
     } catch (err) {
       return null;
     }
   }
+  // 「その日に予定があるか」の判定は、推しごとカレンダー側の occursOn と同じでなければ
+  // ならない。片方にしか無い条件があると、同じ日を見ているのに中身が食い違う。
   function oshiOccursOn(e, key) {
     if (!e.date || key < e.date) return false;
     if (!e.repeat) return key === e.date;
     if (e.until && key > e.until) return false;
+    // その回だけ休みにした予定。向こうで休みにしたものを、こちらで出さない。
+    if (Array.isArray(e.skips) && e.skips.includes(key)) return false;
     const a = fromYmd(e.date), b = fromYmd(key);
     if (e.repeat === "daily") return true;
     if (e.repeat === "weekly") return a.getDay() === b.getDay();
@@ -5008,12 +5017,14 @@
   }
   // 読むだけ。こちらから書き換えない。相手のアプリが正本。
   function oshiPlansOn(key) {
-    if (!oshiLink) return [];
     const o = readOshi();
     if (!o) return [];
-    return o.events.filter((e) => oshiOccursOn(e, key))
+    // 向こうで「今は隠す」を選んだ推しの予定は、こちらにも出さない。
+    const hidden = Array.isArray(o.hidden) ? o.hidden.map(String) : [];
+    return o.events.filter((e) => !hidden.includes(String(e.ownerId || "")) && oshiOccursOn(e, key))
       .map((e) => ({ t: String(e.time || ""), s: String(e.title || "") }))
-      .sort((a, b) => (a.t || "").localeCompare(b.t || ""));
+      // 時刻の無い予定は下に置く。向こうの並び順に合わせる（見比べたときに順番が違うと迷う）。
+      .sort((a, b) => (a.t || "99:99").localeCompare(b.t || "99:99"));
   }
 
   // 予定の1行。時刻と内容をその場で直せる。「保存」を押させない。
@@ -5469,6 +5480,25 @@
   const recordToolsCloseBtn = document.getElementById("record-tools-close");
   const toolFileEl = document.getElementById("tool-file");
   const toolOshiEl = document.getElementById("tool-oshi");
+  const toolOshiFileEl = document.getElementById("tool-oshi-file");
+  const toolOshiStateEl = document.getElementById("tool-oshi-state");
+  const toolOshiClearEl = document.getElementById("tool-oshi-clear");
+
+  // 受け取っているかどうかを、🔧 を開くたびに出す。出していないと
+  // 「送ったのに届いていないのか、届いたのに出ていないのか」が分からない。
+  function renderOshiState() {
+    const o = readOshi();
+    if (!o) {
+      toolOshiStateEl.textContent = "";
+      toolOshiClearEl.classList.add("hidden");
+      return;
+    }
+    const d = String(o.exportedAt || "").slice(0, 10);
+    toolOshiStateEl.textContent = "　いま予定" + o.events.length + "件を預かっています"
+      + (d ? "（" + d.replace(/-/g, "/") + "に送られたもの）" : "")
+      + "。そのあと推しごとカレンダーで変えたぶんは、もう一度送ると入れ替わります。";
+    toolOshiClearEl.classList.remove("hidden");
+  }
 
   function closeRecordTools() {
     if (recordToolsMask.classList.contains("hidden")) return;
@@ -5476,7 +5506,7 @@
     recordToolsBtn.focus();
   }
   recordToolsBtn.addEventListener("click", () => {
-    toolOshiEl.checked = oshiLink;
+    renderOshiState();
     recordToolsMask.classList.remove("hidden");
     recordToolsCloseBtn.focus();
   });
@@ -5530,15 +5560,69 @@
     reader.readAsText(file);
   });
 
-  toolOshiEl.addEventListener("change", () => {
-    oshiLink = toolOshiEl.checked;
-    try { localStorage.setItem(OSHI_LINK_KEY, oshiLink ? "1" : "0"); } catch (err) { /* 保存できなくても今回は効く */ }
-    if (oshiLink && !readOshi()) {
-      alert(["推しごとカレンダーの予定が見つかりませんでした。", "",
-        "同じ端末の同じブラウザで、一度そちらを開いてからお試しください。"].join(LF));
-    }
-    renderCalendar();
+  toolOshiEl.addEventListener("click", () => toolOshiFileEl.click());
+  toolOshiFileEl.addEventListener("change", () => {
+    const file = toolOshiFileEl.files && toolOshiFileEl.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      let data = null;
+      try { data = JSON.parse(String(reader.result)); } catch (err) { data = null; }
+      // 控えのファイルを選んでしまうこともある。どちらにも予定は入っているので受け取る。
+      if (!data || !Array.isArray(data.events)) {
+        alert(["このファイルには予定が入っていませんでした。", "",
+          "推しごとカレンダーの ⚙️ にある「数秘電卓に送る」で作ったものを選んでください。"].join(LF));
+        toolOshiFileEl.value = "";
+        return;
+      }
+      // 預かるのは予定と「今は隠す」の指定だけ。推しの名前や写真は持たない。
+      const keep = {
+        app: "oshi-cal-plans",
+        exportedAt: String(data.exportedAt || ""),
+        events: data.events,
+        hidden: Array.isArray(data.hidden) ? data.hidden : []
+      };
+      try {
+        localStorage.setItem(OSHI_RECV_KEY, JSON.stringify(keep));
+      } catch (err) {
+        alert("この端末では、受け取ったものを保存できませんでした。画面を閉じると消えます。");
+      }
+      oshiCacheRaw = null;   // 預かったものが変わったので読み直させる
+      toolOshiFileEl.value = "";
+      renderOshiState();
+      renderCalendar();
+      if (!dayMaskEl.classList.contains("hidden")) renderDaySheet();
+      alert("予定" + data.events.length + "件を受け取りました。カレンダーに並びます。");
+    };
+    reader.onerror = () => {
+      alert("ファイルを読めませんでした。もう一度お試しください。");
+      toolOshiFileEl.value = "";
+    };
+    reader.readAsText(file);
   });
+
+  toolOshiClearEl.addEventListener("click", () => {
+    if (!confirm(["受け取った推しごとカレンダーの予定を、この手帳から消します。", "",
+      "推しごとカレンダーのほうは何も変わりません。もう一度送れば戻せます。"].join(LF))) return;
+    try { localStorage.removeItem(OSHI_RECV_KEY); } catch (err) { /* 消せなくても続ける */ }
+    oshiCacheRaw = null;
+    renderOshiState();
+    renderCalendar();
+    if (!dayMaskEl.classList.contains("hidden")) renderDaySheet();
+  });
+
+  // 🚨 予定は「欄から離れたとき」に保存される作り。ところがアプリを切り替えても
+  //    欄から離れたことにはならず、書きかけのまま画面を離れられる。記録のほうは
+  //    flushNote で同じ手当てをしているのに、予定には無かった。
+  function commitEditingPlan() {
+    const el = document.activeElement;
+    if (!el) return;
+    if (el.classList.contains("plan-text") || el.classList.contains("plan-time")) el.blur();
+  }
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") commitEditingPlan();
+  });
+  window.addEventListener("pagehide", commitEditingPlan);
 
   function closeRecordHelp() {
     if (recordHelpMask.classList.contains("hidden")) return;
