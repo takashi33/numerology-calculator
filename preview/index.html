@@ -2049,6 +2049,10 @@
     const trialNotice = document.getElementById("trial-notice");
     if (trialNotice) trialNotice.classList.toggle("hidden", !isTrial);
     document.body.classList.toggle("is-trial", isTrial);
+    // 通知から来て扉で止まっていた人を、解錠した時点でその日の手帳へ送る。
+    // 起動時の解錠では手帳の部品がまだ組み立たっていないので、そのときは何もしない
+    // （組み立てが終わった時点で、下の techoReady のところから改めて呼ぶ）。
+    if (techoReady) openPendingTecho();
   }
 
   // Reading/writing sessionStorage can throw (e.g. browser privacy settings,
@@ -2135,11 +2139,56 @@
     return true;
   }
 
+  // 通知から「その日の手帳」を開くための日付（`?d=2026-08-22`）。
+  //
+  // 🚨 ここで読むのは、この下の unlockFromUrl() が `?t=` を消すときに
+  //    アドレス欄の問い合わせ部分ごと消えてしまうため。順番を入れ替えないこと。
+  //
+  // 手帳の部品はこのファイルのずっと下で組み立てるので、受け取っても
+  // すぐには開けない。開ける状態になるまで持っておく。
+  let techoReady = false;
+  let pendingTechoDate = (function readTechoDate() {
+    let raw = null;
+    try {
+      raw = new URLSearchParams(window.location.search).get("d");
+    } catch (err) {
+      return null; // 読めない環境なら、ふつうに開いたのと同じ扱いにする
+    }
+    if (!raw || !/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(raw)) return null;
+    const parts = raw.split("-").map(Number);
+    const dt = new Date(parts[0], parts[1] - 1, parts[2]);
+    if (dt.getFullYear() !== parts[0] || dt.getMonth() !== parts[1] - 1 || dt.getDate() !== parts[2]) {
+      return null; // 2026-02-31 のような日付は捨てる
+    }
+    // 日付だけをアドレス欄から消す。読み込み直すたびに開き直すのを防ぐため。
+    // `?t=`（体験用の解錠コード）は、この後で読むので残す。
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("d");
+      window.history.replaceState(null, "", url.pathname + url.search + url.hash);
+    } catch (err) {
+      // Ignore: 消せなくても、開く動作そのものには影響しない。
+    }
+    return raw;
+  })();
+
   // 端末の記憶を先に見る。すでにnote購入者などで解錠している人が体験用のQRを
   // 読んでも、体験モードに引き下げないため。
   const rememberedRole = getRememberedRole();
   if (rememberedRole) {
     unlock(rememberedRole);
+    // 🚨 すでに解錠済みの端末は unlockFromUrl() を通らないため、
+    //    体験用コードがアドレス欄に残ったままになる。ここで消す。
+    //    残すと、URLをコピーして人に渡したときコードも一緒に渡る。
+    try {
+      const url = new URL(window.location.href);
+      if (url.searchParams.has("t")) {
+        url.searchParams.delete("t");
+        window.history.replaceState(null, "", url.pathname + url.search + url.hash);
+      }
+    } catch (err) {
+      // Ignore: 消せなくても解錠は済んでいる。
+    }
   } else {
     unlockFromUrl();
   }
@@ -2180,6 +2229,34 @@
   const birthYearInput = document.getElementById("birth-year");
   const birthMonthInput = document.getElementById("birth-month");
   const birthDayInput = document.getElementById("birth-day");
+
+  // 生年月日を、この端末にだけ覚えておく（2026-08-22 依頼者の決定）。
+  // 通知から手帳を開いた人に、毎回打ち直させないため。予定・記録と同じ扱いで、
+  // 🚨 端末の外へは出さない。アドレス欄にも載せない。
+  // 覚え直すには、欄を書き替えて「計算する」を押せばよい。
+  const BIRTH_KEY = "numerology-birth";
+  function rememberBirth(year, month, day) {
+    try {
+      localStorage.setItem(BIRTH_KEY, [year, month, day].join("-"));
+    } catch (err) {
+      // Ignore: 保存できなくても、その場の計算には影響しない。
+    }
+  }
+  (function restoreBirth() {
+    let raw = null;
+    try {
+      raw = localStorage.getItem(BIRTH_KEY);
+    } catch (err) {
+      return;
+    }
+    if (!raw || !/^[0-9]{4}-[0-9]{1,2}-[0-9]{1,2}$/.test(raw)) return;
+    const parts = raw.split("-");
+    // 打ちかけの人の入力を、覚えていた値で上書きしない。
+    if (birthYearInput.value || birthMonthInput.value || birthDayInput.value) return;
+    birthYearInput.value = parts[0];
+    birthMonthInput.value = String(Number(parts[1]));
+    birthDayInput.value = String(Number(parts[2]));
+  })();
   const lastNameInput = document.getElementById("last-name");
   const firstNameInput = document.getElementById("first-name");
   // タップ表・お試しボタンは1つしかないため、直前にフォーカスしていた方の
@@ -2548,6 +2625,18 @@
     return reduceToSingleDigit(personalMonth + reduceToSingleDigit(targetDay));
   }
 
+  // 🚨 毎朝の言葉（MORNING_WORDS）を選ぶためだけの数字。画面には出さない。
+  //    （2026-08-22 依頼者の決定）画面のパーソナルデイは必ず1桁まで還元するが、
+  //    **還元する前に 11・22・33 になる日には、その数字の文章を出す。**
+  //    38 → 3＋8 ＝ 11 のように、足し直した先が 11・22・33 の日も含める。
+  //
+  //    足す日（1〜31）は還元しない。還元すると合計が最大18にしかならず、
+  //    22・33 の日が永久に来なくなるため。1〜9 に落ち着く日は、還元してもしなくても
+  //    同じ値になる（各桁を足す操作は、1桁への落ち先を変えないため）。
+  function calcMorningWordDay(personalMonth, targetDay) {
+    return reduceToSingleOrMaster(personalMonth + targetDay);
+  }
+
   function calcDestinyNumber(letters) {
     if (letters.length === 0) return null;
     const raw = sumLetterValues(letters);
@@ -2821,6 +2910,8 @@
       showError("生年月日を正しく入力してください。");
       return;
     }
+
+    rememberBirth(year, month, day);
 
     // かな→ローマ字の自動変換は、打鍵が止まってから走る（拗音・ヴ行が壊れる
     // のを防ぐため）。ボタンを押した時点でまだ変換待ちが残っている可能性が
@@ -3113,16 +3204,17 @@
             {
               h3: "パーソナルマンスナンバー",
               blocks: [
-                ["f", "パーソナルイヤーナンバー ＋ 計算した月（1〜12をそのまま） → 1桁へ還元"],
-                ["f", "7月 → 11 ＋ 7 ＝ 18 → 1＋8 ＝ 9"],
+                ["f", "パーソナルイヤーナンバー ＋（計算した月を1桁へ還元した値） → 1桁へ還元"],
+                ["f", "2026年7月に計算した場合\n→ 7月 → 7　11 ＋ 7 ＝ 18 → 1＋8 ＝ 9"],
               ],
             },
             {
               h3: "パーソナルデイナンバー",
               blocks: [
-                ["f", "パーソナルマンスナンバー ＋ 計算した日（1〜31をそのまま） → 1桁へ還元"],
-                ["f", "30日 → 9 ＋ 30 ＝ 39 → 3＋9 ＝ 12 → 1＋2 ＝ 3"],
-                ["n", "月・日は、月数・日数のように先に還元せず、そのままの数を足します。"],
+                ["f", "パーソナルマンスナンバー ＋（計算した日を1桁へ還元した値） → 1桁へ還元"],
+                ["f", "30日に計算した場合\n→ 30日 → 3＋0 ＝ 3　9 ＋ 3 ＝ 12 → 1＋2 ＝ 3"],
+                ["n", "足す月・日は、先に1桁へ還元してから使います（30日なら 3＋0 ＝ 3）。ここでは 11・22 でも止めずに1桁まで還元します。生年月日から出す「月数・日数」とは還元のしかたが違うため、同じ値になるとは限りません。"],
+                ["n", "パーソナルマンスナンバーとパーソナルデイナンバーは、途中で 11・22・33 になっても止めず、必ず1桁まで還元します。マスターナンバーとして扱うのは、パーソナルイヤーナンバーまでです。"],
               ],
             },
           ],
@@ -4768,7 +4860,8 @@
     const py = calcPersonalYearNumber(lp.rMonth, lp.rDay, d.getFullYear());
     const pm = calcPersonalMonthNumber(py, d.getMonth() + 1);
     const pd = calcPersonalDayNumber(pm, d.getDate());
-    return { lifePath: lp.value, year: py, month: pm, day: pd };
+    const wd = calcMorningWordDay(pm, d.getDate());
+    return { lifePath: lp.value, year: py, month: pm, day: pd, wordDay: wd };
   }
 
   // その日に届いた（届く）言葉。記録に残っていればそれを優先する。
@@ -4780,7 +4873,7 @@
     if (!nums) return null;
     const row = MORNING_WORDS[String(nums.lifePath)];
     if (!row) return null;
-    return row[String(nums.day)] || null;
+    return row[String(nums.wordDay)] || null;
   }
 
   function renderCalendar() {
@@ -5699,6 +5792,32 @@
     showRecordTab("cal");
     window.scrollTo(0, 0);
   });
+
+  // 通知から渡された日付で、手帳のその日のシートを開く。
+  // 「手帳」ボタンを押したときとの違いは、今日ではなくその日を選んで、
+  // カレンダーを出すだけで終わらせずにシートまで開くこと。
+  function openPendingTecho() {
+    if (!pendingTechoDate) return;
+    if (!gateEl.classList.contains("hidden")) return; // まだ扉の中。解錠時にもう一度呼ばれる
+    const dateStr = pendingTechoDate;
+    pendingTechoDate = null;
+    // 開きっぱなしで日をまたぐことがあるので、開くたびに今日を取り直す。
+    recordToday = ymd(new Date());
+    calView = fromYmd(dateStr);
+    calView.setDate(1);
+    calSelected = dateStr;
+    if (isSampleMode()) sampleRecords = buildSampleRecords();
+    recordSampleEl.classList.toggle("hidden", !isSampleMode());
+    appEl.classList.add("hidden");
+    recordEl.classList.remove("hidden");
+    showRecordTab("cal");
+    window.scrollTo(0, 0);
+    openDaySheet();
+  }
+
+  // 手帳の部品がそろった。ここから先は、解錠のたびに unlock() から呼ばれる。
+  techoReady = true;
+  openPendingTecho();
 
   recordBackBtn.addEventListener("click", () => {
     flushNote();

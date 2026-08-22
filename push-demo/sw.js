@@ -36,7 +36,10 @@ self.addEventListener("push", (event) => {
     // 同じ tag の通知は上書きされる。毎朝1通なので積み上がらないようにする。
     tag: "morning-message",
     renotify: true,
-    data: { url: "./" },
+    // 押した先は、手帳のその日のシート（2026-08-22 依頼者の決定）。
+    // 通知だけで読み終わるので、アプリ側は「昨日を残す・見返す」場所にあたる。
+    // 送信側が url を入れてこなければ、これまでどおり案内ページへ戻す。
+    data: { url: payload.url || "./" },
   };
 
   event.waitUntil(self.registration.showNotification(title, options));
@@ -44,20 +47,38 @@ self.addEventListener("push", (event) => {
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
+  const target = (event.notification.data && event.notification.data.url) || "./";
   event.waitUntil(
     (async () => {
       const all = await self.clients.matchAll({
         type: "window",
         includeUncontrolled: true,
       });
-      // すでに開いていればそれを前に出す。無ければ開く。
-      for (const client of all) {
-        if (client.url.includes("/push-demo/") && "focus" in client) {
+      // すでに開いていれば、その画面をその日の手帳に切り替えてから前に出す。
+      // 🚨 focus() だけでは足りない。開きっぱなしの画面は昨日の日付のままなので、
+      //    navigate() で日付を渡し直さないと、押した日のシートが出ない。
+      //
+      // 🚨 URLを確かめてから動かすこと。GitHub Pages は他のアプリと同じドメインで、
+      //    確かめずに最初の1枚を navigate() すると、別のアプリを開いている人の画面が
+      //    数秘電卓に置き換わる。
+      const mine = all.filter((c) =>
+        c.url.includes("/numerology-calculator/") || c.url.includes("/push-demo/")
+      );
+      for (const client of mine) {
+        if ("focus" in client) {
+          if ("navigate" in client) {
+            try {
+              const moved = await client.navigate(target);
+              if (moved) return moved.focus();
+            } catch (err) {
+              // Ignore: 別の場所を開いている等で移動できないときは、そのまま前に出す。
+            }
+          }
           return client.focus();
         }
       }
       if (self.clients.openWindow) {
-        return self.clients.openWindow("./");
+        return self.clients.openWindow(target);
       }
     })()
   );
