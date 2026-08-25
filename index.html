@@ -654,6 +654,7 @@
     text-align: center;
   }
 
+  #push-btn,
   #admin-qr-btn,
   #relock-btn {
     display: block;
@@ -667,7 +668,14 @@
     cursor: pointer;
   }
 
-  #admin-qr-btn.hidden {
+  #admin-qr-btn.hidden,
+  #push-btn.hidden {
+    display: none;
+  }
+
+  /* 🚨 体験の方には出さない。体験モードは「基本の3数字」までを見せる約束で、
+     毎朝の言葉はその先にあるもの。ここだけ通ってしまうと線引きが崩れる。 */
+  body.is-trial #push-btn {
     display: none;
   }
 
@@ -682,6 +690,7 @@
     margin: 0;
   }
 
+  #push-btn:hover,
   #admin-qr-btn:hover,
   #relock-btn:hover {
     color: var(--ink-soft);
@@ -868,7 +877,8 @@
     color: var(--ink-faint);
   }
 
-  #info-modal {
+  #info-modal,
+  #push-modal {
     position: fixed;
     inset: 0;
     z-index: 50;
@@ -879,7 +889,8 @@
     background: rgba(10, 4, 20, 0.72);
   }
 
-  #info-modal.hidden {
+  #info-modal.hidden,
+  #push-modal.hidden {
     display: none;
   }
 
@@ -910,6 +921,7 @@
     line-height: 1.8;
   }
 
+  #push-modal-close,
   #info-modal-close {
     position: absolute;
     top: 10px;
@@ -921,6 +933,60 @@
     line-height: 1;
     cursor: pointer;
     padding: 4px 8px;
+  }
+
+  .push-status {
+    margin: 14px 0 0;
+    padding: 10px 12px;
+    border-radius: 10px;
+    font-size: 12px;
+    line-height: 1.7;
+    border: 1px solid var(--card-border);
+    color: var(--ink-soft);
+  }
+
+  .push-status.ok { border-color: var(--gold); color: var(--gold); }
+
+  #push-do {
+    display: block;
+    width: 100%;
+    margin: 16px 0 0;
+    padding: 12px;
+    font-family: var(--font-body);
+    font-size: 14px;
+    color: var(--bg-1);
+    background: var(--gold);
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+  }
+
+  #push-do:disabled { opacity: 0.5; cursor: default; }
+
+  #push-handoff textarea {
+    width: 100%;
+    height: 72px;
+    margin: 10px 0 0;
+    font-size: 11px;
+    color: var(--ink-soft);
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    padding: 8px;
+  }
+
+  #push-copy {
+    display: block;
+    width: 100%;
+    margin: 8px 0 0;
+    padding: 10px;
+    font-family: var(--font-body);
+    font-size: 13px;
+    color: var(--ink-soft);
+    background: none;
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    cursor: pointer;
   }
 
   .gate-help-btn {
@@ -1833,6 +1899,7 @@
 
   <p class="footnote">※ 数秘術には複数の計算方法・流派があり、本アプリは一般的な現代数秘術の一例を採用しています。占いの結果は断定的なものではなく、参考としてお楽しみください。</p>
 
+  <button id="push-btn" type="button">🔔 毎朝のお便りを受け取る</button>
   <button id="admin-qr-btn" type="button">サブスク用コードを確認（管理者用）</button>
 </div>
 
@@ -1982,6 +2049,34 @@
       <div class="qr-modal-code-value" id="qr-modal-code-value"></div>
     </div>
     <p class="qr-modal-note">このコードとURLを、サブスクの参加者限定記事に掲載してください。</p>
+  </div>
+</div>
+
+<div id="push-modal" class="hidden">
+  <div class="info-modal-card">
+    <button id="push-modal-close" type="button" aria-label="閉じる">×</button>
+    <h2>毎朝のお便りを受け取る</h2>
+    <p id="push-lead">毎朝7時に、その日のあなたの言葉をこの端末へお届けします。<br>
+    文章はこの端末の中で選ばれます。<strong>生年月日も、そこから出る数字も、外へは送られません。</strong></p>
+
+    <div id="push-ios" class="push-status hidden">
+      iPhone・iPad では、<strong>ホーム画面に追加してから</strong>でないと通知を受け取れません。<br>
+      下の共有ボタン → 「ホーム画面に追加」→ 追加したアイコンから開き直して、もう一度この画面を開いてください。
+    </div>
+
+    <div id="push-nobirth" class="push-status hidden">
+      先に生年月日を入れて「計算する」を押してください。<br>
+      その日の言葉は、生年月日から選びます。
+    </div>
+
+    <button id="push-do" type="button">受け取りを始める</button>
+    <div id="push-msg" class="push-status hidden"></div>
+
+    <div id="push-handoff" class="hidden">
+      <p>下の合言葉をコピーして、お送りください。届くようになります。</p>
+      <textarea id="push-sub" readonly></textarea>
+      <button id="push-copy" type="button">合言葉をコピーする</button>
+    </div>
   </div>
 </div>
 
@@ -2902,6 +2997,8 @@
     }
 
     rememberBirth(year, month, day);
+    // 貯めてある「日付 → 言葉」も作り直す。生年月日が変われば言葉も変わるため。
+    saveMorningPlan();
 
     // かな→ローマ字の自動変換は、打鍵が止まってから走る（拗音・ヴ行が壊れる
     // のを防ぐため）。ボタンを押した時点でまだ変換待ちが残っている可能性が
@@ -5808,6 +5905,215 @@
   // 手帳の部品がそろった。ここから先は、解錠のたびに unlock() から呼ばれる。
   techoReady = true;
   openPendingTecho();
+
+  // ---------------- 毎朝のお便り（受け取りの登録と、端末に貯める一覧） ----------------
+  //
+  // 🚨 送り手は「朝です」という合図しか送らない（仕様書「端末の外に、利用者の情報を
+  //    持たない」2026-08-24 依頼者の決定）。どの文章を出すかは、この端末が決める。
+  //    そのために、これから先の分の「日付 → 見出し・本文」をここで作って端末に貯め、
+  //    サービスワーカー（通知を受け取る係）に読ませる。
+  //
+  // 🚨 計算式をサービスワーカー側へ写さないこと。
+  //    式は5か所に散っており、増やすと画面と通知で違う数字が出る
+  //    （→ numerology-formula スキル）。作るのは必ずこちら側。
+
+  const MORNING_DB = "numerology-morning";
+  const MORNING_STORE = "kv";
+  const MORNING_KEY = "plan";
+  // 1年ぶん。アプリを開くたびに作り直すので、実際にはここまで使い切らない。
+  const MORNING_DAYS = 400;
+
+  function saveMorningWords(value) {
+    return new Promise((resolve) => {
+      let request;
+      try {
+        request = indexedDB.open(MORNING_DB, 1);
+      } catch (err) {
+        return resolve(false); // 使えない環境でも、画面の動作は止めない
+      }
+      request.onupgradeneeded = () => {
+        const db = request.result;
+        if (!db.objectStoreNames.contains(MORNING_STORE)) db.createObjectStore(MORNING_STORE);
+      };
+      request.onerror = () => resolve(false);
+      request.onsuccess = () => {
+        const db = request.result;
+        try {
+          const tx = db.transaction(MORNING_STORE, "readwrite");
+          tx.objectStore(MORNING_STORE).put(value, MORNING_KEY);
+          tx.oncomplete = () => { db.close(); resolve(true); };
+          tx.onerror = () => { db.close(); resolve(false); };
+        } catch (err) {
+          db.close();
+          resolve(false);
+        }
+      };
+    });
+  }
+
+  // これから先の分の言葉を作って端末に貯める。
+  // 🚨 体験モードの見本の記録は混ぜない。届くのは本人の生年月日から出た言葉だけ。
+  function saveMorningPlan() {
+    const lp = birthReduced();
+    if (!lp) return Promise.resolve(false);
+    const days = {};
+    let date = ymd(new Date());
+    for (let i = 0; i < MORNING_DAYS; i++) {
+      const nums = numbersOn(date);
+      const row = nums && MORNING_WORDS[String(nums.lifePath)];
+      const word = row && row[String(nums.wordDay)];
+      if (word) days[date] = word;
+      date = addDays(date, 1);
+    }
+    return saveMorningWords({ savedAt: ymd(new Date()), days });
+  }
+
+  // 開いた時点で一度貯める。以後は「計算する」を押すたびに作り直す。
+  saveMorningPlan();
+
+  // ---------------- 受け取りの登録 ----------------
+
+  // 公開鍵。これは公開してよいもの（対になる秘密鍵は GitHub Secrets にある）。
+  // 🚨 鍵を変えると既存の購読はすべて無効になる。変えたら登録し直してもらうこと。
+  const VAPID_PUBLIC_KEY = "BB9S3DceY4YVRxbU7IZG6D1j-CqeAwC2L6IaxLwReWHrui1Xy9Zpq3X0x3cddXmygGJFjt74fUhAHGIwioB-dxc";
+
+  const pushBtn = document.getElementById("push-btn");
+  const pushModal = document.getElementById("push-modal");
+  const pushDoBtn = document.getElementById("push-do");
+  const pushMsgEl = document.getElementById("push-msg");
+  const pushHandoffEl = document.getElementById("push-handoff");
+  const pushSubEl = document.getElementById("push-sub");
+  const pushCopyBtn = document.getElementById("push-copy");
+  const pushIosEl = document.getElementById("push-ios");
+  const pushNoBirthEl = document.getElementById("push-nobirth");
+
+  function pushSay(kind, html) {
+    pushMsgEl.className = "push-status " + kind;
+    pushMsgEl.innerHTML = html;
+  }
+
+  // 公開鍵の文字列を、購読に渡せる形へ変換する
+  function urlBase64ToUint8Array(base64String) {
+    const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+    const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+    const raw = window.atob(base64);
+    const out = new Uint8Array(raw.length);
+    for (let i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i);
+    return out;
+  }
+
+  // 既存の登録が、いまの公開鍵で作られたものかを確かめる。
+  // 🚨 鍵を作り直しても購読は自動で更新されない。古い鍵のまま送ると
+  //    VapidPkHashMismatch で弾かれ、利用者側の操作では直せない。
+  function sameKey(stored, current) {
+    if (!stored) return false;
+    const a = new Uint8Array(stored);
+    if (a.length !== current.length) return false;
+    for (let i = 0; i < a.length; i++) {
+      if (a[i] !== current[i]) return false;
+    }
+    return true;
+  }
+
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const isStandalone =
+    window.navigator.standalone === true ||
+    window.matchMedia("(display-mode: standalone)").matches;
+
+  function openPushModal() {
+    pushMsgEl.classList.add("hidden");
+    pushHandoffEl.classList.add("hidden");
+    pushIosEl.classList.add("hidden");
+    pushNoBirthEl.classList.add("hidden");
+    pushDoBtn.classList.remove("hidden");
+    pushDoBtn.disabled = false;
+
+    // iPhone はホーム画面に追加しないと通知が届かない（仕様書「配信」）。
+    if (isIOS && !isStandalone) {
+      pushIosEl.classList.remove("hidden");
+      pushDoBtn.classList.add("hidden");
+    } else if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
+      pushDoBtn.classList.add("hidden");
+      pushMsgEl.classList.remove("hidden");
+      pushSay("", "お使いの環境では通知を扱えないようです。別のブラウザでお試しください。");
+    } else if (!birthReduced()) {
+      // 生年月日が無いと、その日の言葉を選べない。
+      pushNoBirthEl.classList.remove("hidden");
+      pushDoBtn.classList.add("hidden");
+    }
+    pushModal.classList.remove("hidden");
+  }
+
+  pushBtn.addEventListener("click", openPushModal);
+  document.getElementById("push-modal-close").addEventListener("click", () => {
+    pushModal.classList.add("hidden");
+  });
+  pushModal.addEventListener("click", (e) => {
+    if (e.target === pushModal) pushModal.classList.add("hidden");
+  });
+
+  pushDoBtn.addEventListener("click", async () => {
+    pushDoBtn.disabled = true;
+    pushMsgEl.classList.remove("hidden");
+    pushSay("", "準備しています…");
+
+    try {
+      // 🚨 ここでは登録しない。通知の受け取り役はページの読み込み時に登録済みで、
+      //    ここで register() をもう一度書くと、確認用ページ（Service Worker を
+      //    外して作る）にもそれが残ってしまう（make-preview.js が止める）。
+      const existing = await navigator.serviceWorker.getRegistration();
+      if (!existing) {
+        pushDoBtn.disabled = false;
+        pushSay("", "この画面では通知を登録できません。公開中のアプリからお試しください。");
+        return;
+      }
+      const reg = await navigator.serviceWorker.ready;
+
+      const permission = await Notification.requestPermission();
+      if (permission !== "granted") {
+        pushDoBtn.disabled = false;
+        pushSay("", "通知が許可されませんでした。<br>端末の設定からこのアプリの通知をオンにすると、もう一度お試しいただけます。");
+        return;
+      }
+
+      // 🚨 許可を取ってから貯め直す。ここで一覧が無いと、初回の通知が
+      //    「アプリを開くと読めます」という案内だけになってしまう。
+      await saveMorningPlan();
+
+      const appKey = urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
+      let sub = await reg.pushManager.getSubscription();
+      if (sub && !sameKey(sub.options && sub.options.applicationServerKey, appKey)) {
+        await sub.unsubscribe();
+        sub = null;
+      }
+      if (!sub) {
+        sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: appKey,
+        });
+      }
+
+      pushSubEl.value = btoa(JSON.stringify(sub));
+      pushHandoffEl.classList.remove("hidden");
+      pushDoBtn.classList.add("hidden");
+      pushSay("ok", "受け取りの準備ができました。");
+    } catch (err) {
+      pushDoBtn.disabled = false;
+      pushSay("", "うまくいきませんでした。<br>もう一度お試しいただくか、この文言をお知らせください：<br>" +
+        String(err && err.message ? err.message : err));
+    }
+  });
+
+  pushCopyBtn.addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText(pushSubEl.value);
+      pushCopyBtn.textContent = "コピーしました";
+    } catch (err) {
+      pushSubEl.select();
+      pushCopyBtn.textContent = "選択しました。長押しでコピーしてください";
+    }
+    setTimeout(() => { pushCopyBtn.textContent = "合言葉をコピーする"; }, 3000);
+  });
 
   recordBackBtn.addEventListener("click", () => {
     flushNote();

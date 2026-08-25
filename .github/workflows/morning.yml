@@ -1,0 +1,42 @@
+# 毎朝7時（日本時間）に、お便りの「合図」を送る。
+#
+# 🚨 送るのは合図だけで、文章は入っていない。
+#    どの文章を出すかは、受け取った端末が自分で決める。
+#    → 送り手は生年月日も数字も持たない（仕様書「端末の外に、利用者の情報を持たない」）。
+#
+# ⚠️ GitHub の定時実行は、混み具合によって数分〜数十分ほど遅れることがある。
+#    早まることはない。7時ちょうどを保証したい場合は、別の仕組みが要る。
+name: 毎朝のお便り
+
+on:
+  schedule:
+    # 22:00 UTC ＝ 翌日の 07:00（日本時間）
+    - cron: "0 22 * * *"
+  # 手で試せるようにしておく（Actions タブ →「Run workflow」）。
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "送らずに、宛先の数だけ数える"
+        type: boolean
+        default: false
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      # 依存はこの1つだけ。package.json を置かず、その場で入れる。
+      - run: npm install --no-save web-push@3
+
+      - name: 送る
+        env:
+          VAPID_PUBLIC_KEY: ${{ secrets.VAPID_PUBLIC_KEY }}
+          VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
+          VAPID_SUBJECT: ${{ secrets.VAPID_SUBJECT }}
+          SUBSCRIPTIONS: ${{ secrets.SUBSCRIPTIONS }}
+        run: node .github/scripts/send-morning.js ${{ inputs.dry_run && '--dry-run' || '' }}
