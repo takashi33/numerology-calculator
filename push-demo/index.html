@@ -139,8 +139,10 @@
     <div class="status" id="status"></div>
 
     <div class="hidden" id="handoff">
-      <p style="margin-top:1.1rem"><strong>下の合言葉をコピーして、丸得さんへお送りください。</strong><br>
+      <p style="margin-top:1.1rem"><strong>あと少しです。下のボタンを押すと、たかしさんあてのメールが開きます。そのまま送信してください。</strong><br>
       受け取り次第、こちらから実際にお便りを送ります。</p>
+      <button id="send-btn" type="button">メールで送る</button>
+      <p class="hint">メールが開かないときは、下の合言葉をコピーして、たかしさんへお送りください。</p>
       <textarea id="sub-text" readonly></textarea>
       <button class="ghost" id="copy-btn" type="button">合言葉をコピーする</button>
       <p class="hint">送ったあとは、この画面を閉じてしまって構いません。<br>
@@ -172,6 +174,11 @@
   var handoffEl  = document.getElementById("handoff");
   var subTextEl  = document.getElementById("sub-text");
   var copyBtn    = document.getElementById("copy-btn");
+  var sendBtn    = document.getElementById("send-btn");
+
+  // 合言葉の送り先。押すだけで、この宛先のメールが開く。
+  // 🚨 ここに書いたアドレスは、このページを開いた人なら誰でも読める。
+  var HANDOFF_MAIL = "suuhi.app2026@gmail.com";
   var iosStepEl  = document.getElementById("ios-step");
   var mainStepEl = document.getElementById("main-step");
 
@@ -277,6 +284,16 @@
       copyBtn.textContent = "選択しました。長押しでコピーしてください";
     }
     setTimeout(function () { copyBtn.textContent = "合言葉をコピーする"; }, 3000);
+  });
+
+  // 「コピーはできたが、どこへ送るのか分からない」を無くす。
+  // 🚨 合言葉は長い。件名と本文は必ず encodeURIComponent を通す
+  //    （+ / = がそのままだと途中で切れて届かない）。
+  sendBtn.addEventListener("click", function () {
+    var body = "毎朝のお便りの合言葉です。このまま送信してください。\n\n" + subTextEl.value + "\n";
+    window.location.href = "mailto:" + HANDOFF_MAIL
+      + "?subject=" + encodeURIComponent("毎朝のお便り 合言葉")
+      + "&body=" + encodeURIComponent(body);
   });
 })();
 </script>

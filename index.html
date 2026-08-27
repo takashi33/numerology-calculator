@@ -947,7 +947,8 @@
 
   .push-status.ok { border-color: var(--gold); color: var(--gold); }
 
-  #push-do {
+  #push-do,
+  #push-send {
     display: block;
     width: 100%;
     margin: 16px 0 0;
@@ -961,7 +962,8 @@
     cursor: pointer;
   }
 
-  #push-do:disabled { opacity: 0.5; cursor: default; }
+  #push-do:disabled,
+  #push-send:disabled { opacity: 0.5; cursor: default; }
 
   #push-handoff textarea {
     width: 100%;
@@ -987,6 +989,13 @@
     border: 1px solid var(--card-border);
     border-radius: 8px;
     cursor: pointer;
+  }
+
+  .push-hint {
+    margin: 12px 0 0;
+    font-size: 12px;
+    line-height: 1.7;
+    color: var(--ink-faint);
   }
 
   .gate-help-btn {
@@ -2072,8 +2081,13 @@
     <button id="push-do" type="button">受け取りを始める</button>
     <div id="push-msg" class="push-status hidden"></div>
 
+    <!-- 合言葉の渡し方。送り先（HANDOFF_MAIL）が決まっていれば、押すだけで
+         送り先の入ったメールが開く。決まっていなければコピーだけの画面になる。
+         文言は JS 側で入れ直す（呼び名を入れるかどうかが変わるため）。 -->
     <div id="push-handoff" class="hidden">
-      <p>下の合言葉をコピーして、お送りください。届くようになります。</p>
+      <p id="push-handoff-lead">下の合言葉をコピーして、お送りください。届くようになります。</p>
+      <button id="push-send" type="button" class="hidden">メールで送る</button>
+      <p id="push-handoff-alt" class="push-hint hidden">メールが開かないときは、下の合言葉をコピーしてお送りください。</p>
       <textarea id="push-sub" readonly></textarea>
       <button id="push-copy" type="button">合言葉をコピーする</button>
     </div>
@@ -5977,6 +5991,14 @@
   // 🚨 鍵を変えると既存の購読はすべて無効になる。変えたら登録し直してもらうこと。
   const VAPID_PUBLIC_KEY = "BB9S3DceY4YVRxbU7IZG6D1j-CqeAwC2L6IaxLwReWHrui1Xy9Zpq3X0x3cddXmygGJFjt74fUhAHGIwioB-dxc";
 
+  // 合言葉の送り先。押すだけで、この宛先のメールが開く。
+  // 🚨 ここに書いたアドレスは、アプリを開いた人なら誰でも読める（このページは公開されている）。
+  //    空にすると、メールのボタンを出さず、コピーだけの画面に戻る。
+  const HANDOFF_MAIL = "suuhi.app2026@gmail.com";
+  // 画面に出す送り先の呼び名。「さん」まで含めてここに書く（文の中でそのまま使う）。
+  // 空なら、呼び名を出さない言い方になる。
+  const HANDOFF_NAME = "たかしさん";
+
   const pushBtn = document.getElementById("push-btn");
   const pushModal = document.getElementById("push-modal");
   const pushDoBtn = document.getElementById("push-do");
@@ -5984,6 +6006,9 @@
   const pushHandoffEl = document.getElementById("push-handoff");
   const pushSubEl = document.getElementById("push-sub");
   const pushCopyBtn = document.getElementById("push-copy");
+  const pushSendBtn = document.getElementById("push-send");
+  const pushHandoffLead = document.getElementById("push-handoff-lead");
+  const pushHandoffAlt = document.getElementById("push-handoff-alt");
   const pushIosEl = document.getElementById("push-ios");
   const pushNoBirthEl = document.getElementById("push-nobirth");
 
@@ -6113,6 +6138,31 @@
       pushCopyBtn.textContent = "選択しました。長押しでコピーしてください";
     }
     setTimeout(() => { pushCopyBtn.textContent = "合言葉をコピーする"; }, 3000);
+  });
+
+  // 「コピーはできたが、どこへ送るのか分からない」を無くす。送り先が決まっていれば、
+  // 押すだけで宛先と本文の入ったメールが開き、あとは送信を押すだけにする。
+  if (HANDOFF_MAIL) {
+    pushSendBtn.classList.remove("hidden");
+    pushHandoffAlt.classList.remove("hidden");
+    pushHandoffLead.innerHTML = "あと少しです。下のボタンを押すと、"
+      + (HANDOFF_NAME ? HANDOFF_NAME + "あての" : "")
+      + "メールが開きます。<strong>そのまま送信してください。</strong>届くようになります。";
+    // メールを使っていない端末のための逃げ道。ここにも送り先の名前を出す。
+    pushHandoffAlt.textContent = "メールが開かないときは、下の合言葉をコピーして、"
+      + (HANDOFF_NAME ? HANDOFF_NAME + "へ" : "")
+      + "お送りください。";
+  } else if (HANDOFF_NAME) {
+    pushHandoffLead.textContent = "下の合言葉をコピーして、" + HANDOFF_NAME + "へお送りください。届くようになります。";
+  }
+
+  pushSendBtn.addEventListener("click", () => {
+    // 🚨 合言葉は長い。件名と本文は必ず encodeURIComponent を通す
+    //    （+ / = がそのままだと途中で切れて届かない）。
+    const body = "毎朝のお便りの合言葉です。このまま送信してください。\n\n" + pushSubEl.value + "\n";
+    window.location.href = "mailto:" + HANDOFF_MAIL
+      + "?subject=" + encodeURIComponent("毎朝のお便り 合言葉")
+      + "&body=" + encodeURIComponent(body);
   });
 
   recordBackBtn.addEventListener("click", () => {
