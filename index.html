@@ -26,7 +26,9 @@
     --ink-soft: #cbb9f0;
     --ink-faint: #9c88c2;
     --card: rgba(255, 255, 255, 0.055);
-    --card-border: rgba(244, 217, 139, 0.28);
+    /* 🚨 枠の色（2026-08-28 依頼者の指示で金色へ）。
+       アプリ中の枠は 40 か所以上がこれを見ている。ここだけ直せば全部変わる。 */
+    --card-border: #d9a94a;
     --input-bg: #faf7ff;
     --input-ink: #221542;
     --font-display: Georgia, "Iowan Old Style", "Palatino Linotype", "Hiragino Mincho ProN", "Yu Mincho", serif;
@@ -611,7 +613,7 @@
   /* マスターナンバーの金とは意味が違うので、上部のカルミックデット帯と同じ
      紫系でそろえ、見分けがつくようにする。 */
   .result-card.karmic {
-    border: 1px solid rgba(190, 140, 210, 0.75);
+    border: 1px solid var(--card-border);
     background: rgba(120, 60, 140, 0.3);
   }
 
@@ -797,7 +799,7 @@
   .trial-notice {
     margin: 1.5rem 0;
     padding: 1rem 1.15rem;
-    border: 1px dashed rgba(120,120,120,.5);
+    border: 1px dashed var(--card-border);
     border-radius: 8px;
     font-size: .92rem;
     line-height: 1.75;
@@ -838,7 +840,7 @@
   .upgrade-coming {
     margin-top: 1.35rem;
     padding-top: 1.2rem;
-    border-top: 1px solid rgba(244, 217, 139, 0.18);
+    border-top: 1px solid var(--card-border);
   }
   .upgrade-coming h3 {
     margin: 0 0 .5rem;
@@ -1048,7 +1050,7 @@
     color: var(--ink-faint);
     background: none;
     border: none;
-    border-bottom: 1px solid rgba(156, 136, 194, 0.5);
+    border-bottom: 1px solid var(--card-border);
     cursor: pointer;
   }
 
