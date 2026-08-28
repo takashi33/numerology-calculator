@@ -965,6 +965,14 @@
   #push-do:disabled,
   #push-send:disabled { opacity: 0.5; cursor: default; }
 
+  /* 🚨 上の #push-do は ID なので、.hidden（クラス）より強い。打ち消しを
+     書かないと classList.add("hidden") が効かず、押せてはいけない場面でも
+     ボタンが出たままになる。
+     2026-08-28、これが原因で iPhone の Safari から「受け取りを始める」を
+     押せてしまい、Notification が無くて英語の例外になっていた。 */
+  #push-do.hidden,
+  #push-send.hidden { display: none; }
+
   #push-handoff textarea {
     width: 100%;
     height: 72px;
@@ -6040,10 +6048,21 @@
     return true;
   }
 
-  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  // 🚨 iPad は Safari が自分を Macintosh と名乗る（iPadOS 13 以降）。
+  //    指で触れる Mac は無いので、触れる点の数で見分ける。
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) ||
+    (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
   const isStandalone =
     window.navigator.standalone === true ||
     window.matchMedia("(display-mode: standalone)").matches;
+
+  // 🚨 3つそろって初めて通知を扱える。iPhone・iPad では、ホーム画面に追加しても
+  //    iOS 16.4 より古いと Notification が無く、押した先で英語の例外になる
+  //    （2026-08-27、実機で「Can't find variable: Notification」が出た）。
+  //    押す前に止めて、日本語で理由を出す。
+  const canPush = "serviceWorker" in navigator &&
+    "PushManager" in window &&
+    typeof Notification !== "undefined";
 
   function openPushModal() {
     pushMsgEl.classList.add("hidden");
@@ -6057,10 +6076,14 @@
     if (isIOS && !isStandalone) {
       pushIosEl.classList.remove("hidden");
       pushDoBtn.classList.add("hidden");
-    } else if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
+    } else if (!canPush) {
       pushDoBtn.classList.add("hidden");
       pushMsgEl.classList.remove("hidden");
-      pushSay("", "お使いの環境では通知を扱えないようです。別のブラウザでお試しください。");
+      pushSay("", isIOS
+        ? "この端末では、毎朝のお便りを受け取れません。<br>"
+          + "iPhone・iPad で通知を受け取るには <strong>iOS 16.4 以上</strong>が要ります。<br>"
+          + "<strong>設定 → 一般 → 情報 → システムバージョン</strong>でご確認ください。"
+        : "お使いの環境では通知を扱えないようです。別のブラウザでお試しください。");
     } else if (!birthReduced()) {
       // 生年月日が無いと、その日の言葉を選べない。
       pushNoBirthEl.classList.remove("hidden");
