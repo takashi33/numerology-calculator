@@ -2076,7 +2076,8 @@
     <button id="push-modal-close" type="button" aria-label="閉じる">×</button>
     <h2>毎朝のお便りを受け取る</h2>
     <p id="push-lead">毎朝7時に、その日のあなたの言葉をこの端末へお届けします。<br>
-    文章はこの端末の中で選ばれます。<strong>生年月日も、そこから出る数字も、外へは送られません。</strong></p>
+    文章はこの端末の中で選ばれます。<strong>生年月日も、そこから出る数字も、外へは送られません。</strong><br>
+    お預かりするのは、<strong>この端末への届け先だけ</strong>です。</p>
 
     <div id="push-ios" class="push-status hidden">
       iPhone・iPad では、<strong>ホーム画面に追加してから</strong>でないと通知を受け取れません。<br>
@@ -6017,6 +6018,14 @@
   // 空なら、呼び名を出さない言い方になる。
   const HANDOFF_NAME = "たかしさん";
 
+  // 🚨 合言葉の置き場（2026-08-28 依頼者の決定）。
+  //    登録できた時点で、アプリが自分でここへ預ける。利用者に送ってもらう手間を無くすため。
+  //    預けるのは「この端末への届け先」だけ。生年月日も、そこから出る数字も入れない。
+  //    ここに書く鍵は「入れる」ことしかできない（置き場の側で読み取りを許していない）。
+  //    ⚠️ 預けられなかったときは、下のメールの導線に戻る。黙って落とさない。
+  const HANDOFF_BOX_URL = "https://ubnhnrkdaxoglolzgpdb.supabase.co/rest/v1/push_subscriptions";
+  const HANDOFF_BOX_KEY = "sb_publishable_l3nDeW6cR1XJxBzWF0SSRg_ufPY4F17";
+
   const pushBtn = document.getElementById("push-btn");
   const pushModal = document.getElementById("push-modal");
   const pushDoBtn = document.getElementById("push-do");
@@ -6060,6 +6069,35 @@
 
   // 🚨 iPad は Safari が自分を Macintosh と名乗る（iPadOS 13 以降）。
   //    指で触れる Mac は無いので、触れる点の数で見分ける。
+  // 合言葉を置き場へ預ける。うまくいけば true。
+  // ⚠️ 圏外や置き場の不調で止まらないよう、8秒で見切る。
+  async function putInBox(sub) {
+    if (!HANDOFF_BOX_URL || !HANDOFF_BOX_KEY) return false;
+    const stop = new AbortController();
+    const timer = setTimeout(() => stop.abort(), 8000);
+    try {
+      const res = await fetch(HANDOFF_BOX_URL, {
+        method: "POST",
+        headers: {
+          apikey: HANDOFF_BOX_KEY,
+          "Content-Type": "application/json",
+          Prefer: "return=minimal",
+        },
+        body: JSON.stringify({ endpoint: sub.endpoint, subscription: sub }),
+        signal: stop.signal,
+      });
+      // 409 は「同じ届け先がすでに入っている」。登録し直した場合に出るが、
+      // 預かっている中身は同じなので、うまくいったものとして扱う。
+      // 🚨 重複を黙って無視させる書き方（on_conflict）は使えない。置き場の側で
+      //    「入れる」しか許していないため、書き換えの許可が要る形になり弾かれる。
+      return res.ok || res.status === 409;
+    } catch (err) {
+      return false;
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
   const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) ||
     (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
   const isStandalone =
@@ -6152,9 +6190,17 @@
       }
 
       pushSubEl.value = btoa(JSON.stringify(sub));
-      pushHandoffEl.classList.remove("hidden");
       pushDoBtn.classList.add("hidden");
-      pushSay("ok", "受け取りの準備ができました。");
+
+      // 置き場へ預けられたら、利用者の手はここで終わり。
+      // 預けられなければ、これまでどおりメールで送っていただく。
+      if (await putInBox(sub)) {
+        pushHandoffEl.classList.add("hidden");
+        pushSay("ok", "受け取りの準備ができました。<br>明日の朝からお届けします。<strong>ほかにしていただくことはありません。</strong>");
+      } else {
+        pushHandoffEl.classList.remove("hidden");
+        pushSay("ok", "受け取りの準備ができました。<br>あと一つだけ、下の手順をお願いします。");
+      }
     } catch (err) {
       pushDoBtn.disabled = false;
       pushSay("", "うまくいきませんでした。<br>もう一度お試しいただくか、この文言をお知らせください：<br>" +

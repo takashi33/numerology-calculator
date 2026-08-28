@@ -38,5 +38,10 @@ jobs:
           VAPID_PUBLIC_KEY: ${{ secrets.VAPID_PUBLIC_KEY }}
           VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
           VAPID_SUBJECT: ${{ secrets.VAPID_SUBJECT }}
+          # 宛先の置き場。この3つが入っていれば、合言葉の手渡しは要らない。
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+          PUSH_PASS: ${{ secrets.PUSH_PASS }}
+          # 置き場を使わない場合の手渡し用（どちらか一方でよい）。
           SUBSCRIPTIONS: ${{ secrets.SUBSCRIPTIONS }}
         run: node .github/scripts/send-morning.js ${{ inputs.dry_run && '--dry-run' || '' }}

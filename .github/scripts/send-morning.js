@@ -12,7 +12,17 @@
 //   VAPID_PUBLIC_KEY   公開鍵（アプリの index.html に書いてあるものと同じ）
 //   VAPID_PRIVATE_KEY  秘密鍵
 //   VAPID_SUBJECT      連絡先（mailto:... 形式）
-//   SUBSCRIPTIONS      宛先の一覧。合言葉（base64）を1行に1つ並べたもの
+//
+// 宛先の取り方は2通り。置き場が使えるならそちらを使う。
+//   SUPABASE_URL    置き場の住所（https://xxxx.supabase.co）
+//   SUPABASE_KEY    置き場の公開鍵（アプリにも書いてある。これだけでは読み出せない）
+//   PUSH_PASS       取り出しの合言葉（🚨 これが本当の鍵。GitHub Secrets の外へ出さない）
+//   SUBSCRIPTIONS   手渡しでもらった合言葉を1行に1つ（置き場を使わない場合）
+//
+// 🚨 置き場は「入れる」ことしか公開していない。読む・消すは、合言葉が合ったときだけ
+//    動く関数を通す。だから公開鍵がアプリに書いてあっても、宛先は誰にも取り出せない。
+// 🚨 置き場を使うと、届かなくなった宛先を自動で片づける（404/410 の行を消す）。
+//    手渡しの場合は消せないので、画面に出して人が外す。
 //
 // 🚨 宛先をファイルに書かないこと。このリポジトリは公開されている。
 //    宛先そのものが「その端末へ通知を出せる鍵」なので、置いた時点で誰でも送れる。
@@ -49,9 +59,41 @@ function readSubscriptions(raw) {
   return out;
 }
 
+// 置き場の関数を呼ぶ。合言葉が合っているときだけ中身が返る。
+async function callBox(name, body) {
+  const res = await fetch(`${process.env.SUPABASE_URL}/rest/v1/rpc/${name}`, {
+    method: "POST",
+    headers: {
+      apikey: process.env.SUPABASE_KEY,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error(`置き場を呼べませんでした (${res.status})`);
+  return res.json();
+}
+
+// 置き場から宛先を読む。
+async function readFromBox(pass) {
+  const rows = await callBox("list_push_subscriptions", { pass });
+  return (Array.isArray(rows) ? rows : []).filter((sub) => sub && sub.endpoint);
+}
+
+// もう受け取れない宛先を、置き場から消す。-1 は合言葉違い。
+async function removeFromBox(pass, target) {
+  const removed = await callBox("forget_push_subscription", { pass, target });
+  return removed > 0;
+}
+
 async function main() {
   const publicKey = need("VAPID_PUBLIC_KEY");
-  const subs = readSubscriptions(need("SUBSCRIPTIONS"));
+  const boxPass = process.env.PUSH_PASS;
+  const useBox = Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_KEY && boxPass);
+  const subs = useBox
+    ? await readFromBox(boxPass)
+    : readSubscriptions(need("SUBSCRIPTIONS"));
+
+  console.log(useBox ? "宛先は置き場から読みました。" : "宛先は SUBSCRIPTIONS から読みました。");
 
   console.log(`宛先 ${subs.length} 件`);
   if (subs.length === 0) {
@@ -85,7 +127,13 @@ async function main() {
   }
 
   console.log(`送信 ${sent} 件`);
-  if (gone.length) {
+  if (gone.length && useBox) {
+    // 置き場を使っているなら、こちらで片づける。人の作業を増やさない。
+    for (const endpoint of gone) {
+      const ok = await removeFromBox(boxPass, endpoint);
+      console.log(`${ok ? "片づけました" : "片づけに失敗しました"}: ${endpoint}`);
+    }
+  } else if (gone.length) {
     console.log(`もう受け取れない宛先が ${gone.length} 件あります。SUBSCRIPTIONS から外してください:`);
     gone.forEach((endpoint) => console.log(`  ${endpoint}`));
   }
