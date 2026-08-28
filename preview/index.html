@@ -1657,25 +1657,24 @@
   .plan-readonly { display: flex; align-items: center; gap: 6px; margin-bottom: 5px; font-size: 12.5px; color: var(--ink-faint); }
   .plan-readonly b { flex: none; width: 44px; font-weight: 400; }
 
+  /* 🚨 2026-08-28 依頼者の指示：画面の中央に出す。
+     それまでは下から出していた（小さい画面のときだけ）。 */
   .day-mask {
     position: fixed; inset: 0; z-index: 40;
-    display: flex; align-items: flex-end; justify-content: center;
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
     background: rgba(18, 8, 31, 0.62);
   }
   /* .hidden と同じ詳細度なので、明示しないと後勝ちで display:flex に戻る。 */
   .day-mask.hidden { display: none; }
   .day-panel {
     position: relative;
-    width: 100%; max-width: 560px; max-height: 88vh; overflow-y: auto;
-    padding: 18px 16px calc(18px + env(safe-area-inset-bottom));
+    width: 100%; max-width: 560px; max-height: 85vh; overflow-y: auto;
+    padding: 18px 16px;
     background: #1b1039; border: 1px solid var(--card-border);
-    border-radius: 18px 18px 0 0;
+    border-radius: 18px;
     /* 中を最後までスクロールしたあと、裏の本体まで動き出さないようにする */
     overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
-  }
-  @media (min-width: 560px) {
-    .day-mask { align-items: center; padding: 20px; }
-    .day-panel { border-radius: 18px; }
   }
   .day-close {
     position: absolute; top: 10px; right: 10px;
@@ -2045,8 +2044,10 @@
     </div>
   </div>
 
-  <!-- 選んだ日の中身は下から出す。表の下に置くと画面の外に出てしまい、
-       開いたことに気づけない（推し活カレンダーの #m-day と同じ作り）。 -->
+  <!-- 選んだ日の中身は画面の中央に出す（2026-08-28 依頼者の指示）。
+       表の下に置くと画面の外に出てしまい、開いたことに気づけない。
+       ⚠️ 文字を打つときに鍵盤（キーボード）が下半分を覆うため、
+       中の欄に触れたら、その欄が見えるところまで自分で寄せる（JS 側）。 -->
   <div id="day-mask" class="day-mask hidden">
     <div class="day-panel" role="dialog" aria-modal="true" aria-label="選んだ日の記録">
       <button type="button" id="day-close" class="day-close" aria-label="閉じる">×</button>
@@ -5688,18 +5689,35 @@
   window.addEventListener("pagehide", flushNote);
 
   let dayScrollY = 0;
+  // 🚨 中央に出すと、文字を打つときに鍵盤（キーボード）が下半分を覆い、
+  //    打っている欄が見えなくなる。鍵盤が出た分だけ、見えている範囲へ寄せ直す。
+  //    visualViewport は「いま実際に見えている範囲」を教えてくれる仕組み。
+  function fitDayPanel() {
+    const view = window.visualViewport;
+    if (!view || dayMaskEl.classList.contains("hidden")) return;
+    dayMaskEl.style.height = `${view.height}px`;
+    dayMaskEl.style.transform = `translateY(${view.offsetTop}px)`;
+  }
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener("resize", fitDayPanel);
+    window.visualViewport.addEventListener("scroll", fitDayPanel);
+  }
+
   function openDaySheet() {
     renderDaySheet();
     dayScrollY = window.scrollY;
     dayMaskEl.classList.remove("hidden");
     document.body.classList.add("day-locked");
     document.body.style.top = `-${dayScrollY}px`;
+    fitDayPanel();
     dayCloseBtn.focus();
   }
   function closeDaySheet() {
     flushNote();   // 打ったまま閉じても消えないようにする
     if (dayMaskEl.classList.contains("hidden")) return;
     dayMaskEl.classList.add("hidden");
+    dayMaskEl.style.height = "";
+    dayMaskEl.style.transform = "";
     document.body.classList.remove("day-locked");
     document.body.style.top = "";
     window.scrollTo(0, dayScrollY);
