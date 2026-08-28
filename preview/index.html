@@ -2226,7 +2226,6 @@
     "325751", // 現行
   ];
   const ADMIN_PASSCODE = "523451";
-  const NOTE_PASSCODE = "421589";
   const TRIAL_PASSCODE = "649096";
   // 無料体験用（2026-08-15 追加）。できることは体験モードと同じで、
   // 記事の中身にあたる資料メニューの解説2本と相性診断は開かない。
@@ -2279,7 +2278,7 @@
   // localStorage を先に見る。sessionStorage はタブ（ホーム画面から開いた場合は
   // アプリ）を閉じると消えるため、購入者が開くたびにコードを求められていた。
   // sessionStorage 側も読み続けるのは、以前のタブが開いたままでも解錠を保つため。
-  // "guest"／"buyer" は旧称。読み取り側だけ受け付ける。
+  // "guest"／"buyer"／"note" は旧称。読み取り側だけ受け付ける。
   function getRememberedRole() {
     for (const store of ["localStorage", "sessionStorage"]) {
       try {
@@ -2414,8 +2413,6 @@
       role = "admin";
     } else if (SUBSCRIBER_PASSCODES.includes(passcodeInput.value)) {
       role = "subscriber";
-    } else if (passcodeInput.value === NOTE_PASSCODE) {
-      role = "note";
     } else if (passcodeInput.value === TRIAL_PASSCODE) {
       role = "trial";
     } else if (FREE_TRIAL_PASSCODES.includes(passcodeInput.value)) {
