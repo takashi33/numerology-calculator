@@ -1001,6 +1001,27 @@
     cursor: pointer;
   }
 
+  .self-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 14px; }
+  .self-btn {
+    flex: 1 1 auto;
+    padding: 9px 10px;
+    font-family: var(--font-body);
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    background: none;
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  .self-btn.hidden { display: none; }
+
+  #push-birth { margin: 16px 0 0; }
+  .push-birth-title { margin: 0 0 8px; font-size: 13px; color: var(--ink-soft); }
+  #push-birth .date-input-group input {
+    padding: 9px 8px;
+    font-size: 15px;
+  }
+
   .push-hint {
     margin: 12px 0 0;
     font-size: 12px;
@@ -1685,8 +1706,9 @@
   /* パネルを開いている間、裏の画面を動かさない。位置は JS が覚えて元に戻す。 */
   body.day-locked { position: fixed; width: 100%; overflow: hidden; }
 
-  .day-sheet { padding-right: 34px; }
-  .day-sheet h3 { margin: 0 0 12px; font-family: var(--font-display); font-size: 16px; color: var(--gold); font-weight: 400; }
+  /* 🚨 右だけ余白を足すと、中身が左に寄って見える（2026-08-28 依頼者の指摘）。
+     × を避ける必要があるのは、いちばん上の見出しの行だけなので、そこだけ避ける。 */
+  .day-sheet h3 { margin: 0 0 12px; padding-right: 34px; font-family: var(--font-display); font-size: 16px; color: var(--gold); font-weight: 400; }
   .day-sheet h3 .day-holi { font-size: 12px; color: #e8a8a8; margin-left: 8px; }
   .day-nums { display: flex; gap: 8px; margin: 0 0 14px; }
   .day-num { flex: 1; text-align: center; padding: 8px 4px; background: rgba(255, 255, 255, 0.05); border-radius: 8px; }
@@ -1829,6 +1851,14 @@
       <input type="text" id="first-name" placeholder="カナ入力">
     </label>
     <p id="name-warning" class="name-warning hidden"></p>
+
+    <!-- 🚨 自分情報（2026-08-28 依頼者の指示）。鑑定で他の方を入れたあと、
+         自分の生年月日と氏名を打ち直す手間を無くす。毎朝のお便りも、
+         ここに登録した生年月日から選ぶ（→ #push-birth）。 -->
+    <div class="self-row">
+      <button type="button" id="self-fill" class="self-btn hidden">自分の情報を入れる</button>
+      <button type="button" id="self-save" class="self-btn">いまの内容を自分の情報にする</button>
+    </div>
 
     <div class="romaji-helper">
       <button type="button" id="romaji-table-toggle" class="romaji-toggle-btn">ヘボン式ローマ字表を見ながら入力する</button>
@@ -2085,12 +2115,22 @@
       下の共有ボタン → 「ホーム画面に追加」→ 追加したアイコンから開き直して、もう一度この画面を開いてください。
     </div>
 
-    <div id="push-nobirth" class="push-status hidden">
-      先に生年月日を入れて「計算する」を押してください。<br>
-      その日の言葉は、生年月日から選びます。
+    <!-- 🚨 自分情報（2026-08-28 依頼者の指示）。
+         鑑定で他の方を計算しても毎朝のお便りが入れ替わらないよう、
+         受け取る本人の生年月日は、計算の欄とは別にここで持つ。 -->
+    <div id="push-birth">
+      <p class="push-birth-title">お便りを受け取る<strong>あなたの生年月日</strong></p>
+      <div class="date-input-group">
+        <input type="text" inputmode="numeric" pattern="[0-9]*" id="push-birth-year" maxlength="4" placeholder="年" aria-label="あなたの生まれた年（西暦）">
+        <span class="date-sep">/</span>
+        <input type="text" inputmode="numeric" pattern="[0-9]*" id="push-birth-month" maxlength="2" placeholder="月" aria-label="あなたの生まれた月">
+        <span class="date-sep">/</span>
+        <input type="text" inputmode="numeric" pattern="[0-9]*" id="push-birth-day" maxlength="2" placeholder="日" aria-label="あなたの生まれた日">
+      </div>
+      <p class="push-hint">ここで決めた生年月日の言葉をお届けします。<strong>鑑定で他の方を計算しても、入れ替わりません。</strong></p>
     </div>
 
-    <button id="push-do" type="button">受け取りを始める</button>
+    <button id="push-do" type="button">この生年月日で受け取る</button>
     <div id="push-msg" class="push-status hidden"></div>
 
     <!-- 合言葉の渡し方。送り先（HANDOFF_MAIL）が決まっていれば、押すだけで
@@ -2353,6 +2393,37 @@
   // 通知から手帳を開いた人に、毎回打ち直させないため。予定・記録と同じ扱いで、
   // 🚨 端末の外へは出さない。アドレス欄にも載せない。
   // 覚え直すには、欄を書き替えて「計算する」を押せばよい。
+  // 🚨 自分情報（2026-08-28 依頼者の指示）。
+  //    鑑定で他の方を入れたあと、自分の生年月日と氏名を打ち直さずに戻せるようにする。
+  //    毎朝のお便りも、ここに入っている生年月日から選ぶ（入っていなければ入力欄）。
+  //    🚨 端末の外へは出さない。届け先を預けるときにも含めない。
+  const SELF_KEY = "numerology-self";
+  function readSelf() {
+    try {
+      const raw = localStorage.getItem(SELF_KEY);
+      if (!raw) return null;
+      const self = JSON.parse(raw);
+      return self && typeof self === "object" ? self : null;
+    } catch (err) {
+      return null; // 壊れていたら「登録されていない」として扱う
+    }
+  }
+  function writeSelf(self) {
+    try {
+      localStorage.setItem(SELF_KEY, JSON.stringify(self));
+      return true;
+    } catch (err) {
+      return false;
+    }
+  }
+  // 毎朝のお便りの持ち主。「1985-3-12」の形。
+  function selfBirthParts() {
+    const self = readSelf();
+    if (!self || !/^[0-9]{4}-[0-9]{1,2}-[0-9]{1,2}$/.test(self.birth || "")) return null;
+    const p = self.birth.split("-").map(Number);
+    return { y: p[0], m: p[1], d: p[2] };
+  }
+
   const BIRTH_KEY = "numerology-birth";
   function rememberBirth(year, month, day) {
     try {
@@ -4975,7 +5046,12 @@
   // その日の3つの数字。計算式はメイン画面と同じ関数をそのまま使う
   // （片方だけ直すと、表示と記録で数字が食い違う）。
   function numbersOn(dateStr) {
-    const lp = birthReduced();
+    return numbersOnFor(dateStr, birthReduced());
+  }
+
+  // 誰の数字かを外から渡せる形。毎朝のお便りは自分情報の生年月日で作るため、
+  // 入力欄を見に行く numbersOn とは分けてある。
+  function numbersOnFor(dateStr, lp) {
     if (!lp) return null;
     const d = fromYmd(dateStr);
     const py = calcPersonalYearNumber(lp.rMonth, lp.rDay, d.getFullYear());
@@ -6005,12 +6081,15 @@
   // これから先の分の言葉を作って端末に貯める。
   // 🚨 体験モードの見本の記録は混ぜない。届くのは本人の生年月日から出た言葉だけ。
   function saveMorningPlan() {
-    const lp = birthReduced();
+    // 🚨 自分情報があれば必ずそちらを使う。鑑定で他の方を計算しても、
+    //    毎朝のお便りが入れ替わらないようにするため（2026-08-28）。
+    const own = selfBirthParts();
+    const lp = own ? calcLifePathNumber(own.y, own.m, own.d) : birthReduced();
     if (!lp) return Promise.resolve(false);
     const days = {};
     let date = ymd(new Date());
     for (let i = 0; i < MORNING_DAYS; i++) {
-      const nums = numbersOn(date);
+      const nums = numbersOnFor(date, lp);
       const row = nums && MORNING_WORDS[String(nums.lifePath)];
       const word = row && row[String(nums.wordDay)];
       if (word) days[date] = word;
@@ -6055,7 +6134,9 @@
   const pushHandoffLead = document.getElementById("push-handoff-lead");
   const pushHandoffAlt = document.getElementById("push-handoff-alt");
   const pushIosEl = document.getElementById("push-ios");
-  const pushNoBirthEl = document.getElementById("push-nobirth");
+  const pushBirthYear = document.getElementById("push-birth-year");
+  const pushBirthMonth = document.getElementById("push-birth-month");
+  const pushBirthDay = document.getElementById("push-birth-day");
 
   function pushSay(kind, html) {
     pushMsgEl.className = "push-status " + kind;
@@ -6134,9 +6215,17 @@
     pushMsgEl.classList.add("hidden");
     pushHandoffEl.classList.add("hidden");
     pushIosEl.classList.add("hidden");
-    pushNoBirthEl.classList.add("hidden");
     pushDoBtn.classList.remove("hidden");
     pushDoBtn.disabled = false;
+
+    // 自分情報があればそれを、無ければ計算の欄の値を写しておく。
+    // 打ちかけの値は上書きしない。
+    const own = selfBirthParts();
+    if (!pushBirthYear.value && !pushBirthMonth.value && !pushBirthDay.value) {
+      pushBirthYear.value = own ? String(own.y) : birthYearInput.value;
+      pushBirthMonth.value = own ? String(own.m) : birthMonthInput.value;
+      pushBirthDay.value = own ? String(own.d) : birthDayInput.value;
+    }
 
     // iPhone はホーム画面に追加しないと通知が届かない（仕様書「配信」）。
     if (isIOS && !isStandalone) {
@@ -6150,10 +6239,6 @@
           + "iPhone・iPad で通知を受け取るには <strong>iOS 16.4 以上</strong>が要ります。<br>"
           + "<strong>設定 → 一般 → 情報 → システムバージョン</strong>でご確認ください。"
         : "お使いの環境では通知を扱えないようです。別のブラウザでお試しください。");
-    } else if (!birthReduced()) {
-      // 生年月日が無いと、その日の言葉を選べない。
-      pushNoBirthEl.classList.remove("hidden");
-      pushDoBtn.classList.add("hidden");
     }
     pushModal.classList.remove("hidden");
   }
@@ -6167,6 +6252,27 @@
   });
 
   pushDoBtn.addEventListener("click", async () => {
+    // 🚨 ここで決めた生年月日が、毎朝のお便りの持ち主になる。
+    //    計算の欄とは切り離してあるので、鑑定で他の方を入れても入れ替わらない。
+    const y = parseInt(pushBirthYear.value, 10);
+    const m = parseInt(pushBirthMonth.value, 10);
+    const d = parseInt(pushBirthDay.value, 10);
+    const ok = Number.isInteger(y) && Number.isInteger(m) && Number.isInteger(d) &&
+      y >= 1900 && y <= 2100 && m >= 1 && m <= 12 && d >= 1 && d <= 31;
+    if (!ok) {
+      pushMsgEl.classList.remove("hidden");
+      pushSay("", "生年月日を正しく入れてください。<br>その日の言葉は、ここから選びます。");
+      return;
+    }
+    const kept = readSelf() || {};
+    writeSelf({
+      birth: [y, m, d].join("-"),
+      last: kept.last || "",
+      first: kept.first || "",
+      mode: kept.mode || nameInputMode,
+    });
+    refreshSelfButtons();
+
     pushDoBtn.disabled = true;
     pushMsgEl.classList.remove("hidden");
     pushSay("", "準備しています…");
@@ -6647,6 +6753,65 @@
     setNameMode(nameInputMode === "manual" ? "kana" : "manual");
   });
   setNameMode(getRememberedNameMode());
+
+  // ---------------- 自分情報の出し入れ ----------------
+  const selfFillBtn = document.getElementById("self-fill");
+  const selfSaveBtn = document.getElementById("self-save");
+
+  function refreshSelfButtons() {
+    const self = readSelf();
+    selfFillBtn.classList.toggle("hidden", !self);
+    selfSaveBtn.textContent = self ? "自分の情報を入れ替える" : "いまの内容を自分の情報にする";
+  }
+  refreshSelfButtons();
+
+  function saySelf(btn, text) {
+    const before = btn.dataset.label || btn.textContent;
+    btn.dataset.label = before;
+    btn.textContent = text;
+    setTimeout(() => {
+      btn.textContent = btn.dataset.label;
+      delete btn.dataset.label;
+      refreshSelfButtons();
+    }, 2200);
+  }
+
+  selfSaveBtn.addEventListener("click", () => {
+    const y = parseInt(birthYearInput.value, 10);
+    const m = parseInt(birthMonthInput.value, 10);
+    const d = parseInt(birthDayInput.value, 10);
+    if (!Number.isInteger(y) || !Number.isInteger(m) || !Number.isInteger(d)) {
+      saySelf(selfSaveBtn, "先に生年月日を入れてください");
+      return;
+    }
+    writeSelf({
+      birth: [y, m, d].join("-"),
+      last: lastNameInput.value,
+      first: firstNameInput.value,
+      mode: nameInputMode,
+    });
+    // 毎朝のお便りの持ち主も、ここで決まる。作り置きを本人のもので作り直す。
+    saveMorningPlan();
+    saySelf(selfSaveBtn, "自分の情報として覚えました");
+  });
+
+  selfFillBtn.addEventListener("click", () => {
+    const self = readSelf();
+    if (!self) return;
+    const parts = (self.birth || "").split("-");
+    if (parts.length === 3) {
+      birthYearInput.value = parts[0];
+      birthMonthInput.value = String(Number(parts[1]));
+      birthDayInput.value = String(Number(parts[2]));
+    }
+    // 🚨 先に入力の種類（カナ／ローマ字）を戻す。あとから値を入れないと、
+    //    切り替えの際の変換が、入れた文字にかかってしまう。
+    if (self.mode && self.mode !== nameInputMode) setNameMode(self.mode);
+    lastNameInput.value = self.last || "";
+    firstNameInput.value = self.first || "";
+    checkNameWarning();
+    saySelf(selfFillBtn, "自分の情報を入れました");
+  });
 
   // 長音の省略（大野＝おおの→ono など）で2回目のタップが何も追加しないとき、
   // 初心者ほど「タップが反応していない」と誤解しやすい。タップ自体は効いている
