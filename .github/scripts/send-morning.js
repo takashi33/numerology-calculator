@@ -6,7 +6,7 @@
 // 🚨 中身（文章）は入れない。
 //    どの文章を出すかは、受け取った端末が自分で決める（sw.js）。
 //    送り手は生年月日も数字も持たない ＝ 預かる情報がゼロ。
-//    → 仕様書「端末の外に、利用者の情報を持たない」（2026-08-24 依頼者の決定）
+//    → 預かる情報がゼロなので、漏れる中身がない。ここに文章を入れないこと。
 //
 // 必要な環境変数（すべて GitHub Secrets から渡す）
 //   VAPID_PUBLIC_KEY   公開鍵（アプリの index.html に書いてあるものと同じ）
@@ -73,6 +73,36 @@ async function callBox(name, body) {
   return res.json();
 }
 
+// 日本時間の「きょう」を YYYY-MM-DD で返す。
+// 端末ごとの暦とは別で、こちらは「どの日の分を送ったか」の札にだけ使う。
+function todayInJST() {
+  const jst = new Date(Date.now() + 9 * 60 * 60 * 1000);
+  return jst.toISOString().slice(0, 10);
+}
+
+// 朝7時（日本時間）から何分過ぎたか。マイナスなら、まだ7時前。
+function minutesLate() {
+  const jst = new Date(Date.now() + 9 * 60 * 60 * 1000);
+  return Math.round((jst.getUTCHours() * 60 + jst.getUTCMinutes()) - 7 * 60);
+}
+
+// その日の札を取る。true が返った回だけが送る。
+// 🚨 GitHub の定時実行が数時間ずれるため、1日に何回も起動をかけている。
+//    札が無いと、遅れて着いた回が2通目・3通目を送ってしまう。
+async function claimToday(pass, date) {
+  const rows = await callBox("claim_morning_send", { pass, jst_date: date });
+  return rows === true || (Array.isArray(rows) && rows[0] === true);
+}
+
+// 1件も送れなかったときは札を返す。返さないと、その日は誰にも届かないまま終わる。
+async function releaseToday(pass, date) {
+  try {
+    await callBox("release_morning_send", { pass, jst_date: date });
+  } catch (err) {
+    console.error(`札を返せませんでした: ${err && err.message}`);
+  }
+}
+
 // 置き場から宛先を読む。
 async function readFromBox(pass) {
   const rows = await callBox("list_push_subscriptions", { pass });
@@ -94,6 +124,20 @@ async function main() {
     : readSubscriptions(need("SUBSCRIPTIONS"));
 
   console.log(useBox ? "宛先は置き場から読みました。" : "宛先は SUBSCRIPTIONS から読みました。");
+
+  const late = minutesLate();
+  console.log(`朝7時（日本時間）から ${late} 分`);
+
+  // 🚨 送る前に札を取る。取れなかった回は、今日ぶんが既に送られている。
+  //    置き場を使っていないとき（手渡しの SUBSCRIPTIONS）は札が無いので、そのまま送る。
+  const today = todayInJST();
+  if (useBox && !DRY_RUN) {
+    const mine = await claimToday(boxPass, today);
+    if (!mine) {
+      console.log(`${today} 分は、もう送ってあります。何もしません。`);
+      return;
+    }
+  }
 
   console.log(`宛先 ${subs.length} 件`);
   if (subs.length === 0) {
@@ -139,7 +183,12 @@ async function main() {
   }
 
   // 🚨 1件も送れなかったときは、気づけるように失敗で終わる。
-  if (sent === 0) process.exit(1);
+  //    あわせて札を返す。返さないと、あとの回が「送り済み」と見て何もせず、
+  //    その日は誰にも届かないまま終わる。
+  if (sent === 0) {
+    if (useBox) await releaseToday(boxPass, today);
+    process.exit(1);
+  }
 }
 
 main().catch((err) => {
