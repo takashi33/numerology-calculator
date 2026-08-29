@@ -132,7 +132,16 @@ async function main() {
   //    置き場を使っていないとき（手渡しの SUBSCRIPTIONS）は札が無いので、そのまま送る。
   const today = todayInJST();
   if (useBox && !DRY_RUN) {
-    const mine = await claimToday(boxPass, today);
+    let mine;
+    try {
+      mine = await claimToday(boxPass, today);
+    } catch (err) {
+      // 🚨 札を取れたかどうか分からないときは、送らない。
+      //    分からないまま送ると、あとの回も同じ判断をして何通も届く。
+      //    失敗で終わるので、持ち主にメールが飛んで気づける。
+      console.error(`札を取れたか分かりませんでした: ${err && err.message}`);
+      process.exit(1);
+    }
     if (!mine) {
       console.log(`${today} 分は、もう送ってあります。何もしません。`);
       return;
