@@ -1107,6 +1107,72 @@
     letter-spacing: 0.02em;
   }
 
+  /* 鑑定の道具（有料）。4つ目が並ぶと3列では1つだけ余るので、2列に組み替える。 */
+  .app-nav.has-pro { grid-template-columns: repeat(2, 1fr); }
+
+  .pro-lead {
+    margin: 0 0 14px;
+    font-size: 13px;
+    line-height: 1.75;
+    color: var(--ink-faint);
+  }
+  .pro-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  .pro-sub {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--gold);
+    letter-spacing: 0.04em;
+    margin: 22px 0 8px;
+  }
+  .pro-fill-btn {
+    font-family: var(--font-body);
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--gold);
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    padding: 8px 10px;
+    cursor: pointer;
+  }
+  .pro-months {
+    width: 100%;
+    overflow-x: auto;
+  }
+  .pro-months table {
+    border-collapse: collapse;
+    width: 100%;
+    min-width: 320px;
+    font-variant-numeric: tabular-nums;
+  }
+  .pro-months th,
+  .pro-months td {
+    border-bottom: 1px solid var(--card-border);
+    padding: 7px 6px;
+    font-size: 13px;
+    text-align: left;
+  }
+  .pro-months th { color: var(--ink-faint); font-weight: 400; width: 4.5em; }
+  .pro-months td.n { color: var(--gold); font-weight: 700; width: 3em; }
+  .pro-months tr.now td,
+  .pro-months tr.now th { background: rgba(255, 255, 255, 0.05); }
+
+  .pro-sheet-preview {
+    margin: 14px 0;
+    text-align: center;
+  }
+  .pro-sheet-preview img {
+    max-width: 100%;
+    height: auto;
+    border: 1px solid var(--card-border);
+    border-radius: 6px;
+  }
+
   .library-open-btn {
     display: block;
     width: 100%;
@@ -1843,6 +1909,10 @@
     <button type="button" id="record-open-btn" class="app-nav-btn">
       <span class="nav-icon">📔</span>手帳<small>予定と数字</small>
     </button>
+    <!-- 有料の方だけに出す。無料の方には無い機能なので、押せる形で見せない。 -->
+    <button type="button" id="pro-open-btn" class="app-nav-btn hidden">
+      <span class="nav-icon">🔎</span>鑑定の道具<small>お客様を観る</small>
+    </button>
   </nav>
 
   <form id="calc-form">
@@ -2032,6 +2102,80 @@
   <p id="compat-error" class="error hidden"></p>
   <div id="compat-result" class="hidden"></div>
   <div id="compat-guide"></div>
+</div>
+
+<div id="pro" class="hidden">
+  <button type="button" id="pro-back-btn" class="library-back">← 戻る</button>
+  <h1 class="library-h1">鑑定の道具</h1>
+  <p class="library-sub">お客様を観るための道具です。入れた内容は、この端末から出ません。</p>
+
+  <div class="record-tabs" role="tablist">
+    <button type="button" class="record-tab" id="pro-tab-forecast" role="tab" aria-selected="true">その方のこれから</button>
+    <button type="button" class="record-tab" id="pro-tab-sheet" role="tab" aria-selected="false">お渡しする1枚</button>
+  </div>
+
+  <div id="pro-forecast">
+    <p class="pro-lead">見たい日を指定すると、その方にとってその日がどういう日かが出ます。先の日付も見られます。</p>
+    <form id="pro-forecast-form" autocomplete="off">
+      <label class="field">
+        <span>その方の生年月日</span>
+        <div class="date-input-group">
+          <input type="text" inputmode="numeric" pattern="[0-9]*" id="pro-birth-year" maxlength="4" placeholder="年" aria-label="その方の生まれた年">
+          <span class="date-sep">/</span>
+          <input type="text" inputmode="numeric" pattern="[0-9]*" id="pro-birth-month" maxlength="2" placeholder="月" aria-label="その方の生まれた月">
+          <span class="date-sep">/</span>
+          <input type="text" inputmode="numeric" pattern="[0-9]*" id="pro-birth-day" maxlength="2" placeholder="日" aria-label="その方の生まれた日">
+        </div>
+      </label>
+      <div class="pro-row">
+        <button type="button" id="pro-fill-btn" class="pro-fill-btn">計算画面の生年月日を入れる</button>
+      </div>
+      <label class="field">
+        <span>見たい日</span>
+        <div class="date-input-group">
+          <input type="text" inputmode="numeric" pattern="[0-9]*" id="pro-target-year" maxlength="4" placeholder="年" aria-label="見たい年">
+          <span class="date-sep">/</span>
+          <input type="text" inputmode="numeric" pattern="[0-9]*" id="pro-target-month" maxlength="2" placeholder="月" aria-label="見たい月">
+          <span class="date-sep">/</span>
+          <input type="text" inputmode="numeric" pattern="[0-9]*" id="pro-target-day" maxlength="2" placeholder="日" aria-label="見たい日">
+        </div>
+      </label>
+      <button type="submit" id="pro-forecast-btn">その日を見る</button>
+    </form>
+    <p id="pro-forecast-error" class="error hidden"></p>
+    <div id="pro-forecast-result" class="hidden"></div>
+  </div>
+
+  <div id="pro-sheet" class="hidden">
+    <p class="pro-lead">鑑定のあとに、その方が持ち帰れる1枚を作ります。端末に保存してから、メールでもLINEでも、ご自身の手でお渡しください。</p>
+    <form id="pro-sheet-form" autocomplete="off">
+      <label class="field">
+        <span>その方の生年月日</span>
+        <div class="date-input-group">
+          <input type="text" inputmode="numeric" pattern="[0-9]*" id="pro-sheet-year" maxlength="4" placeholder="年" aria-label="その方の生まれた年">
+          <span class="date-sep">/</span>
+          <input type="text" inputmode="numeric" pattern="[0-9]*" id="pro-sheet-month" maxlength="2" placeholder="月" aria-label="その方の生まれた月">
+          <span class="date-sep">/</span>
+          <input type="text" inputmode="numeric" pattern="[0-9]*" id="pro-sheet-day" maxlength="2" placeholder="日" aria-label="その方の生まれた日">
+        </div>
+      </label>
+      <label class="field">
+        <span>お名前（1枚に印字します。空でも作れます）</span>
+        <input type="text" id="pro-sheet-name" placeholder="任意">
+      </label>
+      <label class="field">
+        <span>ローマ字（入れると、名前から出る数字も載ります）</span>
+        <input type="text" id="pro-sheet-romaji" placeholder="任意　例：YAMADA HANAKO">
+      </label>
+      <button type="submit" id="pro-sheet-btn">1枚を作る</button>
+    </form>
+    <p id="pro-sheet-error" class="error hidden"></p>
+    <div id="pro-sheet-preview" class="pro-sheet-preview hidden"></div>
+    <div id="pro-sheet-actions" class="pro-row hidden">
+      <button type="button" id="pro-sheet-save" class="pro-fill-btn">端末に保存する</button>
+      <button type="button" id="pro-sheet-share" class="pro-fill-btn hidden">そのまま送る</button>
+    </div>
+  </div>
 </div>
 
 <div id="record" class="hidden">
@@ -2248,11 +2392,23 @@
   const gateError = document.getElementById("gate-error");
   const gateCard = document.querySelector(".gate-card");
   const adminQrBtn = document.getElementById("admin-qr-btn");
+  const proOpenBtn = document.getElementById("pro-open-btn");
+
+  // 鑑定の道具を開けるのは有料の方だけ。無料の会員（SUBSCRIBER_PASSCODES）には出さない。
+  // 管理者を含めるのは、依頼者ご自身が確かめるため。
+  // 🚨 "paid" を名乗る道はまだ無い。決済のあとの専用URLで渡す（仕様書「電卓側のコードとの関係」）。
+  function isPaidRole(role) {
+    return role === "paid" || role === "admin";
+  }
 
   function unlock(role) {
     gateEl.classList.add("hidden");
     appEl.classList.remove("hidden");
     adminQrBtn.classList.toggle("hidden", role !== "admin");
+    const paid = isPaidRole(role);
+    proOpenBtn.classList.toggle("hidden", !paid);
+    // 3列のままだと4つ目が1つだけ次の行に残るので、出すときは2列に組み替える。
+    document.querySelector(".app-nav").classList.toggle("has-pro", paid);
     // 体験モードでは「基本の3数字」だけ数字を出し、それ以外はカードの見出し
     // だけ残して数字と解説を伏せる。何がいくつ算出できるのかは一覧で見えるが、
     // 値そのものは渡さない。名前の入力欄は残すので、カナ→ローマ字の自動変換
@@ -2273,7 +2429,7 @@
   // before the listener below is registered, the "扉を開く" button silently
   // stops responding — so both accesses are guarded and never allowed to
   // interrupt setup.
-  const KNOWN_ROLES = ["admin", "subscriber", "note", "trial", "guest", "buyer"];
+  const KNOWN_ROLES = ["admin", "subscriber", "paid", "note", "trial", "guest", "buyer"];
 
   // localStorage を先に見る。sessionStorage はタブ（ホーム画面から開いた場合は
   // アプリ）を閉じると消えるため、購入者が開くたびにコードを求められていた。
@@ -6140,6 +6296,320 @@
     recordEl.classList.remove("hidden");
     showRecordTab("cal");
     window.scrollTo(0, 0);
+  });
+
+  // ---------------- 鑑定の道具（有料） ----------------
+  //
+  // 🚨 計算は既存の calc* をそのまま呼ぶ。ここで式を作り直さないこと。
+  //    同じ式が5か所にあり、書き写すと必ず片方が古くなる。
+  //
+  // 入れた内容は保存しない。お客様の生年月日を端末に残さないため、閉じれば消える。
+  const proEl = document.getElementById("pro");
+  const proBackBtn = document.getElementById("pro-back-btn");
+  const proForecastEl = document.getElementById("pro-forecast");
+  const proSheetEl = document.getElementById("pro-sheet");
+  const proTabForecast = document.getElementById("pro-tab-forecast");
+  const proTabSheet = document.getElementById("pro-tab-sheet");
+  const proForecastResultEl = document.getElementById("pro-forecast-result");
+  const proForecastErrorEl = document.getElementById("pro-forecast-error");
+  const proSheetErrorEl = document.getElementById("pro-sheet-error");
+  const proSheetPreviewEl = document.getElementById("pro-sheet-preview");
+  const proSheetActionsEl = document.getElementById("pro-sheet-actions");
+  const proSheetSaveBtn = document.getElementById("pro-sheet-save");
+  const proSheetShareBtn = document.getElementById("pro-sheet-share");
+  let proSheetBlob = null;
+
+  const PRO_MONTH_DAYS = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+
+  function proReadDate(yId, mId, dId) {
+    const year = Number(document.getElementById(yId).value);
+    const month = Number(document.getElementById(mId).value);
+    const day = Number(document.getElementById(dId).value);
+    if (!Number.isInteger(year) || year < 1 || year > 9999) return null;
+    if (!Number.isInteger(month) || month < 1 || month > 12) return null;
+    const leap = (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
+    const last = month === 2 && leap ? 29 : PRO_MONTH_DAYS[month - 1];
+    if (!Number.isInteger(day) || day < 1 || day > last) return null;
+    return { year: year, month: month, day: day };
+  }
+
+  function proShowError(el, message) {
+    el.textContent = message;
+    el.classList.toggle("hidden", !message);
+  }
+
+  function proShowTab(which) {
+    const forecast = which === "forecast";
+    proForecastEl.classList.toggle("hidden", !forecast);
+    proSheetEl.classList.toggle("hidden", forecast);
+    proTabForecast.setAttribute("aria-selected", String(forecast));
+    proTabSheet.setAttribute("aria-selected", String(!forecast));
+  }
+
+  proTabForecast.addEventListener("click", () => proShowTab("forecast"));
+  proTabSheet.addEventListener("click", () => proShowTab("sheet"));
+
+  proOpenBtn.addEventListener("click", () => {
+    // 開くたびに「見たい日」を今日に戻す。日をまたいで開きっぱなしのことがある。
+    const now = new Date();
+    document.getElementById("pro-target-year").value = String(now.getFullYear());
+    document.getElementById("pro-target-month").value = String(now.getMonth() + 1);
+    document.getElementById("pro-target-day").value = String(now.getDate());
+    appEl.classList.add("hidden");
+    proEl.classList.remove("hidden");
+    proShowTab("forecast");
+    window.scrollTo(0, 0);
+  });
+
+  proBackBtn.addEventListener("click", () => {
+    proEl.classList.add("hidden");
+    appEl.classList.remove("hidden");
+    window.scrollTo(0, 0);
+  });
+
+  document.getElementById("pro-fill-btn").addEventListener("click", () => {
+    document.getElementById("pro-birth-year").value = birthYearInput.value;
+    document.getElementById("pro-birth-month").value = birthMonthInput.value;
+    document.getElementById("pro-birth-day").value = birthDayInput.value;
+  });
+
+  document.getElementById("pro-forecast-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const birth = proReadDate("pro-birth-year", "pro-birth-month", "pro-birth-day");
+    if (!birth) {
+      proShowError(proForecastErrorEl, "その方の生年月日を、年・月・日の順に半角数字でご入力ください。");
+      proForecastResultEl.classList.add("hidden");
+      return;
+    }
+    const target = proReadDate("pro-target-year", "pro-target-month", "pro-target-day");
+    if (!target) {
+      proShowError(proForecastErrorEl, "見たい日を、年・月・日の順に半角数字でご入力ください。");
+      proForecastResultEl.classList.add("hidden");
+      return;
+    }
+    proShowError(proForecastErrorEl, "");
+
+    const lp = calcLifePathNumber(birth.year, birth.month, birth.day);
+    const py = calcPersonalYearNumber(lp.rMonth, lp.rDay, target.year);
+    const pm = calcPersonalMonthNumber(py, target.month);
+    const pd = calcPersonalDayNumber(pm, target.day);
+
+    proForecastResultEl.textContent = "";
+
+    const heading = document.createElement("p");
+    heading.className = "pro-sub";
+    heading.textContent = target.year + "年" + target.month + "月" + target.day + "日 の、その方";
+    proForecastResultEl.appendChild(heading);
+
+    const grid = document.createElement("div");
+    grid.className = "card-grid";
+    grid.appendChild(createResultCard(target.year + "年のパーソナルイヤーナンバー", py, NUMBER_MEANINGS, true, false, "personalYear"));
+    grid.appendChild(createResultCard(target.month + "月のパーソナルマンスナンバー", pm, NUMBER_MEANINGS, false, false, "personalMonth"));
+    grid.appendChild(createResultCard(target.day + "日のパーソナルデイナンバー", pd, NUMBER_MEANINGS, false, false, "personalDay"));
+    proForecastResultEl.appendChild(grid);
+
+    const monthsHeading = document.createElement("p");
+    monthsHeading.className = "pro-sub";
+    monthsHeading.textContent = target.year + "年の12か月";
+    proForecastResultEl.appendChild(monthsHeading);
+
+    const wrap = document.createElement("div");
+    wrap.className = "pro-months";
+    const table = document.createElement("table");
+    const tbody = document.createElement("tbody");
+    for (let m = 1; m <= 12; m++) {
+      const value = calcPersonalMonthNumber(py, m);
+      const tr = document.createElement("tr");
+      if (m === target.month) tr.className = "now";
+      const th = document.createElement("th");
+      th.scope = "row";
+      th.textContent = m + "月";
+      const tdN = document.createElement("td");
+      tdN.className = "n";
+      tdN.textContent = String(value);
+      const tdM = document.createElement("td");
+      tdM.textContent = NUMBER_MEANINGS[value] || "";
+      tr.appendChild(th);
+      tr.appendChild(tdN);
+      tr.appendChild(tdM);
+      tbody.appendChild(tr);
+    }
+    table.appendChild(tbody);
+    wrap.appendChild(table);
+    proForecastResultEl.appendChild(wrap);
+
+    const note = document.createElement("p");
+    note.className = "pro-lead";
+    note.textContent = "その日の数字をお出しするところまでです。どう過ごすかは、その方に委ねてください。";
+    proForecastResultEl.appendChild(note);
+
+    proForecastResultEl.classList.remove("hidden");
+  });
+
+  // ---- お渡しする1枚 ----
+  //
+  // A4 の縦（150dpi 相当）で描く。印刷しても、画像のまま送っても読める大きさ。
+  // 🚨 アプリからよそへは送らない。端末に保存するところまでで、渡すのは人の手。
+  function proDrawSheet(birth, name, romaji) {
+    const W = 1240;
+    const H = 1754;
+    const canvas = document.createElement("canvas");
+    canvas.width = W;
+    canvas.height = H;
+    const ctx = canvas.getContext("2d");
+    const jp = "\"Hiragino Mincho ProN\", \"Yu Mincho\", serif";
+    const jpSans = "\"Hiragino Sans\", \"Yu Gothic\", sans-serif";
+
+    ctx.fillStyle = "#FBFAF7";
+    ctx.fillRect(0, 0, W, H);
+    ctx.strokeStyle = "#C9B98E";
+    ctx.lineWidth = 3;
+    ctx.strokeRect(48, 48, W - 96, H - 96);
+
+    ctx.fillStyle = "#2B2418";
+    ctx.textBaseline = "alphabetic";
+    ctx.textAlign = "left";
+    ctx.font = "44px " + jp;
+    ctx.fillText("数秘の見取り図", 110, 168);
+
+    ctx.strokeStyle = "#C9B98E";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(110, 196);
+    ctx.lineTo(310, 196);
+    ctx.stroke();
+
+    let y = 268;
+    ctx.font = "30px " + jpSans;
+    ctx.fillStyle = "#5A5040";
+    if (name) {
+      ctx.fillText("お名前", 110, y);
+      ctx.fillStyle = "#2B2418";
+      ctx.font = "36px " + jp;
+      ctx.fillText(name, 300, y);
+      y += 58;
+      ctx.font = "30px " + jpSans;
+      ctx.fillStyle = "#5A5040";
+    }
+    ctx.fillText("生年月日", 110, y);
+    ctx.fillStyle = "#2B2418";
+    ctx.font = "36px " + jp;
+    ctx.fillText(birth.year + "年" + birth.month + "月" + birth.day + "日", 300, y);
+    y += 96;
+
+    const letters = romaji ? nameLetters(romaji) : [];
+    const p = compatProfile(birth.year, birth.month, birth.day, letters);
+
+    const rows = [
+      ["ライフパスナンバー", p.lifePath],
+      ["バースデーナンバー", p.birthday],
+      ["デスティニーナンバー", p.destiny],
+      ["ソウルナンバー", p.soul],
+      ["パーソナリティナンバー", p.personality],
+      ["マチュリティナンバー", p.maturity],
+    ].filter((r) => r[1] !== null && r[1] !== undefined);
+
+    rows.forEach((row) => {
+      ctx.strokeStyle = "#E4DCC8";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(110, y + 24);
+      ctx.lineTo(W - 110, y + 24);
+      ctx.stroke();
+
+      ctx.fillStyle = "#5A5040";
+      ctx.font = "30px " + jpSans;
+      ctx.textAlign = "left";
+      ctx.fillText(row[0], 110, y);
+
+      ctx.fillStyle = "#8A6E28";
+      ctx.font = "52px " + jp;
+      ctx.textAlign = "right";
+      ctx.fillText(String(row[1]), W - 110, y + 8);
+      ctx.textAlign = "left";
+      y += 100;
+    });
+
+    y += 30;
+    ctx.fillStyle = "#5A5040";
+    ctx.font = "28px " + jpSans;
+    const notes = [
+      "数秘術には複数の計算方法・流派があり、この1枚は",
+      "一般的な現代数秘術の一例によるものです。",
+      "断定的なものではなく、参考としてご覧ください。",
+    ];
+    notes.forEach((line, i) => ctx.fillText(line, 110, y + i * 44));
+
+    const made = new Date();
+    ctx.fillStyle = "#8A7E68";
+    ctx.font = "26px " + jpSans;
+    ctx.fillText(made.getFullYear() + "年" + (made.getMonth() + 1) + "月" + made.getDate() + "日 作成", 110, H - 130);
+
+    return canvas;
+  }
+
+  document.getElementById("pro-sheet-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const birth = proReadDate("pro-sheet-year", "pro-sheet-month", "pro-sheet-day");
+    if (!birth) {
+      proShowError(proSheetErrorEl, "その方の生年月日を、年・月・日の順に半角数字でご入力ください。");
+      proSheetPreviewEl.classList.add("hidden");
+      proSheetActionsEl.classList.add("hidden");
+      return;
+    }
+    proShowError(proSheetErrorEl, "");
+    const name = document.getElementById("pro-sheet-name").value.trim();
+    const romaji = document.getElementById("pro-sheet-romaji").value.trim();
+    const canvas = proDrawSheet(birth, name, romaji);
+
+    proSheetPreviewEl.textContent = "";
+    const img = document.createElement("img");
+    img.alt = "作った1枚の見本";
+    img.src = canvas.toDataURL("image/png");
+    proSheetPreviewEl.appendChild(img);
+    proSheetPreviewEl.classList.remove("hidden");
+
+    canvas.toBlob((blob) => {
+      proSheetBlob = blob;
+      proSheetActionsEl.classList.remove("hidden");
+      // 送れる端末にだけ「そのまま送る」を出す。出しておいて押せないほうが困る。
+      let canShare = false;
+      try {
+        canShare = !!(blob && navigator.canShare && navigator.canShare({
+          files: [new File([blob], "sheet.png", { type: "image/png" })],
+        }));
+      } catch (err) {
+        canShare = false;
+      }
+      proSheetShareBtn.classList.toggle("hidden", !canShare);
+    }, "image/png");
+  });
+
+  function proSheetFileName() {
+    const d = new Date();
+    const pad = (n) => String(n).padStart(2, "0");
+    return "数秘の見取り図-" + d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate()) + ".png";
+  }
+
+  proSheetSaveBtn.addEventListener("click", () => {
+    if (!proSheetBlob) return;
+    const url = URL.createObjectURL(proSheetBlob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = proSheetFileName();
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    // すぐ消すと、端末によっては保存が始まる前に消えることがある。
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+  });
+
+  proSheetShareBtn.addEventListener("click", () => {
+    if (!proSheetBlob) return;
+    const file = new File([proSheetBlob], proSheetFileName(), { type: "image/png" });
+    Promise.resolve()
+      .then(() => navigator.share({ files: [file] }))
+      .catch(() => { /* 取り消しただけのことが多い。何も出さない。 */ });
   });
 
   // 通知から渡された日付で、手帳のその日のシートを開く。
