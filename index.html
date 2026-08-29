@@ -1078,58 +1078,69 @@
      カード単位のⓘモーダルに入れると読みきれず、計算画面に並べると入力欄が
      下へ押し出されるため、別画面（メニュー→記事）として切り分けている。 */
 
-  /* トップ画面の入口。3つを横1列に置く。縦積みだと入力欄が画面外へ
-     押し出され、何をする画面かが分からなくなる。 */
+  /* トップ画面の入口。1本の細い帯にまとめる。
+     🚨 縦積みにしない。入力欄が画面外へ押し出され、何をする画面かが分からなくなる。
+     🚨 2026-08-29、カードを並べる形をやめた。依頼者の指摘「不細工」。
+        カード4枚だと入口だけで203px使い、入力欄が438pxまで下がっていた。
+        いまは54pxで、入力欄は223px。→ docs の「入口の並び」
+     4つが同じ幅を分け合うので、名前の長さが違っても必ず揃う。
+     そのために名前は漢字2文字（資料・相性・手帳・鑑定）にしてある。 */
   .app-nav {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 6px;
-    margin: -4px 0 22px;
+    display: flex;
+    margin: 2px 0 22px;
+    padding: 14px 0;
+    /* 🚨 線の色は他の枠と同じ var(--card-border)。ここだけ薄い金にしていて、
+       依頼者に「色が違う」と指摘された（2026-08-29）。 */
+    border-top: 1px solid var(--card-border);
+    border-bottom: 1px solid var(--card-border);
   }
   .app-nav-btn {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 2px;
-    padding: 10px 4px 9px;
-    font-family: var(--font-body);
-    font-size: 12px;
-    font-weight: 700;
-    line-height: 1.35;
-    color: var(--gold);
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid var(--card-border);
-    border-radius: 10px;
+    position: relative;
+    flex: 1;
+    padding: 0;
+    background: none;
+    border: none;
     cursor: pointer;
+    font-family: var(--font-display);
+    font-size: 15px;
+    line-height: 1.5;
+    letter-spacing: 0.1em;
+    color: var(--gold);
     text-align: center;
   }
-  .app-nav-btn .nav-icon { font-size: 17px; line-height: 1.1; }
-  .app-nav-btn small {
-    display: block;
-    font-size: 9.5px;
-    font-weight: 400;
-    color: var(--ink-faint);
-    letter-spacing: 0.02em;
+  /* 区切りのひし形。境目の真ん中に置き、幅を取らせない。
+     幅を取らせると4等分が崩れて、名前の位置がずれる。 */
+  .app-nav-btn + .app-nav-btn::before {
+    content: "◆";
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 7px;
+    letter-spacing: 0;
+    color: var(--gold-deep);
+    opacity: 0.55;
   }
+  /* 有料の「鑑定」を、無料の方にも出しておく（依頼者・2026-08-29）。
+     🚨 押しても開かない。開かない仕掛けは JS 側（proOpenBtn の click）。
+        見た目だけで止めてはいけない。 */
+  .app-nav-btn.is-locked { opacity: 0.55; }
+  .app-nav-btn .nav-lock {
+    font-size: 10px;
+    margin-right: 3px;
+    vertical-align: 1px;
+  }
+  .app-nav-btn:not(.is-locked) .nav-lock { display: none; }
 
-  /* 鑑定の機能（有料）。4つ目が並ぶと3列では1つだけ余るので、2列に組み替える。
-     🚨 上の詰めた寸法（間6px・左右4px・説明9.5px・絵17px）は、
-        3つを幅108pxに収めるためのもの。2列だと1つ165pxになり、詰める理由が無い。
-        そのまま使うと、ページの余白20pxに対してここだけ窮屈に見え、
-        説明が携帯で読める下限（11px）を下回る。→ 2列のときだけ戻す。 */
-  .app-nav.has-pro {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
+  /* 鑑定を押したのに開けなかったときの一言。押した所のすぐ下に出す。 */
+  .nav-locked-note {
+    margin: -14px 0 18px;
+    font-size: 12px;
+    line-height: 1.7;
+    color: var(--gold);
+    text-align: center;
   }
-  .app-nav.has-pro .app-nav-btn {
-    gap: 5px;
-    padding: 14px 12px 13px;
-    font-size: 14px;
-    border-radius: 12px;
-  }
-  .app-nav.has-pro .app-nav-btn .nav-icon { font-size: 22px; }
-  .app-nav.has-pro .app-nav-btn small { font-size: 11px; }
+  .nav-locked-note.hidden { display: none; }
 
   .pro-lead {
     margin: 0 0 14px;
@@ -1921,20 +1932,15 @@
        開き、続けて使うと何ができるかを見せる。書き込みは currentRole 側で
        止めてあるので、見えても保存はされない。 -->
   <nav class="app-nav" aria-label="ほかの画面">
-    <button type="button" id="library-open-btn" class="app-nav-btn">
-      <span class="nav-icon">📖</span>資料メニュー<small>算出方法・解説</small>
-    </button>
-    <button type="button" id="compat-open-btn" class="app-nav-btn">
-      <span class="nav-icon">💞</span>相性診断<small>お二人を並べる</small>
-    </button>
-    <button type="button" id="record-open-btn" class="app-nav-btn">
-      <span class="nav-icon">📔</span>手帳<small>予定と数字</small>
-    </button>
-    <!-- 有料の方だけに出す。無料の方には無い機能なので、押せる形で見せない。 -->
-    <button type="button" id="pro-open-btn" class="app-nav-btn hidden">
-      <span class="nav-icon">🔎</span>鑑定の機能<small>お客様を観る</small>
-    </button>
+    <button type="button" id="library-open-btn" class="app-nav-btn">資料</button>
+    <button type="button" id="compat-open-btn" class="app-nav-btn">相性</button>
+    <button type="button" id="record-open-btn" class="app-nav-btn">手帳</button>
+    <!-- 🚨 無料の方にも出しておく（依頼者・2026-08-29）。以前は隠していた。
+         有料があることに気づいていただくため。鍵を付け、押しても開かない。
+         開かない仕掛けは JS 側。見た目だけで止めてはいけない。 -->
+    <button type="button" id="pro-open-btn" class="app-nav-btn"><span class="nav-lock" aria-hidden="true">🔒</span>鑑定</button>
   </nav>
+  <p id="nav-locked-note" class="nav-locked-note hidden" role="status"></p>
 
   <form id="calc-form">
     <label class="field">
@@ -2424,9 +2430,11 @@
     appEl.classList.remove("hidden");
     adminQrBtn.classList.toggle("hidden", role !== "admin");
     const paid = isPaidRole(role);
-    proOpenBtn.classList.toggle("hidden", !paid);
-    // 3列のままだと4つ目が1つだけ次の行に残るので、出すときは2列に組み替える。
-    document.querySelector(".app-nav").classList.toggle("has-pro", paid);
+    // 🚨 隠さない。無料の方にも「鑑定」を見せ、鍵を付けておく（依頼者・2026-08-29）。
+    //    開かせない仕掛けは proOpenBtn の click 側。ここは見た目だけ。
+    proOpenBtn.classList.toggle("is-locked", !paid);
+    proOpenBtn.setAttribute("aria-label", paid ? "鑑定の機能" : "鑑定の機能（月1,500円）");
+    document.getElementById("nav-locked-note").classList.add("hidden");
     // 体験モードでは「基本の3数字」だけ数字を出し、それ以外はカードの見出し
     // だけ残して数字と解説を伏せる。何がいくつ算出できるのかは一覧で見えるが、
     // 値そのものは渡さない。名前の入力欄は残すので、カナ→ローマ字の自動変換
@@ -6390,6 +6398,14 @@
   proTabSheet.addEventListener("click", () => proShowTab("sheet"));
 
   proOpenBtn.addEventListener("click", () => {
+    // 🚨 払っていない方には開かない。ボタンは見えているので、ここで必ず止める。
+    //    見た目（is-locked）だけで止めると、クラスを外すだけで開けてしまう。
+    if (!isPaidRole(currentRole)) {
+      const note = document.getElementById("nav-locked-note");
+      note.textContent = "「鑑定の機能」は、月1,500円でお使いいただけます。";
+      note.classList.remove("hidden");
+      return;
+    }
     // 開くたびに「見たい日」を今日に戻す。日をまたいで開きっぱなしのことがある。
     const now = new Date();
     document.getElementById("pro-target-year").value = String(now.getFullYear());
