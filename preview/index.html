@@ -47,6 +47,14 @@
     min-height: 100vh;
   }
 
+  /* 🚨 縦スクロールバーのぶんの幅を、いつも空けておく。
+     空けないと、短い画面（資料メニュー・鑑定の道具）ではバーが消えて画面が広がり、
+     中身が右へ寄る。画面を移るたびに「← 戻る」が数px跳ねて見える。
+     ⚠️ iPhone はバーが上に浮くので、もともとずれない。これは大きい画面のための手当て。 */
+  html {
+    scrollbar-gutter: stable;
+  }
+
   body {
     background:
       radial-gradient(ellipse 120% 70% at 50% -10%, var(--bg-3) 0%, transparent 60%),
@@ -1193,7 +1201,15 @@
     background: rgba(255, 255, 255, 0.12);
   }
 
-  #library {
+  /* 🚨 別画面の土台。ここに名前を並べてある画面は、すべて同じ位置から始まる。
+     ⚠️ 画面を足したら、必ずこの並びに名前を足すこと。
+        書き忘れると、その画面だけ余白が無くなり、
+        「← 戻る」が iPhone の時計に潜り込んで押せなくなる。
+        （記録画面で一度、鑑定の道具で二度目を踏んだ） */
+  #library,
+  #compat,
+  #pro,
+  #record {
     max-width: 460px;
     margin: 0 auto;
     padding: calc(28px + env(safe-area-inset-top)) 20px 56px;
@@ -1355,13 +1371,6 @@
   }
 
   /* ---------------- 相性診断 ---------------- */
-
-  #compat {
-    max-width: 460px;
-    margin: 0 auto;
-    padding: calc(28px + env(safe-area-inset-top)) 20px 56px;
-    animation: fadeIn 0.4s ease;
-  }
 
   #compat-form {
     display: flex;
@@ -1595,14 +1604,12 @@
      画面の作りは相性診断（#compat）に合わせてある。保存先は端末の
      localStorage だけで、サーバーへは何も送らない。日付・祝日・月表の
      描き方は、推し活カレンダーで実機に載っているものを流用している。 */
-  /* 🚨 資料メニュー・相性診断と同じ土台を与える。ここが抜けていたため、
-     記録画面だけ余白が無く、「← 戻る」がiPhoneの時計に潜り込んで押せなかった。 */
   #record {
-    max-width: 460px;
-    margin: 0 auto;
-    /* 左右と下は詰める。空いた分はすべてカレンダーの枠に回る。 */
-    padding: calc(24px + env(safe-area-inset-top)) 10px 12px;
-    animation: fadeIn 0.4s ease;
+    /* 左右と下だけ詰める。空いた分はすべてカレンダーの枠に回る。
+       🚨 上は詰めない。土台と同じにしておかないと「← 戻る」の高さがずれる。 */
+    padding-left: 10px;
+    padding-right: 10px;
+    padding-bottom: 12px;
     /* 画面の高さいっぱいに積み、余った高さはカレンダーへ渡す。
        枠の大きさを横幅から決めていたため、下に大きく余白が残っていた。 */
     display: flex;
@@ -1611,7 +1618,8 @@
     box-sizing: border-box;
   }
   /* 縦に積む作りにしたため、放っておくと戻るボタンが横いっぱいに伸びる。 */
-  #record > .library-back { align-self: flex-start; }
+  /* 🚨 左右を10px詰めたぶんを戻し、他の画面と「← 戻る」の左端をそろえる。 */
+  #record > .library-back { align-self: flex-start; margin-left: 10px; }
   #record-cal {
     display: flex;
     flex-direction: column;
@@ -2507,6 +2515,33 @@
     }
     return true;
   }
+
+  // 買った方の専用URL（`?p=...`）。お支払いのあと、この形のURLへ飛ぶ。
+  //
+  // 🚨 ここで読むのは、この下の unlockFromUrl() が `?t=` を消すときに
+  //    アドレス欄の問い合わせ部分ごと消えてしまうため。順番を入れ替えないこと。
+  //
+  // 札が本物かどうかは置き場に聞く（通信が要る）ので、ここでは持っておくだけ。
+  // 実際に聞きに行くのは、置き場の住所が決まったあと（ファイルのずっと下）。
+  let pendingPaidToken = (function readPaidToken() {
+    let raw = null;
+    try {
+      raw = new URLSearchParams(window.location.search).get("p");
+    } catch (err) {
+      return null; // 読めない環境なら、扉からコードを入れてもらう
+    }
+    if (!raw || !/^[A-Za-z0-9_-]{16,128}$/.test(raw)) return null;
+    // アドレス欄から札を消す。画面を人に見せたり、URLをそのまま渡したりしたときに、
+    // 札が一緒に渡らないようにするため（`?t=` と同じ考え方）。
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("p");
+      window.history.replaceState(null, "", url.pathname + url.search + url.hash);
+    } catch (err) {
+      // Ignore: 消せなくても、このあとの手順は進む。
+    }
+    return raw;
+  })();
 
   // 通知から「その日の手帳」を開くための日付（`?d=2026-08-22`）。
   //
@@ -6726,6 +6761,49 @@
   //    ⚠️ 預けられなかったときは、下のメールの導線に戻る。黙って落とさない。
   const HANDOFF_BOX_URL = "https://ubnhnrkdaxoglolzgpdb.supabase.co/rest/v1/push_subscriptions";
   const HANDOFF_BOX_KEY = "sb_publishable_l3nDeW6cR1XJxBzWF0SSRg_ufPY4F17";
+
+  // 🚨 買った方の専用URL（`?p=...`）を、置き場に照らして解錠する。
+  //    札は一度きり。二度目は通らないので、URLを人に転送されても増えない。
+  //
+  // ⚠️ これは「守り」ではない。役は端末の中で決まるし、このページは公開されている。
+  //    札の役目は「コードを打たせずに、買った方をなめらかに通すこと」。
+  //    本当に守るのは、有料の中身を出す側で会員かどうかを見ること。
+  const PAID_RPC_URL = "https://ubnhnrkdaxoglolzgpdb.supabase.co/rest/v1/rpc/redeem_paid_invite";
+
+  async function usePaidToken() {
+    if (!pendingPaidToken) return;
+    const token = pendingPaidToken;
+    pendingPaidToken = null;   // 二度呼ばれても、二度は使わない
+
+    let ok = false;
+    try {
+      const res = await fetch(PAID_RPC_URL, {
+        method: "POST",
+        headers: { apikey: HANDOFF_BOX_KEY, "Content-Type": "application/json" },
+        body: JSON.stringify({ token: token }),
+      });
+      ok = res.ok && (await res.json()) === true;
+    } catch (err) {
+      ok = false;   // つながらなかった。使った扱いにはしない（札は置き場に残る）
+    }
+
+    if (ok) {
+      rememberRole("paid");
+      unlock("paid");
+      return;
+    }
+
+    // 🚨 黙って扉に戻さない。お支払いが済んでいる方が、何が起きたか分からなくなる。
+    openInfoModal({
+      title: "このリンクは使えませんでした",
+      body: "このリンクは、すでに一度お使いになったようです。\n\n"
+        + "お申し込みが済んでいるのにこの画面が出た場合は、お手数ですがご連絡ください。"
+        + "新しいリンクをお送りします。\n\n"
+        + "（通信が届かなかっただけのこともあります。少し時間をおいて、もう一度リンクを開いてみてください。）",
+    });
+  }
+
+  usePaidToken();
 
   const pushBtn = document.getElementById("push-btn");
   const pushModal = document.getElementById("push-modal");
