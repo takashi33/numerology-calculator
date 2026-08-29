@@ -48,7 +48,7 @@
   }
 
   /* 🚨 縦スクロールバーのぶんの幅を、いつも空けておく。
-     空けないと、短い画面（資料メニュー・鑑定の道具）ではバーが消えて画面が広がり、
+     空けないと、短い画面（資料メニュー・鑑定の機能）ではバーが消えて画面が広がり、
      中身が右へ寄る。画面を移るたびに「← 戻る」が数px跳ねて見える。
      ⚠️ iPhone はバーが上に浮くので、もともとずれない。これは大きい画面のための手当て。 */
   html {
@@ -1115,8 +1115,23 @@
     letter-spacing: 0.02em;
   }
 
-  /* 鑑定の道具（有料）。4つ目が並ぶと3列では1つだけ余るので、2列に組み替える。 */
-  .app-nav.has-pro { grid-template-columns: repeat(2, 1fr); }
+  /* 鑑定の機能（有料）。4つ目が並ぶと3列では1つだけ余るので、2列に組み替える。
+     🚨 上の詰めた寸法（間6px・左右4px・説明9.5px・絵17px）は、
+        3つを幅108pxに収めるためのもの。2列だと1つ165pxになり、詰める理由が無い。
+        そのまま使うと、ページの余白20pxに対してここだけ窮屈に見え、
+        説明が携帯で読める下限（11px）を下回る。→ 2列のときだけ戻す。 */
+  .app-nav.has-pro {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  .app-nav.has-pro .app-nav-btn {
+    gap: 5px;
+    padding: 14px 12px 13px;
+    font-size: 14px;
+    border-radius: 12px;
+  }
+  .app-nav.has-pro .app-nav-btn .nav-icon { font-size: 22px; }
+  .app-nav.has-pro .app-nav-btn small { font-size: 11px; }
 
   .pro-lead {
     margin: 0 0 14px;
@@ -1205,7 +1220,7 @@
      ⚠️ 画面を足したら、必ずこの並びに名前を足すこと。
         書き忘れると、その画面だけ余白が無くなり、
         「← 戻る」が iPhone の時計に潜り込んで押せなくなる。
-        （記録画面で一度、鑑定の道具で二度目を踏んだ） */
+        （記録画面で一度、鑑定の機能で二度目を踏んだ） */
   #library,
   #compat,
   #pro,
@@ -1919,7 +1934,7 @@
     </button>
     <!-- 有料の方だけに出す。無料の方には無い機能なので、押せる形で見せない。 -->
     <button type="button" id="pro-open-btn" class="app-nav-btn hidden">
-      <span class="nav-icon">🔎</span>鑑定の道具<small>お客様を観る</small>
+      <span class="nav-icon">🔎</span>鑑定の機能<small>お客様を観る</small>
     </button>
   </nav>
 
@@ -2047,7 +2062,7 @@
     </section>
   </div>
 
-  <p class="footnote">※ 数秘術には複数の計算方法・流派があり、本アプリは一般的な現代数秘術の一例を採用しています。占いの結果は断定的なものではなく、参考としてお楽しみください。</p>
+  <p class="footnote">※ 数秘術には複数の計算方法・流派があり、本アプリは一般的な現代数秘術の一例を採用しています。占いの結果は断定的なものではなく、参考としてお読みください。</p>
 
   <button id="self-open-btn" type="button">👤 自分の情報</button>
   <button id="push-btn" type="button">🔔 毎朝のお便りを受け取る</button>
@@ -2114,8 +2129,8 @@
 
 <div id="pro" class="hidden">
   <button type="button" id="pro-back-btn" class="library-back">← 戻る</button>
-  <h1 class="library-h1">鑑定の道具</h1>
-  <p class="library-sub">お客様を観るための道具です。入れた内容は、この端末から出ません。</p>
+  <h1 class="library-h1">鑑定の機能</h1>
+  <p class="library-sub">お客様を観るための機能です。入れた内容は、この端末から出ません。</p>
 
   <div class="record-tabs" role="tablist">
     <button type="button" class="record-tab" id="pro-tab-forecast" role="tab" aria-selected="true">その方のこれから</button>
@@ -2402,7 +2417,7 @@
   const adminQrBtn = document.getElementById("admin-qr-btn");
   const proOpenBtn = document.getElementById("pro-open-btn");
 
-  // 鑑定の道具を開けるのは有料の方だけ。無料の会員（SUBSCRIBER_PASSCODES）には出さない。
+  // 鑑定の機能を開けるのは有料の方だけ。無料の会員（SUBSCRIBER_PASSCODES）には出さない。
   // 管理者を含めるのは、依頼者ご自身が確かめるため。
   // 🚨 "paid" を名乗る道はまだ無い。決済のあとの専用URLで渡す（仕様書「電卓側のコードとの関係」）。
   function isPaidRole(role) {
@@ -6333,7 +6348,7 @@
     window.scrollTo(0, 0);
   });
 
-  // ---------------- 鑑定の道具（有料） ----------------
+  // ---------------- 鑑定の機能（有料） ----------------
   //
   // 🚨 計算は既存の calc* をそのまま呼ぶ。ここで式を作り直さないこと。
   //    同じ式が5か所にあり、書き写すと必ず片方が古くなる。
