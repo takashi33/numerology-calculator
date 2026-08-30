@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # 数秘電卓アプリを GitHub Pages へ公開する。
 #
-# 公開されるのはリポジトリ直下の index.html / invite-card.html / sw.js の3つだけ。
+# 公開されるのはリポジトリ直下の index.html / sw.js の2つだけ。
+# 🚨 invite-card.html（体験カード）は 2026-08-30 に消した。コードの入力そのものが無くなったため。
 # GitHub の Web UI から手作業でアップロードしていた工程を置き換えるもので、
 # 認証は Windows 資格情報マネージャー（Git Credential Manager）に保存済みの
 # ものを使う。
@@ -13,7 +14,7 @@ set -euo pipefail
 
 cd "$(dirname "$0")"
 
-PUBLISHED=(index.html invite-card.html sw.js)
+PUBLISHED=(index.html sw.js)
 SITE="https://takashi33.github.io/numerology-calculator"
 
 say() { printf '\n\033[1m%s\033[0m\n' "$1"; }
@@ -56,7 +57,7 @@ fi
 # ---- 3. 差分を見せる --------------------------------------------------------
 say "2/5 公開ファイルの差分"
 if git diff --quiet -- "${PUBLISHED[@]}" && git diff --cached --quiet -- "${PUBLISHED[@]}"; then
-  echo "  公開3ファイルに変更はありません。"
+  echo "  公開ファイル（index.html / sw.js）に変更はありません。"
   PUBLISHED_CHANGED=0
 else
   git diff --stat HEAD -- "${PUBLISHED[@]}"
@@ -64,9 +65,9 @@ else
 fi
 
 say "3/5 その他の変更"
-# 公開3ファイルは pathspec で除外する。パス文字列で grep すると
+# 公開ファイルは pathspec で除外する。パス文字列で grep すると
 # webapp/index.html のような「別ファイルだが名前を含む」ものまで消えてしまう。
-OTHER=$(git status --short -- . ':!index.html' ':!invite-card.html' ':!sw.js')
+OTHER=$(git status --short -- . ':!index.html' ':!sw.js')
 [ -n "$OTHER" ] && echo "$OTHER" || echo "  なし"
 
 if [ "$CHECK_ONLY" -eq 1 ]; then
