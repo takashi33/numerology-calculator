@@ -1,8 +1,12 @@
 /*
  * 本体 index.html から、確認用ページ preview/index.html を作る。
  *
- * 確認用ページは本体とほぼ同じで、違うのは下の4点だけ。手で両方に当てていたが、
+ * 確認用ページは本体とほぼ同じで、違うのは下の2点だけ。手で両方に当てていたが、
  * 片方への当て忘れで中身がずれた（2026-08-21）。以後は公開のたびにここで作り直す。
+ *
+ * 🚨 2026-08-30、コードの入力そのものが無くなった（依頼者の決定）。
+ *    確認用のコード（`482915`）を足す3つの決まりは、当てる先が消えたので取り除いた。
+ *    いまの違いは「題名と検索避け」と「Service Worker を登録しない」の2つだけ。
  *
  * 🚨 preview/index.html を直接編集しないこと。次の公開で上書きされる。
  *    確認用ページだけの違いを変えたいときは、このファイルの RULES を直す。
@@ -24,50 +28,6 @@ const RULES = [
       "<!-- 確認専用のページ。公開中のアプリとは別物で、体験の方には配らない。 -->",
       '<meta name="robots" content="noindex,nofollow">',
       "<title>数秘電卓（確認用）</title>"
-    ].join("\n")
-  },
-  {
-    name: "確認用のコードを足す",
-    find: '  const SESSION_KEY = "numerology-gate-role";',
-    // 🚨 コメントに商売の事情（誰に何のために配ったか・料金区分）を書かない。
-    //    このファイルが作るものは公開される。過去に公開ファイルのコメントから
-    //    商売の設計が漏れた（コミット ac8dd84）。ここは事実だけを書く。
-    replace: [
-      "  // 確認用ページだけのコード。公開中のアプリには入れていない。",
-      "  //    止めるときは、この行を消して確認用ページを作り直す。",
-      '  const PREVIEW_PASSCODES = ["482915"];',
-      '  const SESSION_KEY = "numerology-gate-role";'
-    ].join("\n")
-  },
-  {
-    name: "URLのコードで開くとき",
-    find: [
-      "    if (!code || !FREE_TRIAL_PASSCODES.includes(code)) return false;",
-      '    rememberRole("trial");',
-      '    unlock("trial");'
-    ].join("\n"),
-    replace: [
-      "    let urlRole = null;",
-      '    if (code && PREVIEW_PASSCODES.includes(code)) urlRole = "subscriber";',
-      '    else if (code && FREE_TRIAL_PASSCODES.includes(code)) urlRole = "trial";',
-      "    if (!urlRole) return false;",
-      "    rememberRole(urlRole);",
-      "    unlock(urlRole);"
-    ].join("\n")
-  },
-  {
-    name: "コードを手で入れるとき",
-    find: [
-      "    } else if (FREE_TRIAL_PASSCODES.includes(passcodeInput.value)) {",
-      '      role = "trial";',
-      "    }"
-    ].join("\n"),
-    replace: [
-      "    } else if (FREE_TRIAL_PASSCODES.includes(passcodeInput.value)) {",
-      '      role = "trial";',
-      "    } else if (PREVIEW_PASSCODES.includes(passcodeInput.value)) {",
-      '      role = "subscriber";   // 確認用ページのみ',
-      "    }"
     ].join("\n")
   },
   {
@@ -118,7 +78,7 @@ for (const m of scripts) {
     die("作った確認用ページの中身が壊れています: " + e.message);
   }
 }
-for (const must of ["noindex", "PREVIEW_PASSCODES", "数秘電卓（確認用）"]) {
+for (const must of ["noindex", "数秘電卓（確認用）"]) {
   if (!html.includes(must)) die(`確認用ページに「${must}」が入りませんでした。`);
 }
 if (html.includes('navigator.serviceWorker.register("sw.js")')) {
