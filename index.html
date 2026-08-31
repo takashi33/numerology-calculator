@@ -1784,6 +1784,13 @@
       <button type="button" id="admin-mint-share" class="pro-fill-btn hidden">そのまま送る</button>
     </div>
   </div>
+
+  <h2 class="pro-h2">3. お渡ししたリンクの様子</h2>
+  <p class="pro-lead">これまでにお作りしたリンクと、お客様がもう開かれたかどうかが出ます。
+  お渡ししたのに開かれていないものが分かるので、お声がけの目安になります。</p>
+  <button type="button" id="admin-list-btn" class="pro-fill-btn">今の様子を見る</button>
+  <p id="admin-list-msg" class="push-status hidden"></p>
+  <div id="admin-list-out" class="pro-months hidden"></div>
 </div>
 
 <div id="library" class="hidden">
@@ -6838,9 +6845,27 @@
   //    → 依頼者に一度だけ入れていただき、**この端末にだけ**覚える。
   const MINT_PASS_KEY = "numerology-mint-pass";
   const MINT_RPC_URL = "https://ubnhnrkdaxoglolzgpdb.supabase.co/rest/v1/rpc/mint_paid_invite";
+  // 🚨 渡した分の様子を見る口。合言葉が要るのは作るときと同じ。
+  const LIST_RPC_URL = "https://ubnhnrkdaxoglolzgpdb.supabase.co/rest/v1/rpc/list_paid_invites";
 
   function readMintPass() {
     try { return localStorage.getItem(MINT_PASS_KEY) || ""; } catch (err) { return ""; }
+  }
+
+  // 合言葉を用意する。覚えていなければ、その場で一度だけ聞く。
+  // 取り消されたら null を返す（呼んだ側は、何もせずに戻る）。
+  function ensureMintPass() {
+    const saved = readMintPass();
+    if (saved) return saved;
+    const pass = window.prompt("リンクを作るための合言葉を入れてください。\nこの端末にだけ覚えます。");
+    if (!pass) return null;
+    try { localStorage.setItem(MINT_PASS_KEY, pass); } catch (err) { /* 覚えられなくても、この回は使える */ }
+    return pass;
+  }
+
+  // 合言葉が違ったときは、覚えたものを消す。入れ直せるようにするため。
+  function forgetMintPass() {
+    try { localStorage.removeItem(MINT_PASS_KEY); } catch (err) { /* ignore */ }
   }
 
   adminOpenBtn.addEventListener("click", () => {
@@ -6854,6 +6879,8 @@
     }
     document.getElementById("admin-mint-msg").classList.add("hidden");
     document.getElementById("admin-mint-out").classList.add("hidden");
+    document.getElementById("admin-list-msg").classList.add("hidden");
+    document.getElementById("admin-list-out").classList.add("hidden");
     appEl.classList.add("hidden");
     adminEl.classList.remove("hidden");
     window.scrollTo(0, 0);
@@ -6865,13 +6892,9 @@
     const out = document.getElementById("admin-mint-out");
     const say = (text) => { msg.textContent = text; msg.classList.remove("hidden"); };
 
-    let pass = readMintPass();
-    if (!pass) {
-      // 🚨 初回だけ聞く。この端末にだけ残る。
-      pass = window.prompt("リンクを作るための合言葉を入れてください。\nこの端末にだけ覚えます。");
-      if (!pass) return;
-      try { localStorage.setItem(MINT_PASS_KEY, pass); } catch (err) { /* 覚えられなくても、この回は作れる */ }
-    }
+    // 🚨 初回だけ聞く。この端末にだけ残る。
+    const pass = ensureMintPass();
+    if (!pass) return;
 
     btn.disabled = true;
     say("作っています…");
@@ -6885,7 +6908,7 @@
       const token = res.ok ? await res.json() : null;
       if (!token) {
         // 合言葉が違うと null が返る。覚えたものを消して、入れ直せるようにする。
-        try { localStorage.removeItem(MINT_PASS_KEY); } catch (err) { /* ignore */ }
+        forgetMintPass();
         say("リンクを作れませんでした。合言葉が違うかもしれません。もう一度お試しください。");
         return;
       }
@@ -6902,6 +6925,105 @@
       btn.disabled = false;
     }
   });
+
+  // 🚨 渡した分の様子（2026-09-01）。置き場には前から口があったのに、
+  //    アプリから呼んでいなかった。渡したリンクが開かれたかどうかを、
+  //    依頼者がその場で見られるようにする。
+  //    出すのは「いつ作ったか・開かれたか・覚え書き」だけ。合言葉そのものは出さない。
+  document.getElementById("admin-list-btn").addEventListener("click", async () => {
+    const btn = document.getElementById("admin-list-btn");
+    const msg = document.getElementById("admin-list-msg");
+    const out = document.getElementById("admin-list-out");
+    const say = (text) => { msg.textContent = text; msg.classList.remove("hidden"); };
+
+    const pass = ensureMintPass();
+    if (!pass) return;
+
+    btn.disabled = true;
+    say("読んでいます…");
+    out.classList.add("hidden");
+    try {
+      const res = await fetch(LIST_RPC_URL, {
+        method: "POST",
+        headers: { apikey: HANDOFF_BOX_KEY, "Content-Type": "application/json" },
+        body: JSON.stringify({ pass: pass }),
+      });
+      // 合言葉が違うと、中身が空のまま返る。つながらなかった場合と分けて伝える。
+      if (!res.ok) {
+        say("読めませんでした。少し時間をおいて、もう一度お試しください。");
+        return;
+      }
+      const rows = await res.json();
+      if (!Array.isArray(rows)) {
+        forgetMintPass();
+        say("読めませんでした。合言葉が違うかもしれません。もう一度お試しください。");
+        return;
+      }
+      if (rows.length === 0) {
+        // 合言葉が違っても空で返るので、どちらとも取れる言い方にする。
+        out.classList.add("hidden");
+        say("まだ1本もありません。（合言葉が違うときも、こう出ます）");
+        return;
+      }
+      renderInviteList(rows);
+      out.classList.remove("hidden");
+      const used = rows.filter((r) => r.used_at).length;
+      say("全部で" + rows.length + "本。そのうち" + used + "本が開かれています。");
+    } catch (err) {
+      say("つながりませんでした。電波の届くところで、もう一度お試しください。");
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  // 日付を「9月1日 14:05」の形にする。時刻まで出すのは、同じ日に何本も
+  // お作りすることがあり、日付だけでは見分けがつかないため。
+  function inviteWhen(iso) {
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return "—";
+    const hh = String(d.getHours()).padStart(2, "0");
+    const mm = String(d.getMinutes()).padStart(2, "0");
+    return `${d.getMonth() + 1}月${d.getDate()}日 ${hh}:${mm}`;
+  }
+
+  function renderInviteList(rows) {
+    const out = document.getElementById("admin-list-out");
+    out.textContent = "";   // 押し直したときに、前の分を残さない
+    const table = document.createElement("table");
+
+    const head = document.createElement("tr");
+    for (const label of ["作った", "様子", "覚え書き"]) {
+      const th = document.createElement("th");
+      th.textContent = label;
+      head.appendChild(th);
+    }
+    table.appendChild(head);
+
+    for (const row of rows) {
+      const tr = document.createElement("tr");
+
+      const made = document.createElement("td");
+      made.textContent = inviteWhen(row.created_at);
+      tr.appendChild(made);
+
+      const state = document.createElement("td");
+      // 開かれた分は金色にする。ひと目で「渡って使われた」と分かるように。
+      if (row.used_at) {
+        state.className = "n";
+        state.textContent = inviteWhen(row.used_at) + " に開かれました";
+      } else {
+        state.textContent = "まだ開かれていません";
+      }
+      tr.appendChild(state);
+
+      const note = document.createElement("td");
+      note.textContent = row.note || "";
+      tr.appendChild(note);
+
+      table.appendChild(tr);
+    }
+    out.appendChild(table);
+  }
 
   document.getElementById("admin-mint-copy").addEventListener("click", () => {
     const el = document.getElementById("admin-mint-url");
