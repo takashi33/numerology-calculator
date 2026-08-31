@@ -1972,6 +1972,10 @@
     <button id="push-to-self" type="button" class="hidden">自分の情報を登録する</button>
 
     <button id="push-do" type="button">受け取りを始める</button>
+    <!-- 🚨 受け取っている場合だけ出す（2026-08-31）。お金をいただく以上、
+         「やめる」を自分でできない形にしない。押すと、この端末の通知を止め、
+         預かっている届け先も置き場から消す。 -->
+    <button id="push-stop" type="button" class="hidden">毎朝のお便りを止める</button>
     <div id="push-msg" class="push-status hidden"></div>
 
     <!-- 合言葉の渡し方。送り先（HANDOFF_MAIL）が決まっていれば、押すだけで
@@ -6129,6 +6133,9 @@
   //    リンクの役目は「何も打たせずに、お支払いの済んだ方をなめらかに通すこと」。
   //    本当に守るのは、有料の中身を出す側で会員かどうかを見ること。
   const PAID_RPC_URL = "https://ubnhnrkdaxoglolzgpdb.supabase.co/rest/v1/rpc/redeem_paid_invite";
+  // 🚨 自分の届け先を消す口。合言葉は要らない（自分の宛先を知っている端末しか呼べない）。
+  //    他の人の宛先を知る方法は無い（一覧を出す口には合言葉が要る）。
+  const FORGET_RPC_URL = "https://ubnhnrkdaxoglolzgpdb.supabase.co/rest/v1/rpc/forget_my_subscription";
 
   async function usePaidToken() {
     if (!pendingPaidToken) return;
@@ -6297,8 +6304,29 @@
     el.classList.remove("hidden");
   }
 
+  // いまこの端末が受け取る設定になっているか。なっていれば「止める」を出す。
+  async function showStopIfSubscribed() {
+    const stop = document.getElementById("push-stop");
+    stop.classList.add("hidden");
+    if (!canPush) return;
+    try {
+      const reg = await navigator.serviceWorker.getRegistration();
+      const sub = reg && (await reg.pushManager.getSubscription());
+      if (!sub) return;
+      stop.classList.remove("hidden");
+      stop.disabled = false;
+      // すでに受け取っているので、始めるボタンは出さない。
+      pushDoBtn.classList.add("hidden");
+      pushMsgEl.classList.remove("hidden");
+      pushSay("ok", "いま、この端末で受け取る設定になっています。");
+    } catch (err) {
+      // 分からないときは何も出さない。始めるボタンだけが残る。
+    }
+  }
+
   function openPushModal() {
     showArrived();
+    showStopIfSubscribed();
     pushMsgEl.classList.add("hidden");
     pushHandoffEl.classList.add("hidden");
     pushIosEl.classList.add("hidden");
@@ -6340,6 +6368,49 @@
   });
   pushModal.addEventListener("click", (e) => {
     if (e.target === pushModal) pushModal.classList.add("hidden");
+  });
+
+  // 🚨 止める。端末の通知を切るだけでなく、預かっている届け先も置き場から消す。
+  //    片方だけだと「やめたのに残っている」状態になる（Codexの指摘・2026-08-31）。
+  document.getElementById("push-stop").addEventListener("click", async () => {
+    const stop = document.getElementById("push-stop");
+    stop.disabled = true;
+    pushMsgEl.classList.remove("hidden");
+    pushSay("", "止めています…");
+    try {
+      const reg = await navigator.serviceWorker.getRegistration();
+      const sub = reg && (await reg.pushManager.getSubscription());
+      if (!sub) {
+        stop.classList.add("hidden");
+        pushSay("ok", "すでに止まっています。");
+        return;
+      }
+      const endpoint = sub.endpoint;
+      await sub.unsubscribe();          // まず端末側を切る
+      let erased = false;
+      try {
+        const res = await fetch(FORGET_RPC_URL, {
+          method: "POST",
+          headers: { apikey: HANDOFF_BOX_KEY, "Content-Type": "application/json" },
+          body: JSON.stringify({ target: endpoint }),
+        });
+        erased = res.ok;
+      } catch (err) {
+        erased = false;
+      }
+      stop.classList.add("hidden");
+      pushDoBtn.classList.remove("hidden");
+      pushDoBtn.disabled = false;
+      // 🚨 消せなかったことを黙らない。「やめたつもり」で残るのがいちばん困る。
+      pushSay(erased ? "ok" : "",
+        erased
+          ? "止めました。<strong>明日の朝からは届きません。</strong><br>お預かりしていた届け先も消しました。"
+          : "この端末の通知は止めました。<br><strong>ただし、お預かりしている届け先を消せませんでした。</strong>"
+            + "<br>電波の届くところで、もう一度お試しください。");
+    } catch (err) {
+      stop.disabled = false;
+      pushSay("", "止められませんでした。もう一度お試しください。");
+    }
   });
 
   // 「自分の情報」へ渡す。ここで登録してから、もう一度 🔔 を開いてもらう。
