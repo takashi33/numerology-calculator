@@ -10,7 +10,7 @@
 // 🚨 計算式をここに写さないこと。
 //    式は index.html にしかない（→ numerology-formula スキル「同じ式が5か所にある」）。
 //    ここが読むのは、ページ側が計算し終えた「日付 → 文章」の一覧だけ。
-const CACHE_NAME = "numerology-calculator-v5";
+const CACHE_NAME = "numerology-calculator-v6";
 const URLS_TO_CACHE = ["./", "./index.html"];
 
 self.addEventListener("install", (event) => {
@@ -61,6 +61,9 @@ self.addEventListener("fetch", (event) => {
 const MORNING_DB = "numerology-morning";
 const MORNING_STORE = "kv";
 const MORNING_KEY = "plan";
+// 🚨 届いた時刻をここに残す（2026-08-31 依頼者の「7時ちょうどに来たか分からない」から）。
+//    送った側の記録はこちらに残るが、**端末に出た時刻**は端末にしか残らない。
+const ARRIVED_KEY = "arrived";
 
 function readPlan() {
   return new Promise((resolve) => {
@@ -87,6 +90,40 @@ function readPlan() {
       }
       get.onerror = () => { db.close(); resolve(null); };
       get.onsuccess = () => { const value = get.result; db.close(); resolve(value || null); };
+    };
+  });
+}
+
+// 届いた時刻を残す。次に開いたとき、画面で「いつ届いたか」を出すために使う。
+// ⚠️ 通知が出せなくても記録は残す（出なかったことと、届かなかったことを分けて見るため）。
+function writeArrived(shown) {
+  return new Promise((resolve) => {
+    let request;
+    try {
+      request = indexedDB.open(MORNING_DB, 1);
+    } catch (err) {
+      return resolve(false);
+    }
+    request.onupgradeneeded = () => {
+      const db = request.result;
+      if (!db.objectStoreNames.contains(MORNING_STORE)) db.createObjectStore(MORNING_STORE);
+    };
+    request.onerror = () => resolve(false);
+    request.onsuccess = () => {
+      const db = request.result;
+      let tx;
+      try {
+        tx = db.transaction(MORNING_STORE, "readwrite");
+        // 直近の1回だけを持つ。溜めても読む場所が無い。
+        tx.objectStore(MORNING_STORE).put({ at: Date.now(), shown: shown }, ARRIVED_KEY);
+      } catch (err) {
+        db.close();
+        return resolve(false);
+      }
+      // 🚨 書き終わりを待つ。put を呼んだだけでは、まだ入っていない。
+      tx.oncomplete = () => { db.close(); resolve(true); };
+      tx.onerror = () => { db.close(); resolve(false); };
+      tx.onabort = () => { db.close(); resolve(false); };
     };
   });
 }
@@ -144,6 +181,9 @@ self.addEventListener("push", (event) => {
         // 押した先は、手帳のその日のシート（2026-08-22 依頼者の決定）。
         data: { url: (payload && payload.url) || `./?d=${date}` },
       });
+
+      // 🚨 出したあとに残す。ここが「端末に届いた時刻」の唯一の証拠になる。
+      await writeArrived(true);
     })()
   );
 });

@@ -1960,6 +1960,9 @@
     <!-- 🚨 生年月日はここに置かない（2026-08-28）。「自分の情報」の別窓が正本で、
          同じ欄を2か所に置くと必ず片方が古くなる。ここは今の登録内容を出すだけ。 -->
     <p id="push-owner" class="push-hint"></p>
+    <!-- 🚨 いつ届いたかを、この端末に残った記録から出す（2026-08-31）。
+         送った側の記録はこちらで見られるが、**端末に出た時刻は端末にしか残らない**。 -->
+    <p id="push-arrived" class="push-hint hidden"></p>
     <div id="push-nosel" class="push-status hidden">
       先に <strong>「自分の情報」</strong>を登録してください。<br>
       その日の言葉は、登録した生年月日から選びます。
@@ -6248,7 +6251,52 @@
     "PushManager" in window &&
     typeof Notification !== "undefined";
 
+  // 通知が届いた時刻を、サービスワーカーが残した記録から読む。
+  // 🚨 localStorage はサービスワーカーから見えないので、両方から使える入れ物を読む。
+  function readArrived() {
+    return new Promise((resolve) => {
+      let request;
+      try {
+        request = indexedDB.open("numerology-morning", 1);
+      } catch (err) {
+        return resolve(null);
+      }
+      request.onupgradeneeded = () => {
+        const db = request.result;
+        if (!db.objectStoreNames.contains("kv")) db.createObjectStore("kv");
+      };
+      request.onerror = () => resolve(null);
+      request.onsuccess = () => {
+        const db = request.result;
+        let get;
+        try {
+          get = db.transaction("kv", "readonly").objectStore("kv").get("arrived");
+        } catch (err) {
+          db.close();
+          return resolve(null);
+        }
+        get.onerror = () => { db.close(); resolve(null); };
+        get.onsuccess = () => { const v = get.result; db.close(); resolve(v || null); };
+      };
+    });
+  }
+
+  async function showArrived() {
+    const el = document.getElementById("push-arrived");
+    el.classList.add("hidden");
+    const rec = await readArrived();
+    if (!rec || !rec.at) return;
+    const d = new Date(rec.at);
+    const pad2 = (n) => String(n).padStart(2, "0");
+    const today = new Date();
+    const sameDay = d.toDateString() === today.toDateString();
+    const when = sameDay ? "今朝" : `${d.getMonth() + 1}月${d.getDate()}日`;
+    el.textContent = `前回届いたのは ${when} ${d.getHours()}時${pad2(d.getMinutes())}分 です。`;
+    el.classList.remove("hidden");
+  }
+
   function openPushModal() {
+    showArrived();
     pushMsgEl.classList.add("hidden");
     pushHandoffEl.classList.add("hidden");
     pushIosEl.classList.add("hidden");
