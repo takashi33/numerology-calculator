@@ -704,7 +704,8 @@
   #push-do,
   #push-send,
   #push-to-self,
-  #self-store {
+  #self-store,
+  #push-stop {
     display: block;
     width: 100%;
     margin: 16px 0 0;
@@ -729,7 +730,18 @@
   #push-do.hidden,
   #push-send.hidden,
   #push-to-self.hidden,
-  #self-store.hidden { display: none; }
+  #self-store.hidden,
+  #push-stop.hidden { display: none; }
+
+  /* 「止める」は取り消しの操作。金色の主役ボタンと同じ見た目にすると、
+     押してほしい方に見える。**枠線だけの控えめな形にする。** */
+  #push-stop {
+    color: var(--ink-soft);
+    background: none;
+    border: 1px solid var(--card-border);
+  }
+  #push-stop:hover { color: var(--ink); border-color: var(--gold); }
+  #push-stop:disabled { opacity: 0.5; cursor: default; }
 
   #push-handoff textarea {
     width: 100%;
@@ -6551,28 +6563,39 @@
   }
 
   // いまこの端末が受け取る設定になっているか。なっていれば「止める」を出す。
+  // 受け取っていれば true を返す。
   async function showStopIfSubscribed() {
     const stop = document.getElementById("push-stop");
     stop.classList.add("hidden");
-    if (!canPush) return;
+    if (!canPush) return false;
     try {
       const reg = await navigator.serviceWorker.getRegistration();
       const sub = reg && (await reg.pushManager.getSubscription());
-      if (!sub) return;
+      if (!sub) return false;
       stop.classList.remove("hidden");
       stop.disabled = false;
-      // すでに受け取っているので、始めるボタンは出さない。
+      // すでに受け取っているので、ほかの案内は出さない。
       pushDoBtn.classList.add("hidden");
+      pushIosEl.classList.add("hidden");
+      pushHandoffEl.classList.add("hidden");
+      pushNoSelEl.classList.add("hidden");
+      pushToSelfBtn.classList.add("hidden");
       pushMsgEl.classList.remove("hidden");
       pushSay("ok", "いま、この端末で受け取る設定になっています。");
+      return true;
     } catch (err) {
-      // 分からないときは何も出さない。始めるボタンだけが残る。
+      return false;   // 分からないときは、ふつうの案内に任せる
     }
   }
 
-  function openPushModal() {
+  // 🚨 受け取っている端末には、受け取っている話だけを出す。
+  //    以前は「自分の情報を登録してください」と「いま受け取る設定になっています」が
+  //    同じ画面に並んで出た（2026-09-01、実物で発覚）。**先に調べてから、1つの形に決める。**
+  async function openPushModal() {
     showArrived();
-    showStopIfSubscribed();
+    pushModal.classList.remove("hidden");
+    const subscribed = await showStopIfSubscribed();
+    if (subscribed) return;   // 受け取り中の案内だけを残す
     pushMsgEl.classList.add("hidden");
     pushHandoffEl.classList.add("hidden");
     pushIosEl.classList.add("hidden");
@@ -6605,7 +6628,6 @@
       pushToSelfBtn.classList.remove("hidden");
       pushDoBtn.classList.add("hidden");
     }
-    pushModal.classList.remove("hidden");
   }
 
   pushBtn.addEventListener("click", openPushModal);
