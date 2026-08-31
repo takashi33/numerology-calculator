@@ -872,6 +872,22 @@
   }
   .nav-locked-note.hidden { display: none; }
 
+  /* お申し込みのボタン。鍵の案内のすぐ下に、控えめに置く。 */
+  .join-btn {
+    display: block;
+    margin: -8px auto 18px;
+    padding: 10px 22px;
+    font-family: var(--font-display);
+    font-size: 14px;
+    color: var(--gold);
+    background: transparent;
+    border: 1px solid var(--gold);
+    border-radius: 999px;
+    cursor: pointer;
+  }
+  .join-btn:disabled { opacity: 0.5; cursor: default; }
+  .join-btn.hidden { display: none; }
+
   .pro-lead {
     margin: 0 0 14px;
     font-size: 13px;
@@ -1655,6 +1671,9 @@
     <button type="button" id="pro-open-btn" class="app-nav-btn"><span class="nav-lock" aria-hidden="true">🔒</span>鑑定</button>
   </nav>
   <p id="nav-locked-note" class="nav-locked-note hidden" role="status"></p>
+  <!-- 🚨 お申し込みの入口。Stripe の支度が済むまでは出さない（JS 側の STRIPE_READY）。
+       出しておいて押せない・失敗するのが、いちばん不親切なため。 -->
+  <button type="button" id="join-btn" class="join-btn hidden">お申し込みへ進む</button>
 
   <form id="calc-form">
     <label class="field">
@@ -2134,6 +2153,9 @@
     appEl.classList.remove("hidden");
     setRole(role);
     document.getElementById("nav-locked-note").classList.add("hidden");
+    // 🚨 id で引く。joinBtn の const はこのファイルのずっと下にあり、
+    //    起動のときに名前で触ると、まだ作られていなくて落ちる。
+    document.getElementById("join-btn").classList.add("hidden");
     // 通知から来た人を、その日の手帳へ送る。起動のときは手帳の部品がまだ
     // 組み立たっていないので、そのときは何もしない（組み立てが終わった時点で、
     // 下の techoReady のところから改めて呼ぶ）。
@@ -2257,6 +2279,32 @@
     try {
       const url = new URL(window.location.href);
       url.searchParams.delete("p");
+      window.history.replaceState(null, "", url.pathname + url.search + url.hash);
+    } catch (err) {
+      // Ignore: 消せなくても、このあとの手順は進む。
+    }
+    return raw;
+  })();
+
+  // お支払いを済ませて戻ってきた方の印（`?m=...`）。
+  //
+  // 🚨 これも `?p=` と同じで、readTechoDate() がアドレス欄を書き替える前に読む。
+  //    順番を入れ替えないこと。
+  //
+  // この印だけでは開かない。置き場に「もう払い終わっているか」を聞いてから開く。
+  let pendingMemberToken = (function readMemberToken() {
+    let raw = null;
+    try {
+      raw = new URLSearchParams(window.location.search).get("m");
+    } catch (err) {
+      return null; // 読めない環境なら、ふつうに開いたのと同じ扱いにする
+    }
+    if (!raw || !/^[A-Za-z0-9_-]{16,128}$/.test(raw)) return null;
+    // アドレス欄から消す。画面を人に見せたり、URLをそのまま渡したりしたときに、
+    // 一緒に渡らないようにするため。
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("m");
       window.history.replaceState(null, "", url.pathname + url.search + url.hash);
     } catch (err) {
       // Ignore: 消せなくても、このあとの手順は進む。
@@ -5893,8 +5941,12 @@
     //    見た目（is-locked）だけで止めると、クラスを外すだけで開けてしまう。
     if (!isPaidRole(currentRole)) {
       const note = document.getElementById("nav-locked-note");
-      note.textContent = "「鑑定の機能」は、月1,500円でお使いいただけます。";
+      // 🚨 支度が済むまでは、押せないボタンを出さずに、お声がけの案内にする。
+      note.textContent = STRIPE_READY
+        ? "「鑑定の機能」は、月1,500円でお使いいただけます。"
+        : "「鑑定の機能」は、月1,500円でお使いいただけます。ご希望の方は、直接お声がけください。";
       note.classList.remove("hidden");
+      joinBtn.classList.toggle("hidden", !STRIPE_READY);
       return;
     }
     // 開くたびに「いつまで」を入れ直す。控えの期限は、置き場に確かめるたびに動く。
@@ -6482,6 +6534,97 @@
   //    他の人の宛先を知る方法は無い（一覧を出す口には合言葉が要る）。
   const FORGET_RPC_URL = "https://ubnhnrkdaxoglolzgpdb.supabase.co/rest/v1/rpc/forget_my_subscription";
 
+  // ---------------- お申し込み（Stripe） ----------------
+  // 🚨 Stripe の支度（登録・値段の作成・置き場への鍵の設定・知らせ先の登録）が
+  //    すべて済むまでは false のままにしておくこと。
+  //    true にすると、無料の方に「お申し込みへ進む」が出る。
+  //    支度が済んでいないのに true にすると、押した方が支払い画面へ行けずに終わる。
+  const STRIPE_READY = false;
+  const CHECKOUT_URL = "https://ubnhnrkdaxoglolzgpdb.supabase.co/functions/v1/stripe-checkout";
+
+  const joinBtn = document.getElementById("join-btn");
+
+  // お支払いの画面へ送る。
+  joinBtn.addEventListener("click", async () => {
+    joinBtn.disabled = true;
+    const note = document.getElementById("nav-locked-note");
+    note.textContent = "お支払いの画面を用意しています…";
+    note.classList.remove("hidden");
+    try {
+      const res = await fetch(CHECKOUT_URL, {
+        method: "POST",
+        headers: { apikey: HANDOFF_BOX_KEY, "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      const data = res.ok ? await res.json() : null;
+      if (data && typeof data.url === "string") {
+        window.location.href = data.url;   // ここから先は Stripe の画面
+        return;
+      }
+      note.textContent = "ただいまお申し込みを受けられません。恐れ入りますが、直接お声がけください。";
+    } catch (err) {
+      note.textContent = "つながりませんでした。電波の届くところで、もう一度お試しください。";
+    } finally {
+      joinBtn.disabled = false;
+    }
+  });
+
+  // お支払いを済ませて戻ってきた方を通す。
+  //
+  // 🚨 戻ってきた時点では、まだ開かないことがある。Stripe からの知らせが
+  //    置き場へ届くまでに、少しかかるため。届くまで何度か聞き直す。
+  //    黙って「使えません」と出すと、払った直後の方が不安になる。
+  async function useMemberFromUrl() {
+    if (!pendingMemberToken) return;
+    const token = pendingMemberToken;
+    pendingMemberToken = null;
+
+    const note = document.getElementById("nav-locked-note");
+    note.textContent = "お支払いを確かめています…";
+    note.classList.remove("hidden");
+
+    // 2秒おきに10回まで（およそ20秒）。
+    for (let i = 0; i < 10; i++) {
+      let data = null;
+      try {
+        const res = await fetch(CHECK_RPC_URL, {
+          method: "POST",
+          headers: { apikey: HANDOFF_BOX_KEY, "Content-Type": "application/json" },
+          body: JSON.stringify({ member_token: token }),
+        });
+        if (res.ok) data = await res.json();
+      } catch (err) {
+        // つながらなかった。次の回で聞き直す。
+      }
+
+      if (data && data.ok === true) {
+        saveMember(token, data.expires_at);
+        unlock("paid");
+        openInfoModal({
+          title: "ありがとうございます",
+          body: "「鑑定の機能」が開きました。\n\n"
+            + memberUntilText(data.expires_at) + "\n\n"
+            + "この端末で覚えていますので、次からはそのまま開いていただけます。",
+        });
+        return;
+      }
+
+      await new Promise((done) => setTimeout(done, 2000));
+    }
+
+    // 🚨 まだ届いていない。合言葉は残しておく。次に開いたときに
+    //    refreshMembership() が拾って、そのとき開く。
+    saveMember(token, null);
+    note.classList.add("hidden");
+    openInfoModal({
+      title: "お支払いを確かめています",
+      body: "お支払いの確認に、少しお時間がかかっているようです。\n\n"
+        + "恐れ入りますが、1〜2分ほどおいてから、このアプリを開き直してください。"
+        + "確認が済んでいれば、そのまま「鑑定の機能」が開きます。\n\n"
+        + "しばらく経っても開かない場合は、お手数ですがご連絡ください。",
+    });
+  }
+
   // 「いつまで」を、お客様に読める形にする。
   function memberUntilText(iso) {
     const d = new Date(iso);
@@ -6585,7 +6728,8 @@
   }
 
   usePaidToken();
-  // リンクから開いた回は usePaidToken() が済ませるので、ここは
+  useMemberFromUrl();
+  // リンクから開いた回は usePaidToken() / useMemberFromUrl() が済ませるので、ここは
   // 「前に会員になった端末を、開くたびに確かめ直す」ための呼び出し。
   refreshMembership();
 
