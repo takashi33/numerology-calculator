@@ -25,7 +25,7 @@
 |---|---|
 | `mint_paid_invite(pass, source, note)` | 一度きりのリンクを作る |
 | `list_paid_invites(pass)` | 渡した分の様子を見る |
-| `list_paid_members(pass)` | 続いている方の様子を見る |
+| `list_paid_members(pass)` | 続いている方の様子を見る（合言葉そのものは返らない） |
 
 ### Stripe からだけ呼べる口（service_role のみ）
 

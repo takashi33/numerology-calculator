@@ -1812,6 +1812,13 @@
   <button type="button" id="admin-list-btn" class="pro-fill-btn">今の様子を見る</button>
   <p id="admin-list-msg" class="push-status hidden"></p>
   <div id="admin-list-out" class="pro-months hidden"></div>
+
+  <h2 class="pro-h2">4. 続いている方</h2>
+  <p class="pro-lead">いま「鑑定の機能」が開いている方と、その期限が出ます。
+  もうすぐ切れる方が分かるので、更新のお声がけの目安になります。</p>
+  <button type="button" id="admin-members-btn" class="pro-fill-btn">続いている方を見る</button>
+  <p id="admin-members-msg" class="push-status hidden"></p>
+  <div id="admin-members-out" class="pro-months hidden"></div>
 </div>
 
 <div id="library" class="hidden">
@@ -7134,6 +7141,8 @@
   const MINT_RPC_URL = "https://ubnhnrkdaxoglolzgpdb.supabase.co/rest/v1/rpc/mint_paid_invite";
   // 🚨 渡した分の様子を見る口。合言葉が要るのは作るときと同じ。
   const LIST_RPC_URL = "https://ubnhnrkdaxoglolzgpdb.supabase.co/rest/v1/rpc/list_paid_invites";
+  // 続いている方を見る口。こちらも合言葉が要る。
+  const MEMBERS_RPC_URL = "https://ubnhnrkdaxoglolzgpdb.supabase.co/rest/v1/rpc/list_paid_members";
 
   function readMintPass() {
     try { return localStorage.getItem(MINT_PASS_KEY) || ""; } catch (err) { return ""; }
@@ -7168,6 +7177,8 @@
     document.getElementById("admin-mint-out").classList.add("hidden");
     document.getElementById("admin-list-msg").classList.add("hidden");
     document.getElementById("admin-list-out").classList.add("hidden");
+    document.getElementById("admin-members-msg").classList.add("hidden");
+    document.getElementById("admin-members-out").classList.add("hidden");
     appEl.classList.add("hidden");
     adminEl.classList.remove("hidden");
     window.scrollTo(0, 0);
@@ -7262,6 +7273,97 @@
       btn.disabled = false;
     }
   });
+
+  // 🚨 続いている方（2026-09-01）。期限を付けたので、切れる日が見えないと
+  //    更新のお声がけができない。会員の合言葉そのものは返らない
+  //    （置き場の側で外してある。一覧から他の方の分を使えてしまうため）。
+  document.getElementById("admin-members-btn").addEventListener("click", async () => {
+    const btn = document.getElementById("admin-members-btn");
+    const msg = document.getElementById("admin-members-msg");
+    const out = document.getElementById("admin-members-out");
+    const say = (text) => { msg.textContent = text; msg.classList.remove("hidden"); };
+
+    const pass = ensureMintPass();
+    if (!pass) return;
+
+    btn.disabled = true;
+    say("読んでいます…");
+    out.classList.add("hidden");
+    try {
+      const res = await fetch(MEMBERS_RPC_URL, {
+        method: "POST",
+        headers: { apikey: HANDOFF_BOX_KEY, "Content-Type": "application/json" },
+        body: JSON.stringify({ pass: pass }),
+      });
+      if (!res.ok) {
+        say("読めませんでした。少し時間をおいて、もう一度お試しください。");
+        return;
+      }
+      const rows = await res.json();
+      if (!Array.isArray(rows)) {
+        forgetMintPass();
+        say("読めませんでした。合言葉が違うかもしれません。もう一度お試しください。");
+        return;
+      }
+      if (rows.length === 0) {
+        out.classList.add("hidden");
+        say("まだどなたもいません。（合言葉が違うときも、こう出ます）");
+        return;
+      }
+      renderMemberList(rows);
+      out.classList.remove("hidden");
+      const live = rows.filter((r) => r.active).length;
+      say("全部で" + rows.length + "人。そのうち" + live + "人が、いまお使いになれます。");
+    } catch (err) {
+      say("つながりませんでした。電波の届くところで、もう一度お試しください。");
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  function renderMemberList(rows) {
+    const out = document.getElementById("admin-members-out");
+    out.textContent = "";
+    const table = document.createElement("table");
+
+    const head = document.createElement("tr");
+    for (const label of ["始まり", "いつまで", "入口", "様子"]) {
+      const th = document.createElement("th");
+      th.textContent = label;
+      head.appendChild(th);
+    }
+    table.appendChild(head);
+
+    for (const row of rows) {
+      const tr = document.createElement("tr");
+
+      const from = document.createElement("td");
+      from.textContent = inviteWhen(row.created_at);
+      tr.appendChild(from);
+
+      const until = document.createElement("td");
+      // 使える方は金色にする。ひと目で見分けられるように。
+      if (row.active) until.className = "n";
+      until.textContent = inviteWhen(row.expires_at);
+      tr.appendChild(until);
+
+      const via = document.createElement("td");
+      via.textContent = row.source === "stripe" ? "お申し込み" : "対面";
+      tr.appendChild(via);
+
+      const state = document.createElement("td");
+      if (row.canceled_at) {
+        // 解約されても、期限までは使っていただく。どちらなのかを分けて出す。
+        state.textContent = row.active ? "解約済み（期限まで）" : "解約済み";
+      } else {
+        state.textContent = row.active ? "お使いになれます" : "期限切れ";
+      }
+      tr.appendChild(state);
+
+      table.appendChild(tr);
+    }
+    out.appendChild(table);
+  }
 
   // 日付を「9月1日 14:05」の形にする。時刻まで出すのは、同じ日に何本も
   // お作りすることがあり、日付だけでは見分けがつかないため。
