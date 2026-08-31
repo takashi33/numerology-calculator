@@ -941,15 +941,22 @@
     word-break: break-all;
   }
 
+  /* 🚨 QRは画面いっぱいにしない（依頼者・2026-09-01）。
+     白い箱が端まで届くと、画面が箱に埋まって見える。左右に余白を残す。 */
   .admin-qr {
     background: #FBFAF7;
     border-radius: 14px;
-    padding: 18px;
-    margin: 14px 0 0;
+    padding: 20px;
+    margin: 16px auto 0;
+    max-width: 300px;
     display: flex;
     justify-content: center;
   }
-  .admin-qr img { width: 100%; max-width: 320px; height: auto; display: block; }
+  .admin-qr img { width: 100%; max-width: 260px; height: auto; display: block; }
+
+  /* 下にも余白。読み終わりが画面の縁で切れないように。 */
+  #admin { padding-bottom: 96px; }
+  #admin .pro-h2 { margin-top: 34px; }
 
   .pro-sheet-preview {
     margin: 14px 0;
@@ -987,10 +994,14 @@
         書き忘れると、その画面だけ余白が無くなり、
         「← 戻る」が iPhone の時計に潜り込んで押せなくなる。
         （記録画面で一度、鑑定の機能で二度目を踏んだ） */
+  /* 🚨 画面を足したら、必ずここに名前を足す。
+     入れ忘れると余白も上端の逃げも効かず、「← 戻る」の位置が崩れる。
+     2026-08-28・08-29・09-01 と、同じ見落としを繰り返している。 */
   #library,
   #compat,
   #pro,
-  #record {
+  #record,
+  #admin {
     max-width: 460px;
     margin: 0 auto;
     padding: calc(28px + env(safe-area-inset-top)) 20px 56px;
@@ -1629,7 +1640,7 @@
 </style>
 
 <div id="app">
-  <h1>数秘電卓<span class="subtitle">Numerology Calculator</span></h1>
+  <h1 id="app-title">数秘電卓<span class="subtitle">Numerology Calculator</span></h1>
   <p class="lead">生年月日と名前（カナ）から、現代数秘術のさまざまな数字を計算します。</p>
 
   <!-- 入口は横1列にまとめる。縦に3つ並べると、計算の入力欄が画面の外へ
@@ -6790,6 +6801,32 @@
     appEl.classList.remove("hidden");
     window.scrollTo(0, 0);
   });
+
+  // 🚨 題名を5回続けて押すと、管理者になる（依頼者・2026-09-01）。
+  //    ホーム画面に追加したアプリは Safari と記憶が別で、開く住所も決め打ちのため、
+  //    `?a=` では入れない。**URLを打てない場所でも入れる形**として置く。
+  // ⚠️ これは「守り」ではない。合言葉と同じで、公開しているページの中にある。
+  //    本当に守るのは、有料の中身を出す置き場の側で会員かどうかを見ること。
+  (function () {
+    const title = document.getElementById("app-title");
+    if (!title) return;
+    let taps = 0;
+    let timer = null;
+    title.addEventListener("click", () => {
+      if (currentRole === "admin") return;
+      taps += 1;
+      clearTimeout(timer);
+      // 3秒あいたら数え直す。ふつうに触った回数で入ってしまわないように。
+      timer = setTimeout(() => { taps = 0; }, 3000);
+      if (taps < 5) return;
+      taps = 0;
+      rememberRole("admin");
+      unlock("admin");
+      const note = document.getElementById("nav-locked-note");
+      note.textContent = "管理者として開きました。下に「管理者用」が出ます。";
+      note.classList.remove("hidden");
+    });
+  })();
 
   // ---------------- 管理者用ページ ----------------
   // 🚨 依頼者だけが開く（2026-08-31「管理者用のページはやはり必要」）。
