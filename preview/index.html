@@ -1857,6 +1857,7 @@
   <button type="button" id="pro-back-btn" class="library-back">← 戻る</button>
   <h1 class="library-h1">鑑定の機能</h1>
   <p class="library-sub">お客様を観るための機能です。入れた内容は、この端末から出ません。</p>
+  <p id="pro-until" class="library-sub hidden"></p>
 
   <div class="record-tabs" role="tablist">
     <button type="button" class="record-tab" id="pro-tab-forecast" role="tab" aria-selected="true">その方のこれから</button>
@@ -2115,33 +2116,41 @@
     return role === "paid" || role === "admin";
   }
 
-  function unlock(role) {
-    appEl.classList.remove("hidden");
+  // 見た目と currentRole を、渡された役に合わせる。
+  // 開いたあとで期限が切れた場合にも、ここを呼んで元に戻す。
+  function setRole(role) {
     const paid = isPaidRole(role);
     // 🚨 隠さない。無料の場合にも「鑑定」を見せ、鍵を付けておく（依頼者・2026-08-29）。
     //    開かせない仕掛けは proOpenBtn の click 側。ここは見た目だけ。
     proOpenBtn.classList.toggle("is-locked", !paid);
     proOpenBtn.setAttribute("aria-label", paid ? "鑑定の機能" : "鑑定の機能（月1,500円）");
-    document.getElementById("nav-locked-note").classList.add("hidden");
     // 管理者用の入口は、管理者のときだけ出す。
     const adminBtn = document.getElementById("admin-open-btn");
     if (adminBtn) adminBtn.classList.toggle("hidden", role !== "admin");
     currentRole = role;
+  }
+
+  function unlock(role) {
+    appEl.classList.remove("hidden");
+    setRole(role);
+    document.getElementById("nav-locked-note").classList.add("hidden");
     // 通知から来た人を、その日の手帳へ送る。起動のときは手帳の部品がまだ
     // 組み立たっていないので、そのときは何もしない（組み立てが終わった時点で、
     // 下の techoReady のところから改めて呼ぶ）。
     if (techoReady) openPendingTecho();
   }
 
-  // 端末に残っている役割を読む。読むのは有料と管理者だけで、それ以外
-  // （コードで入っていた頃の "trial" や "subscriber" など）は、ふつうに
-  // 開いた場合と同じ扱いにする。
+  // 端末に残っている役割を読む。読むのは管理者だけ。
+  //
+  // 🚨 "paid" はもうここでは見ない（2026-09-01 期限を付けたため）。
+  //    以前は端末に "paid" と書いておけば期限なく開いてしまった。
+  //    お支払いが続いているかどうかは、下の「会員」の側だけで決める。
   // localStorage を先に見る。sessionStorage はタブ（ホーム画面から開いた場合は
-  // アプリ）を閉じると消えるため、開くたびに有料が外れてしまう。
+  // アプリ）を閉じると消えるため、開くたびに管理者が外れてしまう。
   //
   // 🚨 読み書きは失敗することがある（ブラウザの設定など）。落ちても
   //    起動そのものは続けられるよう、どちらも try で包む。
-  const ELEVATED_ROLES = ["admin", "paid"];
+  const ELEVATED_ROLES = ["admin"];
   function getRememberedRole() {
     for (const store of ["localStorage", "sessionStorage"]) {
       try {
@@ -2154,13 +2163,53 @@
     return null;
   }
 
-  // 端末に残す。ホーム画面に追加した場合、開くたびにリンクを開き直さずに済む。
+  // ---------------- 会員（お支払いの続いている方） ----------------
+  // 🚨 月1,500円なので、期限を持たせる（依頼者・2026-09-01）。
+  //    端末が持つのは「会員の合言葉」と「いつまでか」の2つだけ。
+  //    合言葉は置き場に照らして確かめる。期限は、圏外でも使っていただくための控え。
+  //
+  // ⚠️ これも「守り」ではない。端末の中の日付は書き替えられる。
+  //    本当に守るのは、有料の中身を出す側で会員かどうかを見ること。
+  const MEMBER_KEY = "numerology-member";
+
+  function readMember() {
+    try {
+      const raw = localStorage.getItem(MEMBER_KEY);
+      if (!raw) return null;
+      const m = JSON.parse(raw);
+      return m && typeof m.token === "string" && m.token ? m : null;
+    } catch (err) {
+      return null;   // 壊れていたら「会員ではない」として扱う
+    }
+  }
+
+  function saveMember(token, expiresAt) {
+    try {
+      localStorage.setItem(MEMBER_KEY, JSON.stringify({ token: token, expiresAt: expiresAt || null }));
+    } catch (err) {
+      // Ignore: 覚えられなくても、この回は開いた状態で使っていただける。
+    }
+  }
+
+  function forgetMember() {
+    try { localStorage.removeItem(MEMBER_KEY); } catch (err) { /* ignore */ }
+  }
+
+  // 控えの期限がまだ先かどうか。置き場に聞けないとき（圏外など）の拠りどころ。
+  function memberLooksActive(m) {
+    if (!m) return false;
+    if (!m.expiresAt) return false;
+    const until = new Date(m.expiresAt).getTime();
+    return !isNaN(until) && until > Date.now();
+  }
+
+  // 端末に残す。いま残すのは管理者だけ（有料は会員の側で持つ）。
   function rememberRole(role) {
     for (const store of ["localStorage", "sessionStorage"]) {
       try {
         window[store].setItem(SESSION_KEY, role);
       } catch (err) {
-        // Ignore: この回だけ有料で開いた状態になる。
+        // Ignore: この回だけ、その役で開いた状態になる。
       }
     }
   }
@@ -2246,10 +2295,14 @@
 
   // ここで役割を決める。判断は3つだけ。
   //   1. 依頼者ご自身の `?a=` か
-  //   2. 前に有料で開いた端末か
+  //   2. 期限がまだ先の会員か
   //   3. どちらでもなければ、無料
+  //
+  // 🚨 ここでは置き場に聞かない。通信を待つ間、画面が出ないのを避けるため。
+  //    控えの期限だけで先に開き、続いているかどうかは、あとから
+  //    refreshMembership() が置き場に確かめて直す。
   if (!unlockAsAdminFromUrl()) {
-    unlock(getRememberedRole() || "subscriber");
+    unlock(getRememberedRole() || (memberLooksActive(readMember()) ? "paid" : "subscriber"));
   }
 
   // ---------------- Numerology calculator ----------------
@@ -5844,6 +5897,17 @@
       note.classList.remove("hidden");
       return;
     }
+    // 開くたびに「いつまで」を入れ直す。控えの期限は、置き場に確かめるたびに動く。
+    const untilEl = document.getElementById("pro-until");
+    const member = readMember();
+    if (member && member.expiresAt) {
+      untilEl.textContent = memberUntilText(member.expiresAt);
+      untilEl.classList.remove("hidden");
+    } else {
+      // 依頼者ご自身（管理者）は会員ではないので、何も出さない。
+      untilEl.classList.add("hidden");
+    }
+
     // 開くたびに「見たい日」を今日に戻す。日をまたいで開きっぱなしのことがある。
     const now = new Date();
     document.getElementById("pro-target-year").value = String(now.getFullYear());
@@ -6408,31 +6472,105 @@
   // ⚠️ これは「守り」ではない。役は端末の中で決まるし、このページは公開されている。
   //    リンクの役目は「何も打たせずに、お支払いの済んだ方をなめらかに通すこと」。
   //    本当に守るのは、有料の中身を出す側で会員かどうかを見ること。
-  const PAID_RPC_URL = "https://ubnhnrkdaxoglolzgpdb.supabase.co/rest/v1/rpc/redeem_paid_invite";
+  // 🚨 v2 にしたのは、期限のある会員を作るため（2026-09-01）。
+  //    古い redeem_paid_invite も置き場に残してある。前のアプリを開いたままの
+  //    端末が、リンクを開いても落ちないようにするため。
+  const PAID_RPC_URL = "https://ubnhnrkdaxoglolzgpdb.supabase.co/rest/v1/rpc/redeem_paid_invite_v2";
+  // 会員がまだ続いているかを聞く口。合言葉を知っている端末しか、自分の分を引けない。
+  const CHECK_RPC_URL = "https://ubnhnrkdaxoglolzgpdb.supabase.co/rest/v1/rpc/check_membership";
   // 🚨 自分の届け先を消す口。合言葉は要らない（自分の宛先を知っている端末しか呼べない）。
   //    他の人の宛先を知る方法は無い（一覧を出す口には合言葉が要る）。
   const FORGET_RPC_URL = "https://ubnhnrkdaxoglolzgpdb.supabase.co/rest/v1/rpc/forget_my_subscription";
+
+  // 「いつまで」を、お客様に読める形にする。
+  function memberUntilText(iso) {
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return "お支払いの期間のあいだ、お使いいただけます。";
+    return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日まで、お使いいただけます。`;
+  }
+
+  // 期間が終わっていた。開いている画面ごと、無料の状態に戻す。
+  // 🚨 黙って閉じない。前の日まで使えていたものが理由も分からず消えるため。
+  function relockPaid(body) {
+    forgetMember();
+    setRole("subscriber");
+    // 「鑑定」を開いたままのことがある。開いていたら、電卓の画面へ戻す。
+    if (!proEl.classList.contains("hidden")) {
+      proEl.classList.add("hidden");
+      appEl.classList.remove("hidden");
+      window.scrollTo(0, 0);
+    }
+    openInfoModal({ title: "お支払いの期間が終わりました", body: body });
+  }
+
+  // 続いているかどうかを、置き場に確かめて直す。
+  //
+  // 🚨 つながらなかったときは、何も変えない。電波の届かない場所で
+  //    使えなくなるのは、お支払いいただいている方に対して筋が通らない。
+  //    閉じるのは、置き場が「もう続いていない」とはっきり答えたときだけ。
+  async function refreshMembership() {
+    const m = readMember();
+    if (!m) return;
+
+    let data = null;
+    try {
+      const res = await fetch(CHECK_RPC_URL, {
+        method: "POST",
+        headers: { apikey: HANDOFF_BOX_KEY, "Content-Type": "application/json" },
+        body: JSON.stringify({ member_token: m.token }),
+      });
+      if (!res.ok) return;          // 置き場の調子が悪いだけ。控えの期限のまま使っていただく
+      data = await res.json();
+    } catch (err) {
+      return;                       // 圏外。控えの期限のまま使っていただく
+    }
+    if (!data || typeof data !== "object") return;
+
+    if (data.ok === true) {
+      // 更新されていれば、ここで期限が延びる。
+      saveMember(m.token, data.expires_at);
+      if (!isPaidRole(currentRole)) unlock("paid");
+      return;
+    }
+
+    // 管理者としてご覧になっている場合は、閉じない（依頼者ご自身の確認の邪魔になる）。
+    if (currentRole === "admin") return;
+
+    relockPaid(
+      "「鑑定の機能」は、お支払いの続いているあいだ、お使いいただけます。\n\n"
+      + "続けてお使いになる場合は、お手数ですがご連絡ください。新しいリンクをお送りします。\n\n"
+      + "電卓・資料・相性・手帳・毎朝のお便りは、これまでどおりお使いいただけます。"
+    );
+  }
 
   async function usePaidToken() {
     if (!pendingPaidToken) return;
     const token = pendingPaidToken;
     pendingPaidToken = null;   // 二度呼ばれても、二度は使わない
 
-    let ok = false;
+    let got = null;
     try {
       const res = await fetch(PAID_RPC_URL, {
         method: "POST",
         headers: { apikey: HANDOFF_BOX_KEY, "Content-Type": "application/json" },
         body: JSON.stringify({ token: token }),
       });
-      ok = res.ok && (await res.json()) === true;
+      const data = res.ok ? await res.json() : null;
+      if (data && data.ok === true && typeof data.member === "string") got = data;
     } catch (err) {
-      ok = false;   // つながらなかった。使った扱いにはしない（リンクは置き場に残る）
+      got = null;   // つながらなかった。使った扱いにはしない（リンクは置き場に残る）
     }
 
-    if (ok) {
-      rememberRole("paid");
+    if (got) {
+      // 🚨 役は端末に書かない。会員の合言葉と期限だけを残す。
+      saveMember(got.member, got.expires_at);
       unlock("paid");
+      openInfoModal({
+        title: "お使いいただけます",
+        body: "「鑑定の機能」が開きました。\n\n"
+          + memberUntilText(got.expires_at) + "\n\n"
+          + "この端末で覚えていますので、次からはそのまま開いていただけます。",
+      });
       return;
     }
 
@@ -6447,6 +6585,9 @@
   }
 
   usePaidToken();
+  // リンクから開いた回は usePaidToken() が済ませるので、ここは
+  // 「前に会員になった端末を、開くたびに確かめ直す」ための呼び出し。
+  refreshMembership();
 
   const pushBtn = document.getElementById("push-btn");
   const pushModal = document.getElementById("push-modal");
