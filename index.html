@@ -1817,6 +1817,13 @@
   <button type="button" id="admin-members-btn" class="pro-fill-btn">続いている方を見る</button>
   <p id="admin-members-msg" class="push-status hidden"></p>
   <div id="admin-members-out" class="pro-months hidden"></div>
+
+  <h2 class="pro-h2">5. お申し込みの支度</h2>
+  <p class="pro-lead">アプリからカードでお申し込みいただけるようにするための、支度の進み具合です。
+  Stripe の画面で設定を入れたあと、ここを押して確かめてください。</p>
+  <button type="button" id="admin-setup-btn" class="pro-fill-btn">支度が済んだか確かめる</button>
+  <p id="admin-setup-msg" class="push-status hidden"></p>
+  <div id="admin-setup-out" class="pro-months hidden"></div>
 </div>
 
 <div id="library" class="hidden">
@@ -7177,6 +7184,8 @@
     document.getElementById("admin-list-out").classList.add("hidden");
     document.getElementById("admin-members-msg").classList.add("hidden");
     document.getElementById("admin-members-out").classList.add("hidden");
+    document.getElementById("admin-setup-msg").classList.add("hidden");
+    document.getElementById("admin-setup-out").classList.add("hidden");
     appEl.classList.add("hidden");
     adminEl.classList.remove("hidden");
     window.scrollTo(0, 0);
@@ -7271,6 +7280,94 @@
       btn.disabled = false;
     }
   });
+
+  // 🚨 お申し込みの支度がどこまで済んだか（2026-09-01）。
+  //    依頼者が Stripe の画面で設定を入れたあと、うまくいったかを
+  //    ご自身で確かめられるようにする。設定の中身は分からなくてよく、
+  //    「入っている・まだ」だけが分かればよい。
+  //
+  //    置き場の側は、入っているかどうか（はい・いいえ）しか返さない。
+  //    鍵そのものは返さない（公開しているページから読めてしまうため）。
+  const SETUP_STEPS = [
+    ["stripe_key", "Stripe の鍵", "STRIPE_SECRET_KEY"],
+    ["price", "月1,500円の値段", "STRIPE_PRICE_ID"],
+    ["webhook_secret", "知らせの受け取り", "STRIPE_WEBHOOK_SECRET"],
+    ["app_url", "戻ってくる先", "APP_URL"],
+  ];
+
+  document.getElementById("admin-setup-btn").addEventListener("click", async () => {
+    const btn = document.getElementById("admin-setup-btn");
+    const msg = document.getElementById("admin-setup-msg");
+    const out = document.getElementById("admin-setup-out");
+    const say = (text) => { msg.textContent = text; msg.classList.remove("hidden"); };
+
+    btn.disabled = true;
+    say("確かめています…");
+    out.classList.add("hidden");
+    try {
+      const res = await fetch(CHECKOUT_URL, {
+        method: "POST",
+        headers: { apikey: HANDOFF_BOX_KEY, "Content-Type": "application/json" },
+        body: JSON.stringify({ check: true }),
+      });
+      const data = res.ok ? await res.json() : null;
+      if (!data || data.check !== true) {
+        say("確かめられませんでした。少し時間をおいて、もう一度お試しください。");
+        return;
+      }
+
+      renderSetupList(data);
+      out.classList.remove("hidden");
+
+      const missing = SETUP_STEPS.filter(([key]) => !data[key]);
+      if (missing.length === 0) {
+        say(STRIPE_READY
+          ? "支度は済んでいます。お客様にお申し込みのボタンが出ています。"
+          : "支度は済みました。あとはアプリ側を切り替えるだけです。ご連絡ください。");
+      } else {
+        say("あと" + missing.length + "つです。下の「まだ」の欄を Stripe と Supabase の画面で入れてください。");
+      }
+    } catch (err) {
+      say("つながりませんでした。電波の届くところで、もう一度お試しください。");
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  function renderSetupList(data) {
+    const out = document.getElementById("admin-setup-out");
+    out.textContent = "";
+    const table = document.createElement("table");
+
+    const head = document.createElement("tr");
+    for (const label of ["何を", "様子", "名前"]) {
+      const th = document.createElement("th");
+      th.textContent = label;
+      head.appendChild(th);
+    }
+    table.appendChild(head);
+
+    for (const [key, label, envName] of SETUP_STEPS) {
+      const tr = document.createElement("tr");
+
+      const what = document.createElement("td");
+      what.textContent = label;
+      tr.appendChild(what);
+
+      const state = document.createElement("td");
+      // 済んだ分は金色にする。ひと目で残りが分かるように。
+      if (data[key]) state.className = "n";
+      state.textContent = data[key] ? "入っています" : "まだ";
+      tr.appendChild(state);
+
+      const name = document.createElement("td");
+      name.textContent = envName;
+      tr.appendChild(name);
+
+      table.appendChild(tr);
+    }
+    out.appendChild(table);
+  }
 
   // 🚨 続いている方（2026-09-01）。期限を付けたので、切れる日が見えないと
   //    更新のお声がけができない。会員の合言葉そのものは返らない

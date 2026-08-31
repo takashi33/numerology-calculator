@@ -49,6 +49,26 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
   if (req.method !== "POST") return reply(405, { error: "POST してください" });
 
+  let body: any = {};
+  try {
+    body = await req.json();
+  } catch {
+    body = {};   // 中身が無くても、お申し込みとして扱う
+  }
+
+  // 支度が済んでいるかを見るだけの呼び方（管理者用ページから使う）。
+  // 🚨 入っているかどうか（はい・いいえ）だけを返す。鍵そのものは決して返さない。
+  //    返してしまうと、公開しているページから誰でも読めてしまう。
+  if (body && body.check === true) {
+    return reply(200, {
+      check: true,
+      stripe_key: Boolean(STRIPE_SECRET),
+      price: Boolean(STRIPE_PRICE),
+      app_url: Boolean(APP_URL),
+      webhook_secret: Boolean(Deno.env.get("STRIPE_WEBHOOK_SECRET")),
+    });
+  }
+
   // 🚨 設定が済んでいないうちは、はっきり断る。黙って支払い画面へ飛ばさない。
   if (!STRIPE_SECRET || !STRIPE_PRICE || !APP_URL) {
     return reply(503, { error: "not_configured" });
