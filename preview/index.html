@@ -1813,10 +1813,10 @@
   <p id="admin-list-msg" class="push-status hidden"></p>
   <div id="admin-list-out" class="pro-months hidden"></div>
 
-  <h2 class="pro-h2">4. 続いている方</h2>
-  <p class="pro-lead">いま「鑑定の機能」が開いている方と、その期限が出ます。
-  もうすぐ切れる方が分かるので、更新のお声がけの目安になります。</p>
-  <button type="button" id="admin-members-btn" class="pro-fill-btn">続いている方を見る</button>
+  <h2 class="pro-h2">4. 続いているお客様</h2>
+  <p class="pro-lead">いま「鑑定の機能」が開いているお客様と、その期限が出ます。
+  もうすぐ切れるお客様が分かるので、更新のお声がけの目安になります。</p>
+  <button type="button" id="admin-members-btn" class="pro-fill-btn">続いているお客様を見る</button>
   <p id="admin-members-msg" class="push-status hidden"></p>
   <div id="admin-members-out" class="pro-months hidden"></div>
 
@@ -2199,7 +2199,7 @@
     return null;
   }
 
-  // ---------------- 会員（お支払いの続いている方） ----------------
+  // ---------------- 会員（お支払いの続いているお客様） ----------------
   // 🚨 月1,500円なので、期限を持たせる（依頼者・2026-09-01）。
   //    端末が持つのは「会員の合言葉」と「いつまでか」の2つだけ。
   //    合言葉は置き場に照らして確かめる。期限は、圏外でも使っていただくための控え。
@@ -5951,14 +5951,14 @@
   proTabSheet.addEventListener("click", () => proShowTab("sheet"));
 
   proOpenBtn.addEventListener("click", () => {
-    // 🚨 払っていない方には開かない。ボタンは見えているので、ここで必ず止める。
+    // 🚨 払っていないお客様には開かない。ボタンは見えているので、ここで必ず止める。
     //    見た目（is-locked）だけで止めると、クラスを外すだけで開けてしまう。
     if (!isPaidRole(currentRole)) {
       const note = document.getElementById("nav-locked-note");
       // 🚨 支度が済むまでは、押せないボタンを出さずに、お声がけの案内にする。
       note.textContent = STRIPE_READY
         ? "「鑑定の機能」は、月1,500円でお使いいただけます。"
-        : "「鑑定の機能」は、月1,500円でお使いいただけます。ご希望の方は、直接お声がけください。";
+        : "「鑑定の機能」は、月1,500円でお使いいただけます。ご希望の場合は、直接お声がけください。";
       note.classList.remove("hidden");
       joinBtn.classList.toggle("hidden", !STRIPE_READY);
       return;
@@ -6552,7 +6552,7 @@
   // 🚨 Stripe の支度（登録・値段の作成・置き場への鍵の設定・知らせ先の登録）が
   //    すべて済むまでは false のままにしておくこと。
   //    true にすると、無料の方に「お申し込みへ進む」が出る。
-  //    支度が済んでいないのに true にすると、押した方が支払い画面へ行けずに終わる。
+  //    支度が済んでいないのに true にすると、押したお客様が支払い画面へ行けずに終わる。
   const STRIPE_READY = false;
   const CHECKOUT_URL = "https://ubnhnrkdaxoglolzgpdb.supabase.co/functions/v1/stripe-checkout";
 
@@ -6663,7 +6663,7 @@
   // 続いているかどうかを、置き場に確かめて直す。
   //
   // 🚨 つながらなかったときは、何も変えない。電波の届かない場所で
-  //    使えなくなるのは、お支払いいただいている方に対して筋が通らない。
+  //    使えなくなるのは、お支払いいただいているお客様に対して筋が通らない。
   //    閉じるのは、置き場が「もう続いていない」とはっきり答えたときだけ。
   async function refreshMembership() {
     const m = readMember();
@@ -7148,7 +7148,7 @@
   const MINT_RPC_URL = "https://ubnhnrkdaxoglolzgpdb.supabase.co/rest/v1/rpc/mint_paid_invite";
   // 🚨 渡した分の様子を見る口。合言葉が要るのは作るときと同じ。
   const LIST_RPC_URL = "https://ubnhnrkdaxoglolzgpdb.supabase.co/rest/v1/rpc/list_paid_invites";
-  // 続いている方を見る口。こちらも合言葉が要る。
+  // 続いているお客様を見る口。こちらも合言葉が要る。
   const MEMBERS_RPC_URL = "https://ubnhnrkdaxoglolzgpdb.supabase.co/rest/v1/rpc/list_paid_members";
 
   function readMintPass() {
@@ -7371,7 +7371,7 @@
     out.appendChild(table);
   }
 
-  // 🚨 続いている方（2026-09-01）。期限を付けたので、切れる日が見えないと
+  // 🚨 続いているお客様（2026-09-01）。期限を付けたので、切れる日が見えないと
   //    更新のお声がけができない。会員の合言葉そのものは返らない
   //    （置き場の側で外してある。一覧から他の方の分を使えてしまうため）。
   document.getElementById("admin-members-btn").addEventListener("click", async () => {
