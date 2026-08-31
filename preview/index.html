@@ -206,8 +206,16 @@
     font-size: 15px;
   }
 
-  #calc-btn {
-    margin-top: 4px;
+  /* 🚨 各画面の「主役のボタン」は、ここ1か所で決める。
+     以前は計算画面と相性診断に同じ指定が別々に書いてあり、あとから足した
+     鑑定の2つには何も当たっていなかった（＝標準の灰色ボタンのまま）。
+     依頼者の指摘（2026-08-31）。**画面を足したら、ここに名前を足す。** */
+  #calc-btn,
+  #compat-btn,
+  #pro-forecast-btn,
+  #pro-sheet-btn {
+    width: 100%;
+    font-family: var(--font-body);
     font-size: 15px;
     font-weight: 700;
     padding: 13px;
@@ -218,7 +226,12 @@
     cursor: pointer;
   }
 
-  #calc-btn:hover {
+  #calc-btn { margin-top: 4px; }
+
+  #calc-btn:hover,
+  #compat-btn:hover,
+  #pro-forecast-btn:hover,
+  #pro-sheet-btn:hover {
     filter: brightness(1.06);
   }
 
@@ -574,7 +587,8 @@
   }
 
   #self-open-btn,
-  #push-btn {
+  #push-btn,
+  #admin-open-btn {
     display: block;
     margin: 18px auto 0;
     padding: 8px 12px;
@@ -589,12 +603,14 @@
   /* 🚨 ID で display を書いたら、必ず .hidden の打ち消しも書く。
      書き忘れると隠す指示が効かない（2026-08-28 に事故） */
   #self-open-btn.hidden,
-  #push-btn.hidden {
+  #push-btn.hidden,
+  #admin-open-btn.hidden {
     display: none;
   }
 
   #self-open-btn:hover,
-  #push-btn:hover {
+  #push-btn:hover,
+  #admin-open-btn:hover {
     color: var(--ink-soft);
     border-color: var(--gold);
   }
@@ -896,6 +912,33 @@
   .pro-months tr.now td,
   .pro-months tr.now th { background: rgba(255, 255, 255, 0.05); }
 
+  /* 管理者用のQR。お客様の端末で読み取っていただくので、大きく・白地で出す。
+     🚨 暗い背景のまま出すと読み取れないことがある（過去にQRが読めなかった事故がある）。 */
+  #admin-mint-url {
+    width: 100%;
+    min-height: 84px;
+    margin-top: 12px;
+    padding: 10px;
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--input-ink);
+    background: var(--input-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    resize: vertical;
+    word-break: break-all;
+  }
+
+  .admin-qr {
+    background: #FBFAF7;
+    border-radius: 14px;
+    padding: 18px;
+    margin: 14px 0 0;
+    display: flex;
+    justify-content: center;
+  }
+  .admin-qr img { width: 100%; max-width: 320px; height: auto; display: block; }
+
   .pro-sheet-preview {
     margin: 14px 0;
     text-align: center;
@@ -1087,7 +1130,12 @@
 
   /* ---------------- 相性診断 ---------------- */
 
-  #compat-form {
+  /* 🚨 入力の並びは、どの画面も同じ間隔にする。
+     鑑定の2つはここに入っておらず、ボタンが入力欄に密着していた（間隔0px）。
+     依頼者の指摘（2026-08-31）。**画面を足したら、ここに名前を足す。** */
+  #compat-form,
+  #pro-forecast-form,
+  #pro-sheet-form {
     display: flex;
     flex-direction: column;
     gap: 16px;
@@ -1127,21 +1175,6 @@
     min-width: 0;
   }
 
-  #compat-btn {
-    font-size: 15px;
-    font-weight: 700;
-    padding: 13px;
-    border: none;
-    border-radius: 9px;
-    background: linear-gradient(135deg, var(--gold), var(--gold-deep));
-    color: #2a1a4d;
-    cursor: pointer;
-    font-family: var(--font-body);
-  }
-
-  #compat-btn:hover {
-    filter: brightness(1.06);
-  }
 
   .compat-summary {
     margin: 24px 0 16px;
@@ -1704,6 +1737,32 @@
 
   <button id="self-open-btn" type="button">👤 自分の情報</button>
   <button id="push-btn" type="button">🔔 毎朝のお便りを受け取る</button>
+  <button id="admin-open-btn" type="button" class="hidden">管理者用</button>
+</div>
+
+<div id="admin" class="hidden">
+  <button type="button" id="admin-back-btn" class="library-back">← 戻る</button>
+  <h1 class="library-h1">お客様にお渡しする</h1>
+  <p class="library-sub">この画面は、お客様には出ません。</p>
+
+  <h2 class="pro-h2">1. その場で使い始めていただく</h2>
+  <p class="pro-lead">この画面をお客様に見せて、読み取っていただきます。
+  <strong>電卓・資料・相性・手帳・毎朝のお便りまで、無料でお使いいただけます。</strong></p>
+  <div id="admin-qr" class="admin-qr"></div>
+
+  <h2 class="pro-h2">2. お支払いをいただいた場合</h2>
+  <p class="pro-lead"><strong>一度きりのリンク</strong>をその場で作ってお渡しします。
+  開いた端末で「鑑定の機能」まで使えるようになります。
+  <strong>一度使うと、そのリンクは通らなくなります。</strong></p>
+  <button type="button" id="admin-mint-btn" class="pro-fill-btn">お渡しするリンクを作る</button>
+  <p id="admin-mint-msg" class="push-status hidden"></p>
+  <div id="admin-mint-out" class="hidden">
+    <textarea id="admin-mint-url" readonly></textarea>
+    <div class="pro-row">
+      <button type="button" id="admin-mint-copy" class="pro-fill-btn">コピーする</button>
+      <button type="button" id="admin-mint-share" class="pro-fill-btn hidden">そのまま送る</button>
+    </div>
+  </div>
 </div>
 
 <div id="library" class="hidden">
@@ -2034,6 +2093,9 @@
     proOpenBtn.classList.toggle("is-locked", !paid);
     proOpenBtn.setAttribute("aria-label", paid ? "鑑定の機能" : "鑑定の機能（月1,500円）");
     document.getElementById("nav-locked-note").classList.add("hidden");
+    // 管理者用の入口は、管理者のときだけ出す。
+    const adminBtn = document.getElementById("admin-open-btn");
+    if (adminBtn) adminBtn.classList.toggle("hidden", role !== "admin");
     currentRole = role;
     // 通知から来た人を、その日の手帳へ送る。起動のときは手帳の部品がまだ
     // 組み立たっていないので、そのときは何もしない（組み立てが終わった時点で、
@@ -5852,6 +5914,90 @@
   //
   // A4 の縦（150dpi 相当）で描く。印刷しても、画像のまま送っても読める大きさ。
   // 🚨 アプリからよそへは送らない。端末に保存するところまでで、渡すのは人の手。
+  // 数字ごとの「キーワード」と「強みとして表れるとき」を、資料の文章から取り出す。
+  //
+  // 🚨 ここに文章を書き写さないこと。正本は資料メニューの「各ナンバーの深堀解説」で、
+  //    あちらを直せば1枚も一緒に直る。写すと必ず片方が古くなる。
+  // ⚠️ 1〜9 には「◯◯力」の見出しがあるが、11・22・33 には無い。だから見出しは使わない。
+  //    キーワードと強みは、12個すべてに入っている（2026-08-31 に確認）。
+  // 🚨 「この数字が表すもの」は使わない。11・22・33 が「還元すると2になる数字です」で
+  //    始まり、性格として読めないため。
+  // お客様に見せる／お渡しする1枚に載せるQR。中身は**アプリのURLだけ**。
+  // 🚨 作り方と照合は tools/icon-maker/make-app-qr.js にある。
+  //    作ったら必ず読み取って中身を確かめること（過去に違うURLのQRを配った事故がある）。
+  const APP_QR = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAeAAAAHgCAYAAAB91L6VAAAAAklEQVR4AewaftIAABJcSURBVO3BMY5dOZYFwCMiN0KXFve/Clp0uQwBkqExC402Prvw5uZPZUT8+P3r558AAKVaAIByLQBAuRYAoFwLAFCuBQAo1wIAlGsBAMq1AADlWgCAci0AQLkWAKBcCwBQrgUAKNcCAJRrAQDKtQAA5VoAgHItAEC5FgCgXAsAUK4FACjXAgCUawEAyrUAAOVaAIByLQBAuRYAoFwLAFCuBQAo1wIAlGsBAMq1AADlWgCAci0AQLkWAKBcCwBQrgUAKNcCAJRrAQDKfeTNzdHDP9Y+uTFHz421T6rN0fOktU+eMkfPjbVPbszRc2Ptk6fM0fMZ1j55yhw9N9Y+uTFHz7ta++RJc/Twj7VP3lULAFCuBQAo1wIAlGsBAMq1AADlWgCAci0AQLkWAKDcR/4Ca598dXP0fIY5em6sffKUtU8+wxw972qOnhtrn7yy9smNOXqeNEfPjbVPXln75MYcPZ9h7ZOnzNFzY+2TJ6198tXN0fOVtQAA5VoAgHItAEC5FgCgXAsAUK4FACjXAgCUawEAyrUAAOU+8o3M0fMZ1j756ubo+erWPnlljp4bc/TcWPuk2hw9T1r75MYcPU+Zo+fG2idPmqPnxhw9r6x9cmPtk3c1R89nWPvkO2gBAMq1AADlWgCAci0AQLkWAKBcCwBQrgUAKNcCAJRrAQDKfYS/0tonT5qj55W1T27M0fOktU+esvbJjTl6bszRU23tkxtz9Dxp7ZOnrH1yY46eG2uf3Fj75Clz9NxY+4TvqQUAKNcCAJRrAQDKtQAA5VoAgHItAEC5FgCgXAsAUK4FACj3EXjIHD031j65MUfPjTl6nrL2yZPWPnnSHD2vzNHz1c3Rc2Ptkxtz9NxY++TGHD1PmaPnxton/F1aAIByLQBAuRYAoFwLAFCuBQAo1wIAlGsBAMq1AADlWgCAch/5RtY++S7m6Pnq1j55V2uf3Jij50lrn7wyR8+T5ui5sfbJU9Y+uTFHz2dY++Qpc/S8q7VP+P/TAgCUawEAyrUAAOVaAIByLQBAuRYAoFwLAFCuBQAo95G/wBw9/Dtrn9yYo+eVtU9uzNFzY+2TG3P03Fj75JU5em6sffKktU9uzNHzytonN+boubH2yY05em6sffLKHD031j65MUfPk+boeWXtk3c2Rw+fqwUAKNcCAJRrAQDKtQAA5VoAgHItAEC5FgCgXAsAUK4FACj3kTe39gl/l7VP3tXaJzfm6Lmx9sm7WvvkXa19wr+z9glfQwsAUK4FACjXAgCUawEAyrUAAOVaAIByLQBAuRYAoFwLAFDuI9/IHD2fYe2TV+boubH2yVc3R8+NtU9urH1yY46eV9Y+ubH2yY05em6sffKUOXpurH1yY46eG2uf3Jij5ylrn9xY++TGHD031j6pNkdPtbVPnjRHT7W1T95VCwBQrgUAKNcCAJRrAQDKtQAA5VoAgHItAEC5FgCgXAsAUO4jb26Onne19smNOXpeWfvkM8zR867m6HlXc/S8q7VPnrT2yY05em6sfVJtjp4ba5/cmKPnO5ij58baJ/zvWgCAci0AQLkWAKBcCwBQrgUAKNcCAJRrAQDKtQAA5VoAgHI/fv/6+Sd8ujl6PsPaJzfm6Pnq1j55ZY6eJ6198qQ5ep6y9sm7mqPnq1v75MYcPU9a++TGHD2vrH3C/58WAKBcCwBQrgUAKNcCAJRrAQDKtQAA5VoAgHItAEC5H79//fyTL26Onhtrn9yYo+dJa588ZY6eG2ufPGmOnqesffLVzdHzpLVPbszR88raJzfm6Lmx9smNOXqqrX3yGebo+Q7WPrkxR8+NtU9uzNFzY+2Tr6wFACjXAgCUawEAyrUAAOVaAIByLQBAuRYAoFwLAFCuBQAo95FvZI6eG2ufPGmOnq9u7ZNqc/Q8ae2Tp6x98qQ5er66tU+qzdFzY+2TG3P0fHVrn7yrOXpurH1yY46eV9Y+eVctAEC5FgCgXAsAUK4FACjXAgCUawEAyrUAAOVaAIByLQBAuR+/f/38E/6VOXqesvbJjTl6PsPaJ6/M0XNj7ZMnzdHzlLVPbszRc2Ptkxtz9NxY++RdzdFzY+2Tp8zR867WPnnSHD3vau2TJ83R85S1T95VCwBQrgUAKNcCAJRrAQDKtQAA5VoAgHItAEC5FgCgXAsAUO4jf4E5et7Z2ievzNHzGdY+ecraJ0+ao+fG2idf3donT5mj58baJzfm6Kk2R8+NtU++ujl6nrT2yY05el5Z++TGHD1PWvvkO2gBAMq1AADlWgCAci0AQLkWAKBcCwBQrgUAKNcCAJRrAQDKfeTNzdHzytonn2GOnhtz9Lyy9slXN0fPjbVPnjRHz421T16Zo+fG2ic35ui5sfZJtTl6bqx98tXN0XNj7ZNqa588aY6ep8zRc2PtE/53LQBAuRYAoFwLAFCuBQAo1wIAlGsBAMq1AADlWgCAcj9+//r5J29sjp5qa5/cmKPnXa19cmOOnhtrnzxljp7PsPbJU+boubH2yZPm6Hll7ZMnzdFzY+2TG3P0vLL2yWeYo+fG2idPmaPnSWuf3Jij55W1T27M0fOktU++gxYAoFwLAFCuBQAo1wIAlGsBAMq1AADlWgCAci0AQLkWAKDcR/4Ca598hrVP3tUcPe9q7ZMbc/TcWPvkxhw972qOnne19slXN0fPjbVPbszRU23tkxtz9Dxljp53NkfPK2ufvKsWAKBcCwBQrgUAKNcCAJRrAQDKtQAA5VoAgHItAEC5FgCg3Ef+AnP03Fj75Elz9HwXc/Q8Ze2TJ83R85S1T540R8+7mqPnxton1eboedLaJ9XWPrkxR8+NOXqetPbJK3P0PGntkxtz9NxY++QrawEAyrUAAOVaAIByLQBAuRYAoFwLAFCuBQAo1wIAlGsBAMp95BuZo+fG2ifV1j65MUfPjbVPbszRc2Ptk1fm6HnS2ifV5ui5sfbJjbVPnjRHzytz9HyGOXpurH3yyhw9T5qj58baJzfWPnlljp4nrX3yXax98h20AADlWgCAci0AQLkWAKBcCwBQrgUAKNcCAJRrAQDKtQAA5T7y5tY+ecocPTfm6Lmx9smNOXpemaPnxton72rtkxtz9Dxp7ZPvYu2TanP03Fj75MYcPU9Z++QzzNHzytonN+bo+Qxz9Lyy9smT5uiptvbJu2oBAMq1AADlWgCAci0AQLkWAKBcCwBQrgUAKNcCAJT78fvXzz95Y3P0VFv75MYcPTfWPnnKHD1PWvvkxhw9r6x9cmOOnhtrn7yrOXpurH1yY46eamufPGmOnqesffLVzdHzpLVPbszRU23tkyfN0fOUtU/eVQsAUK4FACjXAgCUawEAyrUAAOVaAIByLQBAuRYAoFwLAFDux+9fP//kjc3R88raJzfm6Pnq1j55V3P03Fj75MYcPe9q7ZMbc/Q8ae2TV+boedLaJzfm6Lmx9slT5uh50tonN+boeWXtk88wR89T1j65MUfPjbVP+EcLAFCuBQAo1wIAlGsBAMq1AADlWgCAci0AQLkWAKBcCwBQ7iNvbu2TV+boubH2yWeYo+eVtU9uzNHzpLVPnrL2yVe39slnWPvkxhw9T1n75MYcPU+ao+cpa5/cmKPnSWufVJuj58baJzfm6HlXc/Q8Ze2Td9UCAJRrAQDKtQAA5VoAgHItAEC5FgCgXAsAUK4FACjXAgCU+/H7188/+Sbm6OE/rX3ylDl6vou1T27M0fOktU+eMkfPk9Y+eVdz9Dxp7ZNX5ui5sfbJVzdHz2dY++QrawEAyrUAAOVaAIByLQBAuRYAoFwLAFCuBQAo1wIAlGsBAMp9hP+y9sl3MUfPjbVPnrL2yZPm6Lmx9slT5ui5sfbJk+boecraJ0+ao+cpa5+8szl6qs3R89WtfXJjjp4bc/S8svbJu2oBAMq1AADlWgCAci0AQLkWAKBcCwBQrgUAKNcCAJT7yJubo+eVtU+eNEfPk9Y+eWWOnietffJdrH3C/26Onhtrnzxp7ZOnzNHzGdY+ecocPTfWPrkxR8+NtU/e1don30ELAFCuBQAo1wIAlGsBAMq1AADlWgCAci0AQLkWAKBcCwBQ7iNvbu2TV+boubH2yY05ep40R88ra5/cmKPnu5ijp9raJzfWPvkMa5+8MkfPjbVPnrT2yY05el5Z++RJa588aY6e72COnietfcI/WgCAci0AQLkWAKBcCwBQrgUAKNcCAJRrAQDKtQAA5VoAgHIf4V9b++Qpc/TcWPvkM8zR867WPvku5uh5Ze2TJ83R86S1T6rN0fOktU9emaPnxtonN+boubH2yVPWPrkxR8+NOXpurH3yHbQAAOVaAIByLQBAuRYAoFwLAFCuBQAo1wIAlGsBAMq1AADlPvLm5uh5Ze2TzzBHz1PWPrkxR8+NtU+etPbJK3P03Jij58baJ0+ao+eVtU9uzNFzY+2TG3P0VJuj5zPM0fPK2idPWvvkSXP0vLL2yY05ej7DHD1PWfvkM8zR88raJ++qBQAo1wIAlGsBAMq1AADlWgCAci0AQLkWAKBcCwBQrgUAKPfj96+ff/LG5uh5Ze2TJ83R867WPvkMc/Q8Ze2TJ83Rc2Ptk1fm6Lmx9smNOXre1don72qOnu9i7ZMbc/Q8ae2Tp8zR86S1T76DFgCgXAsAUK4FACjXAgCUawEAyrUAAOVaAIByLQBAuY/wX9Y+edIcPa+sfXJjjp4ba5/cmKOn2hw9N9Y+eVdz9LyrtU8+wxw9T1n75MYcPTfWPqk2R8+NOXo+wxw9r6x9cmPtkyfN0fOUtU/eVQsAUK4FACjXAgCUawEAyrUAAOVaAIByLQBAuRYAoFwLAFDuI9/IHD1PWvvkKXP03Fj75Elrn9yYo+eVtU9uzNFzY46eJ83R88raJzfm6HlXc/TcWPvkxhw9T1r75JU5ej7DHD031j75DuboubH2yY05em6sfXJjjp6vrAUAKNcCAJRrAQDKtQAA5VoAgHItAEC5FgCgXAsAUK4FACj34/evn3/CX2eOnmprn7yzOXpeWfvkxhw938XaJzfm6HnK2idPmqOn2tonN+boubH2SbU5ep609smNOXqesvbJu2oBAMq1AADlWgCAci0AQLkWAKBcCwBQrgUAKNcCAJRrAQDKfeTNzdHDP9Y+ubH2yY05em6sfVJtjp4nrX1Sbe2TJ83R88raJzfm6HnS2ifV5uj5DGufvDJHz2eYo+fG2ifvau2T76AFACjXAgCUawEAyrUAAOVaAIByLQBAuRYAoFwLAFCuBQAo95G/wNonX90cPZ9h7ZMbc/S8svbJk9Y+qTZHz421T27M0XNj7ZMba588Ze2TG3P0PGntk2prn9yYo+fGHD3vau2Tr26Onhtrn3xlLQBAuRYAoFwLAFCuBQAo1wIAlGsBAMq1AADlWgCAch/5Rubo+Qxrn1Sbo+fG2ic31j55yhw9N9Y+uTFHz1c3R89T1j65MUcP/2ntk2pz9NyYo+erm6PnSXP0vLL2ybtqAQDKtQAA5VoAgHItAEC5FgCgXAsAUK4FACjXAgCUawEAyn2Eb22Onhtrn7wyR8+NtU8+w9onr8zRc2OOns+w9skrc/S8szl6nrL2yY05er6LtU9uzNHzytonN+boubH2yZPm6PnKWgCAci0AQLkWAKBcCwBQrgUAKNcCAJRrAQDKtQAA5VoAgHIf4Vtb++TGHD1f3Rw9r6x98s7m6Km29km1OXpuzNHDf5qj5ylz9NxY++RJc/TcWPvkK2sBAMq1AADlWgCAci0AQLkWAKBcCwBQrgUAKNcCAJRrAQDKfeQbWfvku1j75Elrn1Sbo+fG2ic35uh5V3P03Fj7pNocPdXWPrkxR8+NtU/e1Rw9N9Y+qTZHz405em6sfcI/WgCAci0AQLkWAKBcCwBQrgUAKNcCAJRrAQDKtQAA5VoAgHIf+QvM0cO/M0fPjbVP3tUcPU+Zo+erm6PnSWufPGmOnlfm6Lmx9smT5ui5sfbJK3P03Fj75MYcPTfWPrkxR89T1j65MUfPjbVPvoMWAKBcCwBQrgUAKNcCAJRrAQDKtQAA5VoAgHItAEC5H79//fwTAKBUCwBQrgUAKNcCAJRrAQDKtQAA5VoAgHItAEC5FgCgXAsAUK4FACjXAgCUawEAyrUAAOVaAIByLQBAuRYAoFwLAFCuBQAo1wIAlGsBAMq1AADlWgCAci0AQLkWAKBcCwBQrgUAKNcCAJRrAQDKtQAA5VoAgHItAEC5FgCgXAsAUK4FACjXAgCUawEAyrUAAOVaAIBy/wcl3rpVbnTslQAAAABJRU5ErkJggg==";
+  const APP_QR_IMG = new Image();
+  APP_QR_IMG.src = APP_QR;
+
+  const numberProfileCache = {};
+  function numberProfile(n) {
+    if (n == null) return null;
+    if (numberProfileCache[n]) return numberProfileCache[n];
+    const doc = LIBRARY_DOCS.find((d) => d.id === "deep");
+    if (!doc) return null;
+    let found = null;
+    doc.sections.forEach((sec) => {
+      (sec.entries || []).forEach((e) => {
+        const head = String(e.h3 || "");
+        if (head === String(n) || head.indexOf(String(n) + " ｜") === 0) found = e;
+      });
+    });
+    if (!found) return null;
+    const blocks = found.blocks || [];
+    const pick = (heading) => {
+      for (let i = 0; i < blocks.length - 1; i++) {
+        if (blocks[i][0] === "h" && blocks[i][1] === heading && blocks[i + 1][0] === "p") return blocks[i + 1][1];
+      }
+      return "";
+    };
+    const kw = blocks.find((x) => x[0] === "p" && String(x[1]).indexOf("キーワード：") === 0);
+    const profile = {
+      keywords: kw ? String(kw[1]).replace("キーワード：", "") : "",
+      strength: pick("強みとして表れるとき"),
+    };
+    numberProfileCache[n] = profile;
+    return profile;
+  }
+
+  // 「◯◯ナンバーが何を表すか」を、結果カードの ⓘ（GLOSSARY）から取り出す。
+  // ⚠️ GLOSSARY のキーは英語（lifePath など）。画面の表示名では引けないので、見出しで探す。
+  // ⚠️ 1枚には1文目だけを載せる（全文は53〜97字あり、紙に入らない）。
+  function positionMeaning(label) {
+    const want = label + "とは？";
+    const key = Object.keys(GLOSSARY).find((k) => GLOSSARY[k] && GLOSSARY[k].title === want);
+    if (!key) return "";
+    const first = String(GLOSSARY[key].body || "").split("。")[0];
+    return first ? first + "。" : "";
+  }
+
+  // 決めた幅で折り返して書く。書き終わった次の行の y を返す。
+  function drawWrapped(ctx, text, x, y, maxWidth, lineHeight) {
+    let line = "";
+    for (const ch of text) {
+      const test = line + ch;
+      if (ctx.measureText(test).width > maxWidth && line) {
+        ctx.fillText(line, x, y);
+        y += lineHeight;
+        line = ch;
+      } else {
+        line = test;
+      }
+    }
+    if (line) { ctx.fillText(line, x, y); y += lineHeight; }
+    return y;
+  }
+
+  // ---- お渡しする1枚 ----
+  //
+  // A4 の縦（150dpi 相当）で描く。印刷しても、画像のまま送っても読める大きさ。
+  // 🚨 アプリからよそへは送らない。端末に保存するところまでで、渡すのは人の手。
+  //
+  // 🚨 作りの芯（依頼者・2026-08-31）
+  //    「お客様は算出された数字ではなく、どのような意味があるか、
+  //      結局どのような性格なのかといったところを重視します」
+  //    「お客様は数字を見てもちんぷんかんぷんです」
+  //    → **数字を見出しにしない。**意味を見出しにして、性格を本文にする。
+  //      数字は根拠として、下に小さく置く。
   function proDrawSheet(birth, name, romaji) {
     const W = 1240;
     const H = 1754;
@@ -5881,71 +6027,171 @@
     ctx.lineTo(310, 196);
     ctx.stroke();
 
-    let y = 268;
-    ctx.font = "30px " + jpSans;
+    let y = 262;
+    ctx.font = "28px " + jpSans;
     ctx.fillStyle = "#5A5040";
     if (name) {
       ctx.fillText("お名前", 110, y);
       ctx.fillStyle = "#2B2418";
-      ctx.font = "36px " + jp;
-      ctx.fillText(name, 300, y);
-      y += 58;
-      ctx.font = "30px " + jpSans;
+      ctx.font = "34px " + jp;
+      ctx.fillText(name, 280, y);
+      y += 54;
+      ctx.font = "28px " + jpSans;
       ctx.fillStyle = "#5A5040";
     }
     ctx.fillText("生年月日", 110, y);
     ctx.fillStyle = "#2B2418";
-    ctx.font = "36px " + jp;
-    ctx.fillText(birth.year + "年" + birth.month + "月" + birth.day + "日", 300, y);
-    y += 96;
+    ctx.font = "34px " + jp;
+    ctx.fillText(birth.year + "年" + birth.month + "月" + birth.day + "日", 280, y);
+    y += 84;
 
     const letters = romaji ? nameLetters(romaji) : [];
     const p = compatProfile(birth.year, birth.month, birth.day, letters);
 
+    // ── もとになった数字（右上）──
+    // 🚨 数字は主役ではない（依頼者・2026-08-31）。「お客様は数字を見てもちんぷんかんぷん」。
+    //    紙の主役は下の「あなたの持ち味」。数字は根拠として右上にまとめ、場所を取らせない。
+    // ⚠️ ここだけ「ナンバー」を省く。右の幅に収めるため（下の持ち味では正式な名前で出す）。
     const rows = [
-      ["ライフパスナンバー", p.lifePath],
-      ["バースデーナンバー", p.birthday],
-      ["デスティニーナンバー", p.destiny],
-      ["ソウルナンバー", p.soul],
-      ["パーソナリティナンバー", p.personality],
-      ["マチュリティナンバー", p.maturity],
+      ["ライフパス", p.lifePath],
+      ["バースデー", p.birthday],
+      ["デスティニー", p.destiny],
+      ["ソウル", p.soul],
+      ["パーソナリティ", p.personality],
+      ["マチュリティ", p.maturity],
     ].filter((r) => r[1] !== null && r[1] !== undefined);
 
-    rows.forEach((row) => {
-      ctx.strokeStyle = "#E4DCC8";
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(110, y + 24);
-      ctx.lineTo(W - 110, y + 24);
-      ctx.stroke();
+    const boxRight = W - 110;
+    const boxLeft = boxRight - 400;
+    let ry = 150;
+    ctx.fillStyle = "#7A6E58";
+    ctx.font = "22px " + jp;
+    ctx.textAlign = "left";
+    ctx.fillText("もとになった数字", boxLeft, ry);
+    ctx.strokeStyle = "#E4DCC8";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(boxLeft, ry + 12);
+    ctx.lineTo(boxRight, ry + 12);
+    ctx.stroke();
+    ry += 44;
 
+    rows.forEach(function (row) {
       ctx.fillStyle = "#5A5040";
-      ctx.font = "30px " + jpSans;
+      ctx.font = "20px " + jpSans;
       ctx.textAlign = "left";
-      ctx.fillText(row[0], 110, y);
+      ctx.fillText(row[0], boxLeft, ry);
 
       ctx.fillStyle = "#8A6E28";
-      ctx.font = "52px " + jp;
+      ctx.font = "26px " + jpSans;
       ctx.textAlign = "right";
-      ctx.fillText(String(row[1]), W - 110, y + 8);
+      ctx.fillText(String(row[1]), boxRight, ry);
       ctx.textAlign = "left";
-      y += 100;
+
+      const prof = numberProfile(row[1]);
+      if (prof && prof.keywords) {
+        ctx.fillStyle = "#A0917A";
+        ctx.font = "17px " + jpSans;
+        ctx.fillText(prof.keywords, boxLeft, ry + 22);
+      }
+      ry += 48;
     });
 
-    y += 30;
-    ctx.fillStyle = "#5A5040";
-    ctx.font = "28px " + jpSans;
+    // 左（名前）と右（数字）の、下にきたほうから続ける。
+    y = Math.max(y, ry + 20);
+
+    // ── あなたの持ち味（ここが主役）──
+    const picks = [
+      ["ライフパスナンバー", p.lifePath],
+      ["ソウルナンバー", p.soul],
+      ["デスティニーナンバー", p.destiny],
+    ].filter((x) => x[1] !== null && x[1] !== undefined && numberProfile(x[1]));
+
+    if (picks.length) {
+      ctx.fillStyle = "#2B2418";
+      ctx.font = "34px " + jp;
+      ctx.fillText("あなたの持ち味", 110, y);
+      ctx.strokeStyle = "#C9B98E";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(110, y + 18);
+      ctx.lineTo(110 + 240, y + 18);
+      ctx.stroke();
+      y += 64;
+
+      picks.forEach(function (pair, index) {
+        const label = pair[0], num = pair[1];
+        // 🚨 ライフパスは人生で最も影響がある数字（依頼者・2026-08-31）。
+        //    3つを同じ重さで並べない。1つ目だけ、字を大きくして縦線を添える。
+        const isCentre = index === 0;
+        if (isCentre) {
+          ctx.strokeStyle = "#C9B98E";
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.moveTo(96, y - 14);
+          ctx.lineTo(96, y + 170);
+          ctx.stroke();
+        }
+        // ① 何を表すものか（これを見出しにする。数字ではなく、こちらが読まれる）
+        const meaning = positionMeaning(label)
+          .replace(/を表す数字です。$/, "")
+          .replace(/を表すとされる数字です。$/, "")
+          .replace(/とされる数字です。$/, "");
+        // 🚨 数字は「見出しの上に小さく」置く。下に置くと、次の見出しにくっついて
+        //    どちらのものか分からなくなった（2026-08-31、実物で確認）。
+        ctx.fillStyle = "#A0917A";
+        ctx.font = "20px " + jpSans;
+        ctx.fillText(label + "　" + num, 110, y);
+        y += 32;
+
+        ctx.fillStyle = "#8A6E28";
+        ctx.font = (isCentre ? "31px " : "26px ") + jp;
+        y = drawWrapped(ctx, meaning, 110, y, W - 220, isCentre ? 42 : 36);
+        y += 10;
+        // ② その人の性格
+        ctx.fillStyle = "#2B2418";
+        ctx.font = (isCentre ? "28px " : "25px ") + jpSans;
+        y = drawWrapped(ctx, numberProfile(num).strength, 110, y, W - 220, isCentre ? 42 : 38);
+        y += 44;
+      });
+    }
+
+    // ── 下に貼り付ける部分（断り書きと作成日）──
+    // 🚨 上から流れてくる文章の量で位置を決めない。**紙の下から測って置く。**
+    //    以前は作成日だけを紙の下に固定していたため、文章が増えたときに重なった。
     const notes = [
       "数秘術には複数の計算方法・流派があり、この1枚は",
       "一般的な現代数秘術の一例によるものです。",
       "断定的なものではなく、参考としてご覧ください。",
     ];
-    notes.forEach((line, i) => ctx.fillText(line, 110, y + i * 44));
-
-    const made = new Date();
-    ctx.fillStyle = "#8A7E68";
+    const madeAt = new Date();
+    const footTop = H - 100 - notes.length * 40;
+    ctx.fillStyle = "#5A5040";
     ctx.font = "26px " + jpSans;
-    ctx.fillText(made.getFullYear() + "年" + (made.getMonth() + 1) + "月" + made.getDate() + "日 作成", 110, H - 130);
+    notes.forEach(function (line, i) { ctx.fillText(line, 110, footTop + i * 40); });
+
+    // 🚨 下とぶつかっていないかを確かめ、近すぎたら記録に残す（作った側が気づけるように）。
+    if (y > footTop - 20) {
+      console.warn("お渡しする1枚：中身が下の断り書きに近すぎます（残り " + Math.round(footTop - y) + "px）");
+    }
+
+    ctx.fillStyle = "#8A7E68";
+    ctx.font = "24px " + jpSans;
+    ctx.fillText(madeAt.getFullYear() + "年" + (madeAt.getMonth() + 1) + "月" + madeAt.getDate() + "日 作成", 110, H - 62);
+
+    // 右下にQR。持ち帰った紙から、お客様がご自分でアプリを開ける。
+    // ⚠️ 読み込みが間に合っていなければ描かない（紙は出す。QRだけ無い形にする）。
+    if (APP_QR_IMG.complete && APP_QR_IMG.naturalWidth) {
+      const qs = 150;
+      const qx = W - 110 - qs;
+      const qy = H - 96 - qs;
+      ctx.drawImage(APP_QR_IMG, qx, qy, qs, qs);
+      ctx.fillStyle = "#8A7E68";
+      ctx.font = "19px " + jpSans;
+      ctx.textAlign = "center";
+      ctx.fillText("読み取ると数秘電卓が開きます", qx + qs / 2, qy - 12);
+      ctx.textAlign = "left";
+    }
 
     return canvas;
   }
@@ -6519,6 +6765,102 @@
     flushNote();
     closeDaySheet();
     recordEl.classList.add("hidden");
+    appEl.classList.remove("hidden");
+    window.scrollTo(0, 0);
+  });
+
+  // ---------------- 管理者用ページ ----------------
+  // 🚨 依頼者だけが開く（2026-08-31「管理者用のページはやはり必要」）。
+  //    入口のボタンは admin のときだけ出す。開く判断は unlock() 側。
+  const adminEl = document.getElementById("admin");
+  const adminOpenBtn = document.getElementById("admin-open-btn");
+
+  // 一度きりのリンクを作るには、置き場の合言葉が要る。
+  // 🚨 合言葉をこのファイルに書かない。書くと、公開しているHTMLから誰でも読めて、
+  //    払っていない人がリンクを作れてしまう。
+  //    → 依頼者に一度だけ入れていただき、**この端末にだけ**覚える。
+  const MINT_PASS_KEY = "numerology-mint-pass";
+  const MINT_RPC_URL = "https://ubnhnrkdaxoglolzgpdb.supabase.co/rest/v1/rpc/mint_paid_invite";
+
+  function readMintPass() {
+    try { return localStorage.getItem(MINT_PASS_KEY) || ""; } catch (err) { return ""; }
+  }
+
+  adminOpenBtn.addEventListener("click", () => {
+    // QRはここで初めて置く（開かない人の画面には作らない）。
+    const box = document.getElementById("admin-qr");
+    if (!box.firstChild) {
+      const img = document.createElement("img");
+      img.src = APP_QR;
+      img.alt = "数秘電卓を開くQR";
+      box.appendChild(img);
+    }
+    document.getElementById("admin-mint-msg").classList.add("hidden");
+    document.getElementById("admin-mint-out").classList.add("hidden");
+    appEl.classList.add("hidden");
+    adminEl.classList.remove("hidden");
+    window.scrollTo(0, 0);
+  });
+
+  document.getElementById("admin-mint-btn").addEventListener("click", async () => {
+    const btn = document.getElementById("admin-mint-btn");
+    const msg = document.getElementById("admin-mint-msg");
+    const out = document.getElementById("admin-mint-out");
+    const say = (text) => { msg.textContent = text; msg.classList.remove("hidden"); };
+
+    let pass = readMintPass();
+    if (!pass) {
+      // 🚨 初回だけ聞く。この端末にだけ残る。
+      pass = window.prompt("リンクを作るための合言葉を入れてください。\nこの端末にだけ覚えます。");
+      if (!pass) return;
+      try { localStorage.setItem(MINT_PASS_KEY, pass); } catch (err) { /* 覚えられなくても、この回は作れる */ }
+    }
+
+    btn.disabled = true;
+    say("作っています…");
+    out.classList.add("hidden");
+    try {
+      const res = await fetch(MINT_RPC_URL, {
+        method: "POST",
+        headers: { apikey: HANDOFF_BOX_KEY, "Content-Type": "application/json" },
+        body: JSON.stringify({ pass: pass, source: "taimen", note: null }),
+      });
+      const token = res.ok ? await res.json() : null;
+      if (!token) {
+        // 合言葉が違うと null が返る。覚えたものを消して、入れ直せるようにする。
+        try { localStorage.removeItem(MINT_PASS_KEY); } catch (err) { /* ignore */ }
+        say("リンクを作れませんでした。合言葉が違うかもしれません。もう一度お試しください。");
+        return;
+      }
+      const url = location.origin + location.pathname.replace(/[^/]*$/, "") + "?p=" + token;
+      document.getElementById("admin-mint-url").value = url;
+      out.classList.remove("hidden");
+      say("できました。お客様の端末で開いていただくと、鑑定の機能まで使えます。");
+      // 送れる端末では「そのまま送る」も出す。
+      const shareBtn = document.getElementById("admin-mint-share");
+      shareBtn.classList.toggle("hidden", !navigator.share);
+    } catch (err) {
+      say("つながりませんでした。電波の届くところで、もう一度お試しください。");
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  document.getElementById("admin-mint-copy").addEventListener("click", () => {
+    const el = document.getElementById("admin-mint-url");
+    el.select();
+    el.setSelectionRange(0, 99999);
+    try { document.execCommand("copy"); } catch (err) { /* 選択だけでも渡せる */ }
+    document.getElementById("admin-mint-msg").textContent = "コピーしました。";
+  });
+
+  document.getElementById("admin-mint-share").addEventListener("click", () => {
+    const url = document.getElementById("admin-mint-url").value;
+    if (navigator.share) navigator.share({ text: url }).catch(() => { /* 取り消しただけ */ });
+  });
+
+  document.getElementById("admin-back-btn").addEventListener("click", () => {
+    adminEl.classList.add("hidden");
     appEl.classList.remove("hidden");
     window.scrollTo(0, 0);
   });
