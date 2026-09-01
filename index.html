@@ -1649,6 +1649,29 @@
     border-radius: 12px; font-size: 13px; line-height: 1.9; color: var(--ink-soft);
   }
   .record-empty strong { display: block; font-family: var(--font-display); font-size: 16px; color: var(--gold); margin-bottom: 8px; font-weight: 400; }
+  /* 🚨 老眼のお客様から「字が小さい」とご指摘（2026-09-01・奥様の講座、お一人目）。
+     ⚠️ 文字の大きさだけを上げると、余白や枠との釣り合いが崩れる（依頼者の指摘）。
+        zoom は画面まるごとを同じ比率で拡げるので、**釣り合いはそのまま**大きくなる。
+        だから px の指定は1つも触っていない。触らないこと。
+     ⚠️ body に当てる。画面は #app・#record・#pro… と横並びで、
+        どれか1つに当てても他が置いていかれる。 */
+  body.text-lg { zoom: 1.18; }
+  body.text-xl { zoom: 1.38; }
+
+  .text-size-btn {
+    display: block;
+    margin: -6px auto 16px;
+    padding: 7px 16px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--card-border);
+    border-radius: 999px;
+    color: var(--ink-soft);
+    font-family: inherit;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .text-size-btn:active { background: rgba(255, 255, 255, 0.12); }
+
   .record-save-note { margin-top: 18px; font-size: 11.5px; line-height: 1.8; color: var(--ink-faint); }
 
 </style>
@@ -1656,6 +1679,10 @@
 <div id="app">
   <h1 id="app-title">数秘電卓<span class="subtitle">Numerology Calculator</span></h1>
   <p class="lead">生年月日と名前（カナ）から、現代数秘術のさまざまな数字を計算します。</p>
+
+  <!-- 🚨 押すたびに「大きく → もっと大きく → もとに戻す」と回る。
+       ボタンの文字は**次に何が起きるか**にする（いまの状態ではなく）。 -->
+  <button type="button" id="text-size-btn" class="text-size-btn">文字を大きく</button>
 
   <!-- 入口は横1列にまとめる。縦に3つ並べると、計算の入力欄が画面の外へ
        押し出されて「何をする画面か」が分からなくなるため。 -->
@@ -2247,6 +2274,40 @@
       }
     }
   }
+
+  // 文字の大きさ。押すたびに ふつう → 大きい → もっと大きい と回り、その端末が覚える。
+  // 🚨 変えるのは zoom だけ。px の指定には触らない（釣り合いを崩さないため）。
+  (function () {
+    const KEY = "numerology-text-size";
+    const STEPS = [
+      { cls: "", label: "文字を大きく" },
+      { cls: "text-lg", label: "文字をもっと大きく" },
+      { cls: "text-xl", label: "文字をもとに戻す" },
+    ];
+    const btn = document.getElementById("text-size-btn");
+    if (!btn) return;
+
+    function apply(i) {
+      document.body.classList.remove("text-lg", "text-xl");
+      if (STEPS[i].cls) document.body.classList.add(STEPS[i].cls);
+      btn.textContent = STEPS[i].label;
+    }
+
+    let step = 0;
+    try {
+      const saved = parseInt(localStorage.getItem(KEY), 10);
+      if (saved >= 0 && saved < STEPS.length) step = saved;
+    } catch (err) {
+      // Ignore: 覚えていなければ、ふつうの大きさで始める。
+    }
+    apply(step);
+
+    btn.addEventListener("click", () => {
+      step = (step + 1) % STEPS.length;
+      apply(step);
+      try { localStorage.setItem(KEY, String(step)); } catch (err) { /* 覚えられなくても、この回は効く */ }
+    });
+  })();
 
   // 依頼者ご自身の入り方（`?a=...`）。画面にコードを入れる場所は無いので、
   // ご自身で確かめるときはこの形のURLで開く。読んだらアドレス欄からすぐ消す
