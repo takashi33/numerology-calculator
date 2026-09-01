@@ -188,15 +188,35 @@
     text-align: center;
     font-variant-numeric: tabular-nums;
     min-width: 0;
+    /* 🚨 中身は真ん中寄せなので、左右の余白は見た目に出ない。
+       それでいて4桁分の幅を食う。「文字を大きく」を1番大きくすると、
+       年の「1958」が切れた（2026-09-01・依頼者のご指摘）。
+       ⚠️ zoom は画面を拡げるぶん、並べられる幅（CSSの px）が減る。
+          固定の余白は減らないので、こういう場所から先に足りなくなる。 */
+    padding-left: 4px;
+    padding-right: 4px;
   }
 
   .date-input-group input#birth-year {
-    flex: 1.4;
+    flex: 1.6;
   }
 
   .date-input-group input#birth-month,
   .date-input-group input#birth-day {
     flex: 1;
+  }
+
+  /* 🚨 「第4期のチャンス（人生後半・52歳〜）」は、かっこの中が11文字ある。
+     日本語の行の決まりで「（」は行末に、「）」は行頭に置けないため、
+     **かっこの中はひと固まりのまま**扱われ、途中で折り返せない。
+     字間（0.04em）がその固まりを5px押し広げ、「文字を大きく」の2段目ではみ出した
+     （2026-09-01・依頼者「1番大きくすると4桁の数字が切れる」と同じ回のご指摘）。
+     ⚠️ `overflow-wrap: anywhere` も `line-break: anywhere` も効かなかった。
+        効いたのは字間を詰めることだけ。
+     ⚠️ **ふつうの大きさでは何も変えない。**大きくしたときだけ詰める。 */
+  body.text-lg .result-label,
+  body.text-xl .result-label {
+    letter-spacing: 0;
   }
 
   .date-sep {
