@@ -2273,6 +2273,40 @@
     return true;
   }
 
+  // 一度きりのリンクを作るには、置き場の合言葉が要る。
+  // 🚨 合言葉をこのファイルに書かない。書くと、公開しているHTMLから誰でも読めて、
+  //    払っていない人がリンクを作れてしまう。
+  const MINT_PASS_KEY = "numerology-mint-pass";
+
+  // 依頼者ご自身の合言葉を、URLから受け取る（`?mp=...`）。
+  // 🚨 合言葉は32文字以上の自動で作った文字列で、人が覚えて打てるものではない。
+  //    以前は画面が聞いていたが、**打たせる形そのものが誤りだった**（依頼者・2026-09-01
+  //    「合言葉は使いたくないです」）。ブックマークを一度押せば、その端末が覚える。
+  // 🚨 ここで読むのは `?p=` と同じ理由。下の readTechoDate() がアドレス欄を
+  //    書き替えるとき、問い合わせ部分ごと消えてしまう。順番を入れ替えないこと。
+  (function readMintPassFromUrl() {
+    let raw = null;
+    try {
+      raw = new URLSearchParams(window.location.search).get("mp");
+    } catch (err) {
+      return; // 読めない環境なら、ふつうに開いたのと同じ扱いにする
+    }
+    if (!raw || !/^[A-Za-z0-9_-]{16,128}$/.test(raw)) return;
+    try {
+      localStorage.setItem(MINT_PASS_KEY, raw);
+    } catch (err) {
+      // Ignore: 覚えられない端末でも、この回は下の readMintPass() が拾えないだけ。
+    }
+    // アドレス欄から消す。画面を人に見せたときに、一緒に見えないようにするため。
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("mp");
+      window.history.replaceState(null, "", url.pathname + url.search + url.hash);
+    } catch (err) {
+      // Ignore: 消せなくても、覚えるところまでは済んでいる。
+    }
+  })();
+
   // 買った方の専用URL（`?p=...`）。お支払いのあと、この形のURLへ飛ぶ。
   //
   // 🚨 ここで読むのは、下の readTechoDate() がアドレス欄を書き替えるときに
@@ -7140,11 +7174,6 @@
   const adminEl = document.getElementById("admin");
   const adminOpenBtn = document.getElementById("admin-open-btn");
 
-  // 一度きりのリンクを作るには、置き場の合言葉が要る。
-  // 🚨 合言葉をこのファイルに書かない。書くと、公開しているHTMLから誰でも読めて、
-  //    払っていない人がリンクを作れてしまう。
-  //    → 依頼者に一度だけ入れていただき、**この端末にだけ**覚える。
-  const MINT_PASS_KEY = "numerology-mint-pass";
   const MINT_RPC_URL = "https://ubnhnrkdaxoglolzgpdb.supabase.co/rest/v1/rpc/mint_paid_invite";
   // 🚨 渡した分の様子を見る口。合言葉が要るのは作るときと同じ。
   const LIST_RPC_URL = "https://ubnhnrkdaxoglolzgpdb.supabase.co/rest/v1/rpc/list_paid_invites";
@@ -7155,15 +7184,15 @@
     try { return localStorage.getItem(MINT_PASS_KEY) || ""; } catch (err) { return ""; }
   }
 
-  // 合言葉を用意する。覚えていなければ、その場で一度だけ聞く。
-  // 取り消されたら null を返す（呼んだ側は、何もせずに戻る）。
-  function ensureMintPass() {
+  // 合言葉を用意する。無ければ null を返し、呼んだ側が案内を出す。
+  // 🚨 ここで聞かないこと（依頼者・2026-09-01「合言葉は使いたくないです」）。
+  //    合言葉は自動で作った32文字以上の文字列で、その場で打てるものではない。
+  //    端末に入れるのは `?mp=` のブックマークの役目（ファイルの上のほう）。
+  function ensureMintPass(say) {
     const saved = readMintPass();
     if (saved) return saved;
-    const pass = window.prompt("リンクを作るための合言葉を入れてください。\nこの端末にだけ覚えます。");
-    if (!pass) return null;
-    try { localStorage.setItem(MINT_PASS_KEY, pass); } catch (err) { /* 覚えられなくても、この回は使える */ }
-    return pass;
+    if (say) say("この端末は、まだ合言葉を覚えていません。ブックマークしてある管理者用のリンクから、一度開いてください。");
+    return null;
   }
 
   // 合言葉が違ったときは、覚えたものを消す。入れ直せるようにするため。
@@ -7200,7 +7229,7 @@
     const say = (text) => { msg.textContent = text; msg.classList.remove("hidden"); };
 
     // 🚨 初回だけ聞く。この端末にだけ残る。
-    const pass = ensureMintPass();
+    const pass = ensureMintPass(say);
     if (!pass) return;
 
     btn.disabled = true;
@@ -7216,7 +7245,7 @@
       if (!token) {
         // 合言葉が違うと null が返る。覚えたものを消して、入れ直せるようにする。
         forgetMintPass();
-        say("リンクを作れませんでした。合言葉が違うかもしれません。もう一度お試しください。");
+        say("リンクを作れませんでした。管理者用のリンクから開き直してください。");
         return;
       }
       const url = location.origin + location.pathname.replace(/[^/]*$/, "") + "?p=" + token;
@@ -7243,7 +7272,7 @@
     const out = document.getElementById("admin-list-out");
     const say = (text) => { msg.textContent = text; msg.classList.remove("hidden"); };
 
-    const pass = ensureMintPass();
+    const pass = ensureMintPass(say);
     if (!pass) return;
 
     btn.disabled = true;
@@ -7263,7 +7292,7 @@
       const rows = await res.json();
       if (!Array.isArray(rows)) {
         forgetMintPass();
-        say("読めませんでした。合言葉が違うかもしれません。もう一度お試しください。");
+        say("読めませんでした。管理者用のリンクから開き直してください。");
         return;
       }
       if (rows.length === 0) {
@@ -7380,7 +7409,7 @@
     const out = document.getElementById("admin-members-out");
     const say = (text) => { msg.textContent = text; msg.classList.remove("hidden"); };
 
-    const pass = ensureMintPass();
+    const pass = ensureMintPass(say);
     if (!pass) return;
 
     btn.disabled = true;
@@ -7399,7 +7428,7 @@
       const rows = await res.json();
       if (!Array.isArray(rows)) {
         forgetMintPass();
-        say("読めませんでした。合言葉が違うかもしれません。もう一度お試しください。");
+        say("読めませんでした。管理者用のリンクから開き直してください。");
         return;
       }
       if (rows.length === 0) {
