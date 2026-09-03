@@ -1975,7 +1975,7 @@
 
   <div class="record-tabs" role="tablist">
     <button type="button" class="record-tab" id="pro-tab-forecast" role="tab" aria-selected="true">その方のこれから</button>
-    <button type="button" class="record-tab" id="pro-tab-sheet" role="tab" aria-selected="false">お渡しする1枚</button>
+    <button type="button" class="record-tab" id="pro-tab-sheet" role="tab" aria-selected="false">鑑定書</button>
   </div>
 
   <div id="pro-forecast">
@@ -2011,7 +2011,7 @@
   </div>
 
   <div id="pro-sheet" class="hidden">
-    <p class="pro-lead">鑑定のあとに、その方が持ち帰れる1枚を作ります。端末に保存してから、メールでもLINEでも、ご自身の手でお渡しください。</p>
+    <p class="pro-lead">鑑定のあとに、その方が持ち帰れる鑑定書を作ります。端末に保存してから、メールでもLINEでも、ご自身の手でお渡しください。</p>
     <form id="pro-sheet-form" autocomplete="off">
       <label class="field">
         <span>その方の生年月日</span>
@@ -2023,15 +2023,11 @@
           <input type="text" inputmode="numeric" pattern="[0-9]*" id="pro-sheet-day" maxlength="2" placeholder="日" aria-label="その方の生まれた日">
         </div>
       </label>
-      <label class="field">
-        <span>お名前（1枚に印字します。空でも作れます）</span>
-        <input type="text" id="pro-sheet-name" placeholder="任意">
-      </label>
-      <label class="field">
-        <span>ローマ字（入れると、名前から出る数字も載ります）</span>
-        <input type="text" id="pro-sheet-romaji" placeholder="任意　例：YAMADA HANAKO">
-      </label>
-      <button type="submit" id="pro-sheet-btn">1枚を作る</button>
+      <div class="compat-names">
+        <label class="field"><span>苗字（カナ）</span><input type="text" id="pro-sheet-last" placeholder="カナ入力"></label>
+        <label class="field"><span>名前（カナ）</span><input type="text" id="pro-sheet-first" placeholder="カナ入力"></label>
+      </div>
+      <button type="submit" id="pro-sheet-btn">鑑定書を作る</button>
     </form>
     <p id="pro-sheet-error" class="error hidden"></p>
     <div id="pro-sheet-preview" class="pro-sheet-preview hidden"></div>
@@ -3196,11 +3192,75 @@
     });
   }
 
-  setupDateSegment(birthYearInput, 4, birthMonthInput);
-  setupDateSegment(birthMonthInput, 2, birthDayInput);
-  setupDateSegment(birthDayInput, 2, null);
-  setupBackspaceToPrevious(birthMonthInput, birthYearInput);
-  setupBackspaceToPrevious(birthDayInput, birthMonthInput);
+  // 年→月→日と、ひとりでに進む。戻るときは、空のところで消すと前へ戻る。
+  // nextId … 日を入れ終えたあとに進む先（名前の欄や、次の日付）。
+  function setupDateGroup(yId, mId, dId, nextId) {
+    const y = document.getElementById(yId);
+    const m = document.getElementById(mId);
+    const d = document.getElementById(dId);
+    if (!y || !m || !d) return;
+    setupDateSegment(y, 4, m);
+    setupDateSegment(m, 2, d);
+    setupDateSegment(d, 2, nextId ? document.getElementById(nextId) : null);
+    setupBackspaceToPrevious(m, y);
+    setupBackspaceToPrevious(d, m);
+  }
+
+  // 苗字の欄から名前の欄へ送る。区切りは**空白**か**確定キー**。
+  // 🚨 字数では決められない。勝手には送らない。
+  function setupNameSplit(lastId, firstId) {
+    const last = document.getElementById(lastId);
+    const first = document.getElementById(firstId);
+    if (!last || !first) return;
+
+    function split() {
+      const hit = last.value.search(/[ \u3000]/);
+      if (hit < 0) return false;
+      const head = last.value.slice(0, hit);
+      const tail = last.value.slice(hit + 1).replace(/^[ \u3000]+/, "");
+      last.value = head;
+      if (tail) first.value = tail + first.value;
+      first.focus();
+      if (tail) first.dispatchEvent(new Event("input", { bubbles: true }));
+      return true;
+    }
+
+    last.addEventListener("input", (e) => {
+      if (e.isComposing) return;
+      split();
+    });
+    // 🚨 携帯の日本語入力では、空白は変換の途中に打たれる。確定したところで見る。
+    last.addEventListener("compositionend", () => { split(); });
+    // 確定キーでも次へ送る。押した人が「進む」つもりでいるため。
+    // ⚠️ preventDefault を忘れると、そのまま計算や鑑定書作りが走ってしまう。
+    last.addEventListener("keydown", (e) => {
+      if (e.key !== "Enter" || e.isComposing) return;
+      e.preventDefault();
+      if (!split()) first.focus();
+    });
+  }
+
+  // 🚨 日付の欄を足したら、必ずこの並びに名前を足すこと。
+  //    2026-09-03、鑑定の3か所と自分の情報が抜けていて、依頼者に言われて気づいた。
+  //    （画面の枠の指定と同じで、**一覧にしないと必ず取りこぼす**）
+  [
+    ["birth-year", "birth-month", "birth-day", "last-name"],        // 計算画面 → 苗字
+    ["a-year", "a-month", "a-day", "a-last"],                       // 相性・お一人目 → 苗字
+    ["b-year", "b-month", "b-day", "b-last"],                       // 相性・お二人目 → 苗字
+    ["self-birth-year", "self-birth-month", "self-birth-day", "self-last"], // 自分の情報 → 苗字
+    ["pro-birth-year", "pro-birth-month", "pro-birth-day", "pro-target-year"], // 鑑定・その方のこれから → 見たい日
+    ["pro-target-year", "pro-target-month", "pro-target-day"],      // 鑑定・見たい日（この先は無い）
+    ["pro-sheet-year", "pro-sheet-month", "pro-sheet-day", "pro-sheet-last"], // 鑑定・鑑定書 → 苗字
+  ].forEach((ids) => setupDateGroup(ids[0], ids[1], ids[2], ids[3]));
+
+  // 苗字 → 名前。日付と同じで、**足したらこの並びに名前を足すこと。**
+  [
+    ["last-name", "first-name"],
+    ["a-last", "a-first"],
+    ["b-last", "b-first"],
+    ["self-last", "self-first"],
+    ["pro-sheet-last", "pro-sheet-first"],
+  ].forEach((ids) => setupNameSplit(ids[0], ids[1]));
 
   // Pasting a full date (e.g. "19781214") into the year box distributes the
   // digits across all 3 boxes instead of overflowing into just the year box.
@@ -4733,14 +4793,8 @@
     b: ["b-year", "b-month", "b-day", "b-last", "b-first"].map((id) => document.getElementById(id)),
   };
 
-  ["a", "b"].forEach((k) => {
-    const [y, m, d] = compatFields[k];
-    setupDateSegment(y, 4, m);
-    setupDateSegment(m, 2, d);
-    setupDateSegment(d, 2, null);
-    setupBackspaceToPrevious(m, y);
-    setupBackspaceToPrevious(d, m);
-  });
+  // ⚠️ 相性診断の日付は、上の setupDateGroup の一覧でまとめて当てている。
+  //    ここで二重に当てると、1文字打つたびに2回動く。
 
   // 名前欄の自動変換。メイン画面のものと同じ変換規則・同じモード（手入力の
   // オン／オフ）に従うが、タップ表の入力先（activeNameInput）は動かさない。
@@ -6323,31 +6377,31 @@
     ctx.lineWidth = 3;
     ctx.strokeRect(48, 48, W - 96, H - 96);
 
+    // 🚨 表題は中央に置く（依頼者・2026-09-03「鑑定書として渡したい」）。
+    //    左寄せの見出しだと、お知らせの紙に見える。中央の表題と「様」で、渡す紙になる。
     ctx.fillStyle = "#2B2418";
     ctx.textBaseline = "alphabetic";
-    ctx.textAlign = "left";
-    ctx.font = "44px " + jp;
-    ctx.fillText("数秘の見取り図", 110, 168);
+    ctx.textAlign = "center";
+    ctx.font = "54px " + jp;
+    ctx.fillText("鑑　定　書", W / 2, 172);
 
     ctx.strokeStyle = "#C9B98E";
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.moveTo(110, 196);
-    ctx.lineTo(310, 196);
+    ctx.moveTo(W / 2 - 160, 202);
+    ctx.lineTo(W / 2 + 160, 202);
     ctx.stroke();
+    ctx.textAlign = "left";
 
-    let y = 262;
+    let y = 296;
+    if (name) {
+      ctx.fillStyle = "#2B2418";
+      ctx.font = "40px " + jp;
+      ctx.fillText(name + "　様", 110, y);
+      y += 62;
+    }
     ctx.font = "28px " + jpSans;
     ctx.fillStyle = "#5A5040";
-    if (name) {
-      ctx.fillText("お名前", 110, y);
-      ctx.fillStyle = "#2B2418";
-      ctx.font = "34px " + jp;
-      ctx.fillText(name, 280, y);
-      y += 54;
-      ctx.font = "28px " + jpSans;
-      ctx.fillStyle = "#5A5040";
-    }
     ctx.fillText("生年月日", 110, y);
     ctx.fillStyle = "#2B2418";
     ctx.font = "34px " + jp;
@@ -6372,7 +6426,7 @@
 
     const boxRight = W - 110;
     const boxLeft = boxRight - 400;
-    let ry = 150;
+    let ry = 296;
     ctx.fillStyle = "#7A6E58";
     ctx.font = "22px " + jp;
     ctx.textAlign = "left";
@@ -6469,7 +6523,7 @@
     // 🚨 上から流れてくる文章の量で位置を決めない。**紙の下から測って置く。**
     //    以前は作成日だけを紙の下に固定していたため、文章が増えたときに重なった。
     const notes = [
-      "数秘術には複数の計算方法・流派があり、この1枚は",
+      "数秘術には複数の計算方法・流派があり、この鑑定書は",
       "一般的な現代数秘術の一例によるものです。",
       "断定的なものではなく、参考としてご覧ください。",
     ];
@@ -6486,7 +6540,7 @@
 
     ctx.fillStyle = "#8A7E68";
     ctx.font = "24px " + jpSans;
-    ctx.fillText(madeAt.getFullYear() + "年" + (madeAt.getMonth() + 1) + "月" + madeAt.getDate() + "日 作成", 110, H - 62);
+    ctx.fillText("鑑定日　" + madeAt.getFullYear() + "年" + (madeAt.getMonth() + 1) + "月" + madeAt.getDate() + "日", 110, H - 62);
 
     // 右下にQR。持ち帰った紙から、お客様がご自分でアプリを開ける。
     // ⚠️ 読み込みが間に合っていなければ描かない（紙は出す。QRだけ無い形にする）。
@@ -6515,13 +6569,17 @@
       return;
     }
     proShowError(proSheetErrorEl, "");
-    const name = document.getElementById("pro-sheet-name").value.trim();
-    const romaji = document.getElementById("pro-sheet-romaji").value.trim();
-    const canvas = proDrawSheet(birth, name, romaji);
+    // ホーム画面と同じで、2欄はもうヘボン式に変わっている。つないで数字に使う。
+    const last = document.getElementById("pro-sheet-last").value.trim();
+    const first = document.getElementById("pro-sheet-first").value.trim();
+    const romaji = (last + " " + first).trim();
+    // 🚨 鑑定書はローマ字で印字する（依頼者・2026-09-03）。
+    //    数字はこの綴りから出しているので、**紙の名前と、数字の根拠がそろう。**
+    const canvas = proDrawSheet(birth, romaji.toUpperCase(), romaji);
 
     proSheetPreviewEl.textContent = "";
     const img = document.createElement("img");
-    img.alt = "作った1枚の見本";
+    img.alt = "作った鑑定書の見本";
     img.src = canvas.toDataURL("image/png");
     proSheetPreviewEl.appendChild(img);
     proSheetPreviewEl.classList.remove("hidden");
@@ -6545,8 +6603,14 @@
   function proSheetFileName() {
     const d = new Date();
     const pad = (n) => String(n).padStart(2, "0");
-    return "数秘の見取り図-" + d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate()) + ".png";
+    return "鑑定書-" + d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate()) + ".png";
   }
+
+  // 🚨 この欄だけ自動変換が無かった（依頼者・2026-09-03「ローマ字に変わりません」）。
+  //    計算画面・相性診断と同じ規則で、カナをヘボン式に変える。
+  ["pro-sheet-last", "pro-sheet-first"].forEach((id) => {
+    setupCompatNameInput(document.getElementById(id));
+  });
 
   proSheetSaveBtn.addEventListener("click", () => {
     if (!proSheetBlob) return;
