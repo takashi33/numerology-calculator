@@ -197,12 +197,15 @@
     padding-right: 4px;
   }
 
-  .date-input-group input#birth-year {
+  /* 🚨 年は4桁ぶんの幅が要る。**画面ごとの id で書かない。**
+     2026-09-01 に計算画面だけ直したが、他の画面には当たっていなかった
+     （2026-09-03、気持ちから読むの欄が崩れたときに気づいた）。 */
+  .date-input-group input[id$="-year"] {
     flex: 1.6;
   }
 
-  .date-input-group input#birth-month,
-  .date-input-group input#birth-day {
+  .date-input-group input[id$="-month"],
+  .date-input-group input[id$="-day"] {
     flex: 1;
   }
 
@@ -1407,6 +1410,757 @@
     margin: 9px 0 0;
   }
 
+  /* ---------------- 怒りの輪（資料） ----------------
+     🚨 画像にしないこと。図を1枚の絵にすると、中の文字が携帯で小さくなって読めない。
+        **図形＝SVG／文字＝HTML** で分けてある。文字の大きさはここで決まる。
+     🚨 文字を収めるために大きさを下げないこと（依頼者の指示・2026-09-02）。
+        収まらないときは、円を大きくする → 文字を減らす → 説明を図の外へ、の順。
+     ⚠️ 拡大（zoom）が掛かると、CSSの px はそのままで**入れ物のほうが縮む。**
+        そのため text-lg / text-xl では字を少し下げてある。
+        下げても、実際に見える大きさは 22px 相当を下回らない（20×1.18／18×1.38）。 */
+  /* 🚨 画面の余白（#library の 20px）を左右へ食い破って、円を画面幅いっぱいに使う。
+     ⚠️ 100vw は使わない。拡大時に viewport の幅がそのまま入ってきて右へはみ出す。 */
+  .aw-fig {
+    position: relative;
+    width: calc(100% + 40px);
+    margin: 0 -20px 14px;
+    aspect-ratio: 1 / 1;
+  }
+
+  .aw-svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  .aw-sector {
+    cursor: pointer;
+    transition: opacity 0.15s ease;
+  }
+
+  .aw-sector:hover {
+    opacity: 0.85;
+  }
+
+  .aw-sector:focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: -3px;
+  }
+
+  /* 文字は当たり判定を持たない。押されるのは下の扇形のほう。 */
+  .aw-label {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    pointer-events: none;
+    font-family: var(--font-body);
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1.22;
+    color: var(--ink);
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.65);
+    white-space: nowrap;
+  }
+
+  .aw-core {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    pointer-events: none;
+  }
+
+  .aw-core-main {
+    font-family: var(--font-display);
+    font-size: 40px;
+    line-height: 1.05;
+    color: var(--gold);
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.7);
+  }
+
+  .aw-core-sub {
+    margin-top: 2px;
+    font-size: 16px;
+    line-height: 1.3;
+    color: var(--ink-soft);
+  }
+
+  /* 🚨 選ばれた気持ちは、図の中でも大きく金色に（依頼者・2026-09-03）。
+     ⚠️ +2px が上限。これ以上だと、320px幅で扇形からはみ出す。 */
+  .aw-label.is-on {
+    font-size: 24px;
+    color: var(--gold);
+  }
+
+  @media (min-width: 430px) {
+    .aw-label { font-size: 26px; }
+    .aw-label.is-on { font-size: 28px; }
+    .aw-core-main { font-size: 44px; }
+    .aw-core-sub { font-size: 18px; }
+  }
+
+  body.text-lg .aw-label { font-size: 19px; }
+  body.text-lg .aw-label.is-on { font-size: 21px; }
+  body.text-lg .aw-core-main { font-size: 36px; }
+  body.text-lg .aw-core-sub { font-size: 14px; }
+  body.text-xl .aw-label { font-size: 16px; }
+  body.text-xl .aw-label.is-on { font-size: 18px; }
+  body.text-xl .aw-core-main { font-size: 28px; }
+  body.text-xl .aw-core-sub { font-size: 12px; }
+
+  /* 説明は図の中に入れない。押された気持ちの分だけ、ここに出す。 */
+  .aw-card {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 14px 16px;
+  }
+
+  /* 🚨 .doc-entry p（12.5px）より強くしないと当たらない。図は資料の項目の中にある。 */
+  .aw-card .aw-card-name {
+    font-family: var(--font-display);
+    font-size: 20px;
+    color: var(--gold);
+    margin: 0 0 8px;
+    line-height: 1.5;
+  }
+
+  .aw-card ul {
+    margin: 0;
+    padding-left: 1.1em;
+  }
+
+  .aw-card li {
+    font-size: 16px;
+    line-height: 1.8;
+    color: var(--ink-soft);
+    margin-bottom: 4px;
+  }
+
+  .aw-card li:last-child {
+    margin-bottom: 0;
+  }
+
+  /* ---------------- その方の数字と、かけたい言葉 ---------------- */
+  .feel-who {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 16px;
+  }
+
+  .feel-who .feel-h {
+    margin-top: 0;
+  }
+
+  .feel-num {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin: 14px 0 12px;
+  }
+
+  .feel-num-label {
+    font-size: 13px;
+    color: var(--ink-faint);
+  }
+
+  .feel-num-value {
+    font-family: var(--font-display);
+    font-size: 38px;
+    line-height: 1;
+    color: var(--gold);
+  }
+
+  .feel-block {
+    margin-bottom: 14px;
+  }
+
+  .feel-block-h {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--gold);
+    letter-spacing: 0.03em;
+    margin: 0 0 7px;
+  }
+
+  .feel-block ul {
+    margin: 0;
+    padding-left: 1.1em;
+  }
+
+  .feel-block li {
+    font-size: 15px;
+    line-height: 1.8;
+    color: var(--ink-soft);
+    margin-bottom: 4px;
+  }
+
+  /* かけたい言葉は、鑑定の最中にいちばん見るところ。ここだけ大きくする。 */
+  .feel-block.is-say li {
+    font-size: 18px;
+    line-height: 1.75;
+    color: var(--ink);
+    margin-bottom: 8px;
+  }
+
+  .feel-block li:last-child {
+    margin-bottom: 0;
+  }
+
+  .feel-should {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-top: 14px;
+  }
+
+  .feel-should-lead {
+    font-size: 13px;
+    line-height: 1.85;
+    color: var(--ink-soft);
+    margin: 0 0 10px;
+  }
+
+  .feel-point {
+    border-top: 1px solid var(--card-border);
+    padding-top: 11px;
+    margin-top: 11px;
+  }
+
+  .feel-point-top {
+    font-size: 12.5px;
+    color: var(--ink-faint);
+    margin: 0 0 5px;
+  }
+
+  .feel-should-word {
+    font-family: var(--font-display);
+    font-size: 22px;
+    line-height: 1.6;
+    color: var(--gold);
+    margin: 0;
+  }
+
+  .feel-point + .feel-should-why {
+    margin-top: 14px;
+  }
+
+  .feel-should-why {
+    font-size: 13.5px;
+    line-height: 1.85;
+    color: var(--ink-faint);
+    margin: 0;
+  }
+
+  .feel-note {
+    font-size: 12.5px;
+    line-height: 1.85;
+    color: var(--ink-faint);
+    background: rgba(0, 0, 0, 0.24);
+    border-left: 3px solid var(--gold-deep);
+    border-radius: 0 8px 8px 0;
+    padding: 9px 12px;
+    margin: 0 0 12px;
+  }
+
+  .feel-empty {
+    font-size: 13px;
+    line-height: 1.8;
+    color: var(--ink-faint);
+    margin: 0 0 12px;
+  }
+
+  .feel-log {
+    border-top: 1px solid var(--card-border);
+    padding-top: 11px;
+    margin-top: 4px;
+  }
+
+  .feel-log-line {
+    font-size: 13.5px;
+    line-height: 1.8;
+    color: var(--ink-soft);
+    margin: 0 0 6px;
+  }
+
+  .feel-log-note {
+    font-size: 11.5px;
+    line-height: 1.8;
+    color: var(--ink-faint);
+    margin: 6px 0 0;
+  }
+
+  .feel-log-del {
+    padding: 6px 12px;
+    font-family: var(--font-body);
+    font-size: 12px;
+    color: var(--ink-soft);
+    background: none;
+    border: 1px solid var(--card-border);
+    border-radius: 999px;
+    cursor: pointer;
+  }
+
+  .lad-cue {
+    font-size: 12.5px;
+    line-height: 1.6;
+    color: var(--ink-faint);
+    margin-top: 2px;
+  }
+
+  .lad-step .lad-cue {
+    margin-top: 5px;
+  }
+
+  .lad-w-wrap {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  /* お客様にお見せするあいだは、鑑定士向けの手引きを全部隠す。
+     🚨 携帯を渡した先で、こちらの覚え書きが読まれないようにするため。 */
+  .feel-present-end {
+    display: none;
+    width: 100%;
+    margin-bottom: 14px;
+    padding: 11px 14px;
+    font-family: var(--font-body);
+    font-size: 15px;
+    color: var(--bg-0);
+    background: linear-gradient(140deg, var(--gold) 0%, var(--gold-deep) 100%);
+    border: none;
+    border-radius: 999px;
+    cursor: pointer;
+  }
+
+  body.feel-present #pro-back-btn,
+  body.feel-present #pro > .library-h1,
+  body.feel-present #pro > .library-sub,
+  body.feel-present #pro-until,
+  body.feel-present #pro > .record-tabs,
+  body.feel-present #pro-feel > .pro-lead,
+  body.feel-present #feel-present-btn,
+  body.feel-present .feel-order,
+  body.feel-present .feel-caution,
+  body.feel-present .feel-who,
+  body.feel-present .feel-h,
+  body.feel-present .feel-should,
+  body.feel-present .lad-save,
+  body.feel-present .aw-go,
+  body.feel-present .lad-go {
+    display: none !important;
+  }
+
+  /* ①②③ は残す。ただし、お客様の前では控えめにする。 */
+  body.feel-present #pro-feel > .record-tabs {
+    margin-bottom: 16px;
+  }
+
+  body.feel-present .feel-present-end {
+    display: block !important;
+  }
+
+  /* ---------------- 感情の22段階 ----------------
+     🚨 ここも画像にしない。段の色はCSS、文字はHTML。
+     ⚠️ 22行あるので、1行を短く保つこと。長い言い方を足すと携帯で3行に割れる。 */
+  /* ---------------- 気持ちから読む（鑑定の機能） ----------------
+     🚨 鑑定の最中に開く画面。迷わせないため、順番を先に出してから図を出す。 */
+  .feel-order {
+    margin: 0 0 12px;
+    padding-left: 1.3em;
+    font-size: 13.5px;
+    line-height: 1.95;
+    color: var(--ink-soft);
+  }
+
+  .feel-order li {
+    margin-bottom: 7px;
+  }
+
+  .feel-order b {
+    color: var(--ink);
+  }
+
+  .feel-caution {
+    font-size: 12.5px;
+    line-height: 1.85;
+    color: var(--ink-faint);
+    background: rgba(0, 0, 0, 0.24);
+    border-left: 3px solid var(--gold-deep);
+    border-radius: 0 8px 8px 0;
+    padding: 9px 12px;
+    margin: 0 0 16px;
+  }
+
+  .feel-caution b {
+    color: var(--ink-soft);
+  }
+
+  .feel-h {
+    font-family: var(--font-display);
+    font-size: 15px;
+    color: var(--gold);
+    margin: 0 0 10px;
+    padding-bottom: 7px;
+    border-bottom: 1px solid var(--card-border);
+  }
+
+  /* いまの段と、次に向かう段。ここが鑑定でいちばん見るところ。 */
+  .lad-panel {
+    margin-bottom: 14px;
+  }
+
+  .lad-hint {
+    font-size: 13px;
+    line-height: 1.8;
+    color: var(--ink-faint);
+    text-align: center;
+    margin: 0;
+    padding: 14px 10px;
+    border: 1px dashed var(--card-border);
+    border-radius: 10px;
+  }
+
+  .lad-step {
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    padding: 10px 13px;
+  }
+
+  .lad-step.is-next {
+    border-color: var(--gold);
+    background: rgba(244, 217, 139, 0.1);
+  }
+
+  .lad-step-tag {
+    font-size: 12px;
+    color: var(--ink-faint);
+    margin-bottom: 3px;
+  }
+
+  .lad-step.is-next .lad-step-tag {
+    color: var(--gold);
+  }
+
+  .lad-step-body {
+    display: flex;
+    align-items: baseline;
+    gap: 9px;
+  }
+
+  .lad-step-n {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--gold);
+    font-variant-numeric: lining-nums tabular-nums;
+  }
+
+  .lad-step-w {
+    font-size: 20px;
+    line-height: 1.5;
+    color: var(--ink);
+  }
+
+  .lad-arrow {
+    text-align: center;
+    font-size: 12.5px;
+    color: var(--gold);
+    padding: 6px 0;
+  }
+
+  .lad-row.is-on {
+    border-color: var(--gold);
+  }
+
+  /* 🚨 選ばれた行は、別窓が開くときのように浮き出させる（依頼者・2026-09-03）。
+     影を濃くするだけでは浮かない。**まわりを引かせて、選んだ行だけを前に出す。**
+     ⚠️ 1.06倍まで。これ以上だと、左のバーや画面の端に触れる（320px幅で実測）。 */
+  .lad-rows.has-pick .lad-row:not(.is-on) {
+    opacity: 0.42;
+  }
+
+  .lad-row.is-on {
+    transform: scale(1.06);
+    box-shadow: 0 16px 38px rgba(0, 0, 0, 0.66), 0 0 0 2px var(--gold);
+    position: relative;
+    z-index: 1;
+  }
+
+  .lad-row.is-on .lad-w {
+    font-size: 21px;
+    color: var(--gold);
+  }
+
+  .lad-row.is-on .lad-n {
+    color: var(--gold);
+    background: rgba(244, 217, 139, 0.18);
+  }
+
+  body.text-lg .lad-row.is-on .lad-w { font-size: 20px; }
+  body.text-xl .lad-row.is-on .lad-w { font-size: 19px; }
+
+  /* 🚨 .aw-go はこの下にある。同じ強さだと負けるので、2つ重ねて強くする。 */
+  .aw-go.aw-go-sub {
+    background: none;
+    border: 1px solid var(--card-border);
+    color: var(--ink-soft);
+    margin-top: 8px;
+  }
+
+  /* 🚨 軽い・重いは、左の縦バーで見せる（依頼者・2026-09-03）。
+     上ほど薄く、下ほど濃い。**22行のどこを見ていても、左を見れば向きが分かる。**
+     ⚠️ 前は上と下に文字を置いていたので、真ん中では何も見えなかった。 */
+  .lad-body {
+    display: flex;
+    gap: 10px;
+    align-items: stretch;
+  }
+
+  /* 🚨 バーを太くして、文字を中に入れる（依頼者・2026-09-03）。
+     細いバーの外に小さく置くと、文字が読めなかった。
+     🚨 軽いほうは金。金はこのアプリで「良いほう」を指す色。
+     ⚠️ 上は金地なので字は濃く、下は暗い地なので字は明るく。**同じ色にしない。** */
+  .lad-scale {
+    flex: 0 0 44px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-radius: 16px;
+    background: linear-gradient(180deg,
+      var(--gold) 0%,
+      var(--gold-deep) 16%,
+      hsl(285, 34%, 46%) 44%,
+      hsl(268, 34%, 14%) 100%);
+  }
+
+  /* 🚨 縦書きにする（依頼者・2026-09-03）。バーが縦なので、文字も縦に流す。
+     ⚠️ 横書きだと、バーの幅に収めるために字を小さくするしかなかった。
+        縦書きなら、幅は字1つぶんで足りる。**大きくできる。** */
+  .lad-scale-top,
+  .lad-scale-bottom {
+    writing-mode: vertical-rl;
+    text-orientation: upright;
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: 0.06em;
+  }
+
+  .lad-scale-top {
+    color: var(--input-ink);
+  }
+
+  .lad-scale-bottom {
+    color: var(--ink);
+  }
+
+  body.text-lg .lad-scale-top,
+  body.text-lg .lad-scale-bottom { font-size: 18px; }
+  body.text-xl .lad-scale-top,
+  body.text-xl .lad-scale-bottom { font-size: 16px; }
+
+  /* ⚠️ 拡大するとバーだけ太くなり、22行の幅を食う。太さのほうを詰める。 */
+  body.text-lg .lad-scale { flex-basis: 40px; }
+  body.text-xl .lad-scale { flex-basis: 36px; }
+
+  .lad-rows {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  /* 🚨 7と8の間の区切り（依頼者・2026-09-03）。押すと説明が開く。
+     線だけでは何の線か分からず、飾りに見える。 */
+  /* ⚠️ 見えるのは線だけ。ただし2pxは指で押せないので、
+        押せる範囲を上下に広げてある（padding）。 */
+  .lad-split {
+    display: block;
+    width: 100%;
+    padding: 13px 4px;
+    margin: 0;
+    background: none;
+    border: none;
+    cursor: pointer;
+  }
+
+  .lad-split::after {
+    content: "";
+    display: block;
+    height: 2px;
+    border-radius: 999px;
+    background: var(--gold-deep);
+  }
+
+  .lad-split:hover::after,
+  .lad-split:focus-visible::after {
+    background: var(--gold);
+    height: 3px;
+  }
+
+  /* 押せる帯。ボタンなので、幅と字の寄せを戻しておかないと中身の幅で縮む。 */
+  .lad-row {
+    display: flex;
+    width: 100%;
+    text-align: left;
+    font-family: var(--font-body);
+    align-items: center;
+    gap: 9px;
+    padding: 11px 10px;
+    cursor: pointer;
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    margin-bottom: 7px;
+  }
+
+  .lad-n {
+    flex: 0 0 auto;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 700;
+    font-variant-numeric: lining-nums tabular-nums;
+    background: rgba(255, 255, 255, 0.12);
+    color: var(--gold);
+  }
+
+  /* 🚨 長い言葉は、削らずに折る（依頼者・2026-09-03「言葉は捨てないでください」）。
+     ⚠️ 320px幅で、22番を1行に描くには315px要る。使える幅は175px。**1行は物理的に無理。**
+     → text-wrap: balance で、2行の長さをそろえる。**崩れて見えないようにする。** */
+  .lad-w {
+    font-size: 18px;
+    line-height: 1.45;
+    color: var(--ink);
+    text-wrap: balance;
+  }
+
+  /* 🚨 中黒のところでだけ折る（依頼者・2026-09-03「みが下の段にいってる」）。
+     これが無いと「深い悲し／み」のように、言葉の真ん中で切れる。 */
+  .lad-w.is-parts,
+  .lad-step-w.is-parts {
+    word-break: keep-all;
+  }
+
+  .lad-save {
+    display: block;
+    width: 100%;
+    margin-top: 10px;
+    padding: 9px 14px;
+    font-family: var(--font-body);
+    font-size: 14px;
+    color: var(--ink-soft);
+    background: none;
+    border: 1px solid var(--card-border);
+    border-radius: 999px;
+    cursor: pointer;
+  }
+
+  .lad-save:disabled {
+    color: var(--ink-faint);
+    cursor: default;
+  }
+
+  .lad-go {
+    display: block;
+    width: 100%;
+    margin: 4px 0 12px;
+    padding: 10px 14px;
+    font-family: var(--font-body);
+    font-size: 15px;
+    color: var(--bg-0);
+    background: linear-gradient(140deg, var(--gold) 0%, var(--gold-deep) 100%);
+    border: none;
+    border-radius: 999px;
+    cursor: pointer;
+  }
+
+  body.text-lg .lad-w { font-size: 17px; }
+  body.text-xl .lad-w { font-size: 16px; }
+
+  /* 気持ちの強さ。弱い言い方から強い言い方まで、並べて向きを見せる。
+     🚨 「弱いとき／そのまま／強いとき」と書いたら伝わらなかった（依頼者・2026-09-03）。 */
+  .aw-lv-lead {
+    font-size: 13px;
+    line-height: 1.8;
+    color: var(--ink-faint);
+    margin: 0 0 9px;
+  }
+
+  .aw-lv-row {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+  }
+
+  /* 🚨 塗った四角はやめた（依頼者・2026-09-03「安っぽいです」）。
+     文字だけを並べ、区切りは細い縦線1本。強さは字の明るさで見せる。 */
+  .aw-lv-item {
+    position: relative;
+    padding: 2px 10px;
+    font-size: 16px;
+    line-height: 1.75;
+    letter-spacing: 0.02em;
+    /* ⚠️ 言葉の途中では折らない。折るなら言葉と言葉のあいだで。 */
+    white-space: nowrap;
+  }
+
+  .aw-lv-item:first-child {
+    padding-left: 0;
+  }
+
+  .aw-lv-item + .aw-lv-item::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0.35em;
+    bottom: 0.35em;
+    width: 1px;
+    background: var(--card-border);
+    opacity: 0.55;
+  }
+
+  .aw-lv-why {
+    font-size: 13px;
+    line-height: 1.8;
+    color: var(--ink-faint);
+    margin: 11px 0 0;
+  }
+
+  body.text-lg .aw-lv-item { font-size: 15px; }
+  body.text-xl .aw-lv-item { font-size: 14px; }
+
+  .aw-go {
+    display: block;
+    width: 100%;
+    margin-top: 12px;
+    padding: 10px 14px;
+    font-family: var(--font-body);
+    font-size: 15px;
+    color: var(--bg-0);
+    background: linear-gradient(140deg, var(--gold) 0%, var(--gold-deep) 100%);
+    border: none;
+    border-radius: 999px;
+    cursor: pointer;
+  }
+
+  .aw-wrap .aw-hint {
+    font-size: 13px;
+    color: var(--ink-faint);
+    text-align: center;
+    margin: 0 0 10px;
+  }
+
   .doc-table-wrap {
     overflow-x: auto;
     margin: 0 0 9px;
@@ -1974,6 +2728,7 @@
   <div class="record-tabs" role="tablist">
     <button type="button" class="record-tab" id="pro-tab-forecast" role="tab" aria-selected="true">その方のこれから</button>
     <button type="button" class="record-tab" id="pro-tab-sheet" role="tab" aria-selected="false">鑑定書</button>
+    <button type="button" class="record-tab" id="pro-tab-feel" role="tab" aria-selected="false">気持ちから読む</button>
   </div>
 
   <div id="pro-forecast">
@@ -2033,6 +2788,54 @@
       <button type="button" id="pro-sheet-save" class="pro-fill-btn">端末に保存する</button>
       <button type="button" id="pro-sheet-share" class="pro-fill-btn hidden">そのまま送る</button>
     </div>
+  </div>
+
+  <!-- 🚨 気持ちから読む（有料）。2026-09-03、依頼者の指示で資料から移した。
+       「サブスクにしてよかった」と思っていただくための、鑑定中に開く画面。
+       図は画像にしない（図形＝SVG／文字＝HTML）。→ 仕様.md「鑑定の機能」 -->
+  <div id="pro-feel" class="hidden">
+    <button type="button" id="feel-present-end" class="feel-present-end">お見せするのを終わる</button>
+    <p class="pro-lead">お客様が何を感じておられるかを、その場でたどるための画面です。生年月日を入れると、その方にかけたい言葉まで出ます。</p>
+    <button type="button" id="feel-present-btn" class="pro-fill-btn">お客様にお見せする（この画面の手引きを隠します）</button>
+
+    <ol class="feel-order">
+      <li><b>生年月日を入れる。</b>その方の数字と、<b>かけたい言葉</b>が出ます。</li>
+      <li><b>気持ちを選んでいただく。</b>①の輪をお客様にお見せして「いま、どれに近いですか」と伺います。</li>
+      <li><b>いま、どのあたりかを見る。</b>②で、お客様の言葉に近いものを押します。<b>ひとつ軽いほう</b>が出ます。そこが次の行き先です。</li>
+      <li><b>怒りなら、下を見る。</b>③で、怒りの下に隠れている気持ちを一緒に探します。<b>その下にある怒りの出どころは、言い当てずに伺ってください。</b></li>
+    </ol>
+    <p class="feel-caution">こちらから「あなたはこれです」と当てはめないでください。<b>選ぶのはお客様です。</b>この画面は、次に何を伺うかの手がかりです。</p>
+
+    <div class="feel-who">
+      <label class="field">
+        <span>その方の生年月日</span>
+        <div class="date-input-group">
+          <input type="text" inputmode="numeric" pattern="[0-9]*" id="feel-year" maxlength="4" placeholder="年" aria-label="その方の生まれた年">
+          <span class="date-sep">/</span>
+          <input type="text" inputmode="numeric" pattern="[0-9]*" id="feel-month" maxlength="2" placeholder="月" aria-label="その方の生まれた月">
+          <span class="date-sep">/</span>
+          <input type="text" inputmode="numeric" pattern="[0-9]*" id="feel-day" maxlength="2" placeholder="日" aria-label="その方の生まれた日">
+        </div>
+      </label>
+      <div class="compat-names">
+        <label class="field"><span>苗字（カナ）</span><input type="text" id="feel-last" placeholder="任意"></label>
+        <label class="field"><span>名前（カナ）</span><input type="text" id="feel-first" placeholder="任意"></label>
+      </div>
+      <div class="pro-row">
+        <button type="button" id="feel-fill-btn" class="pro-fill-btn">計算画面の内容を入れる</button>
+      </div>
+      <div id="feel-who-out" class="hidden"></div>
+    </div>
+
+    <div class="record-tabs" role="tablist">
+      <button type="button" class="record-tab" id="feel-tab-wheel" role="tab" aria-selected="true">① 気持ち</button>
+      <button type="button" class="record-tab" id="feel-tab-ladder" role="tab" aria-selected="false">② どのあたり</button>
+      <button type="button" class="record-tab" id="feel-tab-anger" role="tab" aria-selected="false">③ 怒りの下</button>
+    </div>
+
+    <div id="feel-wheel"></div>
+    <div id="feel-ladder" class="hidden"></div>
+    <div id="feel-anger" class="hidden"></div>
   </div>
 </div>
 
@@ -2231,7 +3034,7 @@
     // 🚨 隠さない。無料の場合にも「鑑定」を見せ、鍵を付けておく（依頼者・2026-08-29）。
     //    開かせない仕掛けは proOpenBtn の click 側。ここは見た目だけ。
     proOpenBtn.classList.toggle("is-locked", !paid);
-    proOpenBtn.setAttribute("aria-label", paid ? "鑑定の機能" : "鑑定の機能（月1,500円）");
+    proOpenBtn.setAttribute("aria-label", paid ? "鑑定の機能" : "鑑定の機能（準備中）");
     // 管理者用の入口は、管理者のときだけ出す。
     const adminBtn = document.getElementById("admin-open-btn");
     if (adminBtn) adminBtn.classList.toggle("hidden", role !== "admin");
@@ -3219,6 +4022,8 @@
       last.value = head;
       if (tail) first.value = tail + first.value;
       first.focus();
+      // ⚠️ ここで blur を出さないこと。**送った先で控えるカナより先に**
+      //    苗字がローマ字へ変わってしまい、鑑定書の宛名から苗字が消えた（2026-09-03）。
       if (tail) first.dispatchEvent(new Event("input", { bubbles: true }));
       return true;
     }
@@ -3239,7 +4044,7 @@
   }
 
   // 🚨 日付の欄を足したら、必ずこの並びに名前を足すこと。
-  //    2026-09-03、鑑定の3か所と自分の情報が抜けていて、依頼者に言われて気づいた。
+  //    2026-09-03、鑑定の3か所と「気持ちから読む」が抜けていて、依頼者に言われて気づいた。
   //    （画面の枠の指定と同じで、**一覧にしないと必ず取りこぼす**）
   [
     ["birth-year", "birth-month", "birth-day", "last-name"],        // 計算画面 → 苗字
@@ -3249,9 +4054,10 @@
     ["pro-birth-year", "pro-birth-month", "pro-birth-day", "pro-target-year"], // 鑑定・その方のこれから → 見たい日
     ["pro-target-year", "pro-target-month", "pro-target-day"],      // 鑑定・見たい日（この先は無い）
     ["pro-sheet-year", "pro-sheet-month", "pro-sheet-day", "pro-sheet-last"], // 鑑定・鑑定書 → 苗字
+    ["feel-year", "feel-month", "feel-day"],                        // 鑑定・気持ちから読む（名前は無い）
   ].forEach((ids) => setupDateGroup(ids[0], ids[1], ids[2], ids[3]));
 
-  // 苗字 → 名前。日付と同じで、**足したらこの並びに名前を足すこと。**
+  // 苗字 → 名前（空白で送る）。日付と同じで、**足したらこの並びに名前を足すこと。**
   [
     ["last-name", "first-name"],
     ["a-last", "a-first"],
@@ -4439,6 +5245,643 @@
   const libraryH1 = document.getElementById("library-h1");
   const librarySub = document.getElementById("library-sub");
 
+  // ---------------- 怒りの輪 ----------------
+  // 🚨 1枚の絵にしないこと（依頼者の指示・2026-09-02）。
+  //    絵の中へ文字を焼き込むと、携帯では字が小さくなり、拡大しないと読めない。
+  //    **図形は SVG、文字は HTML** に分けてある。大きさの決まりは CSS の .aw-label 付近。
+  // 🚨 図の中に入れるのは気持ちの名前だけ。説明は下のカードに出す。
+  const WHEELS = {};
+
+  WHEELS.anger = {};
+  WHEELS.anger.core = {
+    name: "怒り",
+    words: ["イライラ", "ムカつく", "腹が立つ", "激怒"],
+    items: [
+      "いちばん先に、外へ出てくる気持ちです。",
+      "その下に別の気持ちが隠れていることがある、とされています。",
+      "下の気持ちに名前がつくと、話が先へ進みやすくなると言われます。",
+    ],
+    link: { doc: "plutchik", label: "8つの気持ちの輪へ" },
+  };
+
+  // lines … 図の中での改行位置。🚨 1行3文字まで。
+  //   狭い画面（320px）でも扇形からはみ出さない上限がここ。増やすと文字が切れる。
+  WHEELS.anger.parts = [
+    { name: "不安", lines: ["不安"], items: ["先が見えない", "心配になる", "気が張っている"] },
+    { name: "恐れ", lines: ["恐れ"], items: ["どうなるか怖い", "また同じことが起きそう", "近づきたくない"] },
+    { name: "寂しさ", lines: ["寂しさ"], items: ["分かってもらえない", "ひとりだと感じる", "置いていかれた気がする"] },
+    { name: "失望", lines: ["失望"], items: ["期待していたのに違った", "当てが外れた", "がっかりした"] },
+    { name: "傷つき・悲しみ", lines: ["傷つき", "悲しみ"], items: ["言われた言葉が刺さった", "大切にされていないと感じる", "泣きたくなる"] },
+    { name: "恥・罪悪感", lines: ["恥・", "罪悪感"], items: ["自分が悪かったと思う", "人に見られたくない", "申し訳ない"] },
+    { name: "無力感", lines: ["無力感"], items: ["何をしても変わらない", "どうにもできない", "力が出ない"] },
+    { name: "信頼の傷つき", lines: ["信頼の", "傷つき"], items: ["裏切られた気がする", "もう頼れないと思う", "約束が守られなかった"] },
+  ];
+  WHEELS.anger.hue = (i) => "hsl(" + (256 + i * 8) + ", 44%, 44%)";
+  WHEELS.anger.coreFill = "hsl(268, 40%, 20%)";
+  WHEELS.anger.hint = "気持ちを押すと、下に説明が出ます。";
+
+  // ---------------- 8つの気持ちの輪（プルチック） ----------------
+  // 🚨 3段の強さ（弱い・そのまま・強い）は依頼者の図から取っている。
+  //    ⚠️ 並び順だけは、いただいた図と一般に知られている並びが食い違う箇所がある。
+  //    **依頼者の確認待ち**（→ docs の「決めたこと.md」2026-09-02）。
+  // 🚨 説明の文はここに書かない。いただいた語だけを出す。
+  WHEELS.plutchik = {};
+  WHEELS.plutchik.core = {
+    name: "気持ち",
+    words: ["8つに分けて", "見る形です"],
+    items: [
+      "気持ちを8つに分け、それぞれに強さの段を置いた並べ方です。",
+      "外側の気持ちを押すと、弱いとき・強いときの言い方が出ます。",
+      "「怒り」からは、その下に隠れている気持ちへ進めます。",
+    ],
+  };
+  WHEELS.plutchik.parts = [
+    { name: "喜び", lines: ["喜び"], levels: ["おだやか", "喜び", "大よろこび"], step: 1 },
+    { name: "信頼", lines: ["信頼"], levels: ["受け入れる", "信頼", "あこがれ"], step: 4 },
+    { name: "恐れ", lines: ["恐れ"], levels: ["不安", "恐れ", "恐怖"], step: 22 },
+    { name: "驚き", lines: ["驚き"], levels: ["気がそれる", "驚き", "とても驚く"] },
+    { name: "悲しみ", lines: ["悲しみ"], levels: ["しんみり", "悲しみ", "深い悲しみ"], step: 22 },
+    { name: "嫌悪", lines: ["嫌悪"], levels: ["退屈", "嫌悪", "うんざり"], step: 8 },
+    { name: "怒り", lines: ["怒り"], levels: ["いらだち", "怒り", "激怒"], step: 17, link: { doc: "anger", label: "怒りの下にある気持ちへ" } },
+    { name: "期待", lines: ["期待"], levels: ["関心", "期待", "警戒"], step: 4 },
+  ];
+  // もとの図の色の並び（黄・緑・青緑・青・紫・赤紫・赤・橙）を、暗い地に合う濃さで。
+  WHEELS.plutchik.hue = (i) => "hsl(" + [48, 100, 160, 205, 262, 300, 353, 26][i] + ", 40%, 40%)";
+  WHEELS.plutchik.coreFill = "hsl(268, 40%, 20%)";
+  WHEELS.plutchik.hint = "お客様が選ばれた気持ちを、押してください。";
+
+  // ---------------- 数字ごとの言葉（依頼者の言葉） ----------------
+  // 🚨 **ここは全部、依頼者ご自身の言葉です。AIの下書きは1行も入れていません。**
+  //    正本は docs/numerology-calculator/解釈ルール-たたき台.md（2026-09-01 に12個そろった）。
+  //    ⚠️ 直すときは、必ず正本のほうを先に直すこと。ここは写しです。
+  // 🚨 **画面に出さないと決めた語は、ここに入れていない**
+  //    （「男性性」1／「部下か味方か敵か」8／「他人に興味が薄い」7／「認知行動療法」11）。
+  // ⏳ **言い換え待ちの語も外してある**
+  //    （「破壊」「嘘」5／「メリハリ」22／「施し」6）。言い換えをいただいたら足す。
+  // say … かけたい言葉／stuck … つまずきやすいところ／act … してみるとよいこと
+  // note … 鑑定士が外さないための覚え（依頼者の決めごと）
+  // anger … 何をされると腹が立つか（怒りの出どころ）
+  // 🚨 **「〜すべき」の形で12個そろえるのは無理があった**（依頼者・2026-09-03）。
+  //    型に合わせると言葉がねじれる。**腹が立つことそのものを書く。**
+  // 🚨 **stuck（つまずき）から裏返して作らないこと。**
+  //    つまずきは「自分の中で困っていること」、怒りは「外からされて腹が立つこと」。
+  //    こちらは4つ続けて外した（8・4・3・7）。**依頼者に一つずつ伺う。**
+  // ✅ = 依頼者の言葉／⏳ = こちらの下書き（確認待ち）
+  const NUMBER_WORDS = {
+    1: {
+      anger: "すぐに動けないこと", // ⏳ こちらの下書き
+      say: ["「遠足の前の日」のように、まだ何も始まっていないのに心のほうが先に動いている",
+            "「種まきの日」", "「習慣を始める日」"],
+      stuck: ["周りを気にすることが苦手", "予定通りに動くことが苦手"],
+      act: ["決めたことを書き出す", "行動の前に、周りに伝える"],
+      note: "「子どものよう」とは言わない。場面だけを借りる。",
+    },
+    2: {
+      anger: "相談なしに、勝手に決められること", // ⏳ こちらの下書き
+      say: ["休みを取って", "自分が疲れない接し方を探そう", "合わせてしまうときの感情を書き出してみて"],
+      stuck: ["人に合わせすぎて疲れる"],
+      act: ["共感する", "受け取る", "目の前の人に寄り添う"],
+      note: "合わせること自体は、直す対象ではない。「はっきり言おう」ではなく、消耗の側へ寄せる。",
+    },
+    3: {
+      anger: "相手の気持ちを考えずに、輪を乱されること", // ✅ 依頼者の言葉
+      say: ["一人だけ、明るくしなくていい相手を作って"],
+      stuck: ["気が散って続かない", "本心を見せない"],
+      act: ["楽しむ", "インスピレーションを大切にする", "クリエイティブに動く"],
+      note: "つまずきの2つは向きが逆。外へ出しすぎる面と、内に隠す面がある。",
+    },
+    4: {
+      anger: "決まりを守らないこと", // ✅ 依頼者の言葉
+      say: ["できる範囲で構わないから", "小さい一歩を進んでみてください"],
+      stuck: ["枠にはまりやすい。変化を嫌う", "0→1が苦手"],
+      act: ["決まりごとを守る", "ルールに沿って進める", "今の枠組みを再確認する"],
+      note: "「今日の一段」とは言わない。「小さい一歩」と言う。4は決められない人ではない。足りないのは理由。",
+    },
+    5: {
+      anger: "進め方を、細かく縛られること", // ⏳ こちらの下書き
+      say: ["あとで読み返すと面白いよ", "動いた量が見えるよ"],
+      stuck: ["飽きて続かない", "落ち着かない", "自由を守ろうとして約束や関係から逃げる", "発言が大きくなりがち"],
+      act: ["自己主張する"],
+      note: "直させるための言葉ではない。「面白いから」「見えるから」という誘い方をする。",
+    },
+    6: {
+      anger: "身近な人が、ないがしろにされること", // ⏳ こちらの下書き
+      say: ["大切な人ほど、線が引きにくくなるよね", "できないことは抱えなくていい",
+            "自分がどう感じているかを優先に考えてみる"],
+      stuck: ["世話を焼きすぎる", "完璧を求めて疲れる", "近い人にだけ厳しくなる", "自分を置き去りにする"],
+      act: ["家族を大切にする", "自分を大切にする"],
+      note: "「自分を大切にする」が要。ここが抜けると、6のつまずきをそのまま押すことになる。",
+    },
+    7: {
+      anger: "不必要に、自分の時間を奪われること", // ✅ 依頼者の言葉
+      say: ["みんなと仲良くしなくていい", "苦手だって先に言っておけばいい"],
+      stuck: ["人を入れない", "理屈で人を追い詰める"],
+      act: ["読書", "分析", "内省"],
+      note: "「みんなと仲良くしなくていい」は、人の輪に入るのが特に苦手な相手にかける言葉。全員には向かない。",
+    },
+    8: {
+      anger: "効率が悪いこと", // ✅ 依頼者の言葉
+      say: ["一つだけ人に任せていい", "休んでいい", "受け取っていい"],
+      stuck: ["対応が、相手には圧になりやすい", "止まることを自分に許せない"],
+      act: ["ことわらず受け取る", "自分に許す（休む・楽しむ・使う）", "一つだけ人に任せる"],
+      note: "8は自分に許可を出しにくい。許す言い方が効く。相手によって言葉尻を変える（元気な相手には強く、静かな相手には優しく。見分けはバースデー。2・4・6は静かめ）。「これは訓練です」とは言わない。",
+    },
+    9: {
+      anger: "一度決まったことを、覆されること", // ⏳ こちらの下書き
+      say: ["「それでいいと思う？」と問い返す"],
+      stuck: ["頑固", "人の話を聞かない", "線を引けない", "手放すのが苦手"],
+      act: ["取捨選択する", "自己犠牲をやめる", "明日始めることを決める"],
+      note: "5は書いて残す、9は思い返す。終わりで止めない。3つ目が「明日始めることを決める」。",
+    },
+    11: {
+      anger: "気づいているのに、なかったことにされること", // ⏳ こちらの下書き
+      say: ["感じたことを、まず残しておこう", "当たってるかどうかは、今決めなくていい",
+            "感じすぎて疲れてない？", "機嫌取りは休んでいい"],
+      stuck: ["人の気持ちを拾いすぎて疲れる", "思いついても形にしない", "自分の感覚を信じ切れない"],
+      act: ["ノートに書き出す", "メモアプリに記録する"],
+      note: "「直感」を11の言い換えに使わない。11は感じ取るほう。正誤を問う言い方は、その人の体験とずれる。",
+    },
+    22: {
+      anger: "話を、まともに聞いてもらえないこと", // ⏳ こちらの下書き
+      say: ["全部分かってもらおうとしなくていい"],
+      stuck: ["周りに伝わらない"],
+      act: ["大きな空想を書き出す"],
+      note: "22の困りごとは本人の中ではなく、人との間にある。「まず一歩から」ではなく「どう伝えるか」の側へ。",
+    },
+    33: {
+      anger: "助けが要る人が、放っておかれること", // ⏳ こちらの下書き
+      say: ["自分にも同じことをしてあげて"],
+      stuck: ["自分を後回しにしすぎる", "断れない", "何とかしてあげなきゃと思いすぎる"],
+      act: [],
+      note: "33のお客様は、すでに十分やっている。さらに促すと追い打ちになる。全部引き受けなくても、優しさは失われない。",
+    },
+  };
+
+  // ---------------- 感情の22段階（エイブラハム） ----------------
+  // 🚨 画像にしない。段の色はCSS、文字はHTML（→ 2枚の輪と同じ考え方）。
+  // 🚨 言葉はこちらで置き直したもの。**訳文を書き写していない**（AGENTS.md 1章）。
+  //    もとは公に知られている並べ方で、番号と順番はそれに沿っている。
+  // ⚠️ 効き目を約束する言い方をしないこと（景品表示法）。「上がる」「良くなる」と書かない。
+  // 🚨 1行を短く保つ。22行あるので、長くすると携帯で崩れる。
+  // 🚨 順番はもとの並べ方のまま。言葉だけ、日本語で重さの順に読めるように置き直した。
+  //    2026-09-03、依頼者から「失望と落胆が逆では？」とご指摘。
+  //    もとは 12 が「期待が外れる」、16 が「気持ちがくじける」で、順番は合っていた。
+  //    日本語の「失望」が重く読めたため、12 を「がっかり」、16 を「くじける気持ち」にした。
+  const LADDER = [
+    "喜び・感謝・自由・愛",
+    "情熱",
+    "やる気・わくわく",
+    "前向きな期待・信じられる感じ",
+    "楽観",
+    "希望",
+    "満足",
+    "退屈",
+    "悲観",
+    "もどかしさ・いらだち",
+    "手いっぱい",
+    "がっかり",
+    "疑い",
+    "心配",
+    "人のせいにする気持ち",
+    "くじける気持ち",
+    "怒り",
+    "仕返ししたい気持ち",
+    "憎しみ・激怒",
+    "うらやましさ",
+    "自信のなさ・罪悪感",
+    "恐れ・深い悲しみ・絶望・無力感",
+  ];
+
+  // お客様の言葉から、段を見つけるための手がかり。
+  // ⚠️ **依頼者の言葉ではない。**一般に言われている目安を、こちらで短く置いたもの。
+  //    鑑定の言葉として読み上げるためのものではなく、**段を当てるための目印。**
+  // 🚨 8段目の「特に何もない」に注意。
+  //    依頼者が「お客様が悩みがない時が1番困る」と言われた場面が、ここに当たる。
+  const LADDER_CUES = [
+    "ありがたい／いまが楽しい",
+    "これがやりたくてたまらない",
+    "早くやりたい／楽しみ",
+    "たぶん、うまくいくと思う",
+    "なんとかなりそう",
+    "よくなるといいな",
+    "まあ、こんなものかな",
+    "特に何もない／変わりばえしない",
+    "どうせ変わらないと思う",
+    "うまく進まない／じれったい",
+    "やることが多すぎる",
+    "期待していたのに／当てが外れた",
+    "本当にそうなのかな／信じきれない",
+    "悪いことが起きそう／落ち着かない",
+    "あの人のせいだ／私は悪くない",
+    "もうやる気が出ない／続けられない",
+    "腹が立つ／許せない",
+    "思い知らせたい",
+    "顔も見たくない",
+    "あの人ばかり／見ているのがつらい",
+    "自分が悪い／自分には無理",
+    "どうにもならない／何をしても無駄",
+  ];
+
+  // goto(id) … 別の画面へ渡すときに呼ぶ（"anger" / "plutchik" / "ladder"）。
+  // pick … 開いたときに選んでおく段（1〜22）。8つの気持ちの輪から飛んできたとき用。
+  // onPick … 段が選ばれたことを外へ伝える。onSave … 「今日の分を残す」を押されたとき。
+  // 中黒で区切られた言葉は、**中黒のところでだけ折る。**
+  // ⚠️ 中黒が無い言葉に keep-all を当てると、折れずにはみ出す。だから分けている。
+  function putLadderWord(el, word) {
+    if (word.indexOf("・") < 0) {
+      el.textContent = word;
+      return;
+    }
+    el.classList.add("is-parts");
+    word.split("・").forEach((seg, k) => {
+      if (k > 0) {
+        el.appendChild(document.createTextNode("・"));
+        el.appendChild(document.createElement("wbr"));
+      }
+      el.appendChild(document.createTextNode(seg));
+    });
+  }
+
+  function buildLadder(goto, pick, onPick, onSave) {
+    const frag = document.createDocumentFragment();
+
+    // 🚨 いちばん要るのは「いまどこか」ではなく「次にどこを目指すか」。
+    //    ひとつ上の段を大きく出す。段の言葉はもとの並びから引くだけで、
+    //    こちらで作った文章は入れていない。
+    const panel = document.createElement("div");
+    panel.className = "lad-panel";
+    frag.appendChild(panel);
+
+    // 左の縦バー（上ほど薄く、下ほど濃い）と、その右に22行。
+    const body = document.createElement("div");
+    body.className = "lad-body";
+    const scale = document.createElement("div");
+    scale.className = "lad-scale";
+    const scaleTop = document.createElement("span");
+    scaleTop.className = "lad-scale-top";
+    scaleTop.textContent = "軽い";
+    const scaleBottom = document.createElement("span");
+    scaleBottom.className = "lad-scale-bottom";
+    scaleBottom.textContent = "重い";
+    scale.appendChild(scaleTop);
+    scale.appendChild(scaleBottom);
+    const list = document.createElement("div");
+    list.className = "lad-rows";
+    body.appendChild(scale);
+    body.appendChild(list);
+    frag.appendChild(body);
+
+    const rows = [];
+
+    function stepLine(index, label, cls) {
+      const box = document.createElement("div");
+      box.className = "lad-step " + cls;
+      const tag = document.createElement("div");
+      tag.className = "lad-step-tag";
+      tag.textContent = label;
+      const body = document.createElement("div");
+      body.className = "lad-step-body";
+      const n = document.createElement("span");
+      n.className = "lad-step-n";
+      n.textContent = String(index + 1);
+      const w = document.createElement("span");
+      w.className = "lad-step-w";
+      putLadderWord(w, LADDER[index]);
+      body.appendChild(n);
+      body.appendChild(w);
+      box.appendChild(tag);
+      box.appendChild(body);
+      const cue = document.createElement("div");
+      cue.className = "lad-cue";
+      cue.textContent = LADDER_CUES[index];
+      box.appendChild(cue);
+      return box;
+    }
+
+    function select(i) {
+      rows.forEach((r, k) => r.classList.toggle("is-on", k === i));
+      list.classList.toggle("has-pick", i !== null);
+      if (onPick) onPick(i === null ? null : i + 1);
+      panel.innerHTML = "";
+      if (i === null) {
+        const hint = document.createElement("p");
+        hint.className = "lad-hint";
+        hint.textContent = "お客様の言葉に近いものを押してください。次に向かうところが出ます。";
+        panel.appendChild(hint);
+        return;
+      }
+      panel.appendChild(stepLine(i, "いま、このあたり", "is-now"));
+      if (i > 0) {
+        const arrow = document.createElement("div");
+        arrow.className = "lad-arrow";
+        arrow.textContent = "↑ ひとつだけ、軽いほうへ";
+        panel.appendChild(arrow);
+        panel.appendChild(stepLine(i - 1, "次に向かうところ", "is-next"));
+      } else {
+        const done = document.createElement("p");
+        done.className = "lad-hint";
+        done.textContent = "いちばん軽いところです。";
+        panel.appendChild(done);
+      }
+      if (LADDER[i] === "怒り" && goto) {
+        const go = document.createElement("button");
+        go.type = "button";
+        go.className = "lad-go";
+        go.textContent = "怒りの下にある気持ちを見る →";
+        go.addEventListener("click", () => goto("anger"));
+        panel.appendChild(go);
+      }
+      if (onSave) {
+        const save = document.createElement("button");
+        save.type = "button";
+        save.className = "lad-save";
+        // 🚨 「今日の分」では何が残るのか分からない（依頼者・2026-09-03）。
+        //    **残る中身をそのままボタンに出す。**
+        save.textContent = "「" + (i + 1) + "　" + LADDER[i] + "」を、今日の記録に残す";
+        save.addEventListener("click", () => {
+          const said = onSave();
+          save.textContent = said;
+          save.disabled = true;
+        });
+        panel.appendChild(save);
+      }
+    }
+
+    LADDER.forEach((word, i) => {
+      const row = document.createElement("button");
+      row.type = "button";
+      row.className = "lad-row";
+      // 上ほど明るく、下ほど暗い。段の重さがそのまま見えるようにするため。
+      const light = 40 - (i / (LADDER.length - 1)) * 22;
+      row.style.background = "hsl(268, 34%, " + light.toFixed(1) + "%)";
+
+      const n = document.createElement("div");
+      n.className = "lad-n";
+      n.textContent = String(i + 1);
+      const wrap = document.createElement("div");
+      wrap.className = "lad-w-wrap";
+      const w = document.createElement("div");
+      w.className = "lad-w";
+      putLadderWord(w, word);
+      const cue = document.createElement("div");
+      cue.className = "lad-cue";
+      cue.textContent = LADDER_CUES[i];
+      wrap.appendChild(w);
+      wrap.appendChild(cue);
+      row.appendChild(n);
+      row.appendChild(wrap);
+      row.addEventListener("click", () => select(i));
+      rows.push(row);
+      list.appendChild(row);
+      // 🚨 7と8の間に線を引く（依頼者・2026-09-03）。
+      //    もとの並べ方で、ここが向きの変わり目にあたる。
+      if (i === 6) {
+        const split = document.createElement("button");
+        split.type = "button";
+        split.className = "lad-split";
+        split.setAttribute("aria-label", "7と8の分かれ目の説明");
+        split.addEventListener("click", () => {
+          openInfoModal({
+            title: "7と8の分かれ目",
+            body: "7「満足」までが、気持ちの良いほうです。\n8「退屈」から下が、良くないほう。\n\n"
+              + "線の下におられるときに、いきなり1「喜び・感謝」の話をしても届きません。"
+              + "まず、この線の上に出ることが当面の行き先になります。",
+          });
+        });
+        list.appendChild(split);
+      }
+    });
+
+    select(pick ? pick - 1 : null);
+    return frag;
+  }
+
+  // goto(id) … 別の画面へ渡すときに呼ぶ。
+  function buildWheel(spec, goto, onPick) {
+    const NS = "http://www.w3.org/2000/svg";
+    const C = 200;      // 中心
+    const RI = 96;      // 内側の円（「怒り」が入る）
+    const RO = 188;     // 外側の円（選ばれた扇形が 1.06 倍に伸びるぶん、内側に詰めてある）
+    const RL = 146;     // 気持ちの名前を置く輪の半径
+    const GAP = 1.2;    // 扇形どうしのすきま（度）
+    const STEP = 360 / spec.parts.length;
+    const START = -90 - STEP / 2;  // 1つ目を真上に置く
+
+    const wrap = document.createElement("div");
+    wrap.className = "aw-wrap";
+
+    const hint = document.createElement("p");
+    hint.className = "aw-hint";
+    hint.textContent = spec.hint;
+    wrap.appendChild(hint);
+
+    const fig = document.createElement("div");
+    fig.className = "aw-fig";
+
+    const svg = document.createElementNS(NS, "svg");
+    svg.setAttribute("viewBox", "0 0 400 400");
+    svg.setAttribute("class", "aw-svg");
+    svg.setAttribute("role", "group");
+    svg.setAttribute("aria-label", spec.core.name + "の輪");
+
+    const point = (r, deg) => {
+      const a = (deg * Math.PI) / 180;
+      return [C + r * Math.cos(a), C + r * Math.sin(a)];
+    };
+    const round = (n) => Math.round(n * 100) / 100;
+
+    // 背景の円（濃紺〜紫。土台の色をそのまま使う）
+    const disc = document.createElementNS(NS, "circle");
+    disc.setAttribute("cx", C);
+    disc.setAttribute("cy", C);
+    disc.setAttribute("r", RO);
+    disc.setAttribute("fill", "rgba(0, 0, 0, 0.22)");
+    svg.appendChild(disc);
+
+    const card = document.createElement("div");
+    card.className = "aw-card";
+
+    function showCard(part) {
+      card.innerHTML = "";
+      const h = document.createElement("p");
+      h.className = "aw-card-name";
+      h.textContent = part.name;
+      card.appendChild(h);
+      if (part.items) {
+        const ul = document.createElement("ul");
+        part.items.forEach((text) => {
+          const li = document.createElement("li");
+          li.textContent = text;
+          ul.appendChild(li);
+        });
+        card.appendChild(ul);
+      } else {
+        // 🚨 同じ気持ちの、弱い言い方から強い言い方まで。
+        //    2026-09-03、依頼者に「弱いとき／そのまま／強いとき」が伝わらなかった。
+        //    言葉で説明せず、**並べて向きを見せる**形にした。
+        const lead = document.createElement("p");
+        lead.className = "aw-lv-lead";
+        lead.textContent = "お客様は、こんな言い方をされるかもしれません";
+        card.appendChild(lead);
+
+        const row = document.createElement("div");
+        row.className = "aw-lv-row";
+        // 気持ちの深さは、その気持ちの色の濃さで見せる。言葉では言わない。
+        // showCard は index を受け取らないので、並びから引く。
+        const base = (spec.hue(Math.max(0, spec.parts.indexOf(part))).match(/-?\d+(\.\d+)?/g) || ["268", "40", "40"]).map(Number);
+        // 暗い地なので、**強いほうを明るく**する（塗りのときとは向きが逆）。
+        part.levels.forEach((word, i) => {
+          const item = document.createElement("span");
+          item.className = "aw-lv-item";
+          item.style.color = "hsl(" + base[0] + ", 62%, " + (68 + i * 10) + "%)";
+          item.textContent = word;
+          row.appendChild(item);
+        });
+        card.appendChild(row);
+
+        const why = document.createElement("p");
+        why.className = "aw-lv-why";
+        why.textContent = "どの言い方をされても、その言葉のまま受け取ってください。"
+          + "「イライラする」と言われたのに「激怒ですね」と返すと、遠く感じられることがあります。";
+        card.appendChild(why);
+      }
+      // もう一方の図へ渡す。2枚を別々の記事にしているので、押して移れるようにする。
+      if (part.link) {
+        const go = document.createElement("button");
+        go.type = "button";
+        go.className = "aw-go";
+        go.textContent = part.link.label + " →";
+        go.addEventListener("click", () => goto(part.link.doc));
+        card.appendChild(go);
+      }
+      // 22段階に同じ言葉が載っている気持ちは、その段へ飛べるようにする。
+      // 🚨 当てはめではない。**同じ言葉が実際に載っている段**だけを指している。
+      if (part.step && goto) {
+        const toLad = document.createElement("button");
+        toLad.type = "button";
+        toLad.className = "aw-go aw-go-sub";
+        toLad.textContent = "22段階の「" + LADDER[part.step - 1].split("・")[0] + "」を見る →";
+        toLad.addEventListener("click", () => goto("ladder", part.step));
+        card.appendChild(toLad);
+      }
+    }
+
+    const sectors = [];
+    const labels = [];
+    // 選ばれた扇形は、中心から 1.06 倍に伸びる。円の外へ少し出る形になる。
+    const GROW = "translate(" + C + " " + C + ") scale(1.06) translate(-" + C + " -" + C + ")";
+
+    function select(index) {
+      labels.forEach((el, i) => el.classList.toggle("is-on", i === index));
+      if (onPick) onPick(index === -1 ? null : spec.parts[index].name);
+      sectors.forEach((s, i) => {
+        s.setAttribute("fill-opacity", i === index ? "0.95" : "0.55");
+        s.setAttribute("aria-pressed", i === index ? "true" : "false");
+        // 🚨 選ばれた扇形に、太い金の縁を付けない（依頼者・2026-09-03「安っぽいです」）。
+        //    縁はどれも同じ細さのまま。**大きくなることと、色が濃くなることだけで見せる。**
+        if (i === index) {
+          s.setAttribute("transform", GROW);
+        } else {
+          s.removeAttribute("transform");
+        }
+      });
+      core.setAttribute("fill-opacity", index === -1 ? "1" : "0.85");
+      showCard(index === -1 ? spec.core : spec.parts[index]);
+    }
+
+    spec.parts.forEach((part, i) => {
+      const a0 = START + STEP * i + GAP;
+      const a1 = START + STEP * (i + 1) - GAP;
+      const [x0, y0] = point(RO, a0);
+      const [x1, y1] = point(RO, a1);
+      const [x2, y2] = point(RI, a1);
+      const [x3, y3] = point(RI, a0);
+      const path = document.createElementNS(NS, "path");
+      path.setAttribute(
+        "d",
+        "M" + round(x0) + " " + round(y0) +
+        " A" + RO + " " + RO + " 0 0 1 " + round(x1) + " " + round(y1) +
+        " L" + round(x2) + " " + round(y2) +
+        " A" + RI + " " + RI + " 0 0 0 " + round(x3) + " " + round(y3) + " Z"
+      );
+      // 紫〜赤紫の中で少しずつ振る。色数は増やすが、系統は土台から出さない。
+      path.setAttribute("fill", spec.hue(i));
+      path.setAttribute("fill-opacity", "0.55");
+      path.setAttribute("stroke", "#d9a94a");
+      path.setAttribute("stroke-width", "1");
+      path.setAttribute("class", "aw-sector");
+      path.setAttribute("role", "button");
+      path.setAttribute("tabindex", "0");
+      path.setAttribute("aria-label", part.name);
+      path.addEventListener("click", () => select(i));
+      path.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          select(i);
+        }
+      });
+      sectors.push(path);
+      svg.appendChild(path);
+    });
+
+    const core = document.createElementNS(NS, "circle");
+    core.setAttribute("cx", C);
+    core.setAttribute("cy", C);
+    core.setAttribute("r", RI);
+    core.setAttribute("fill", spec.coreFill);
+    core.setAttribute("stroke", "#f4d98b");
+    core.setAttribute("stroke-width", "1.5");
+    core.setAttribute("class", "aw-sector");
+    core.setAttribute("role", "button");
+    core.setAttribute("tabindex", "0");
+    core.setAttribute("aria-label", spec.core.name);
+    core.addEventListener("click", () => select(-1));
+    core.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        select(-1);
+      }
+    });
+    svg.appendChild(core);
+    fig.appendChild(svg);
+
+    // 文字は SVG の外（HTML）に置く。SVG の中に入れると viewBox と一緒に縮む。
+    spec.parts.forEach((part, i) => {
+      const deg = START + STEP * i + STEP / 2;
+      const a = (deg * Math.PI) / 180;
+      const label = document.createElement("div");
+      label.className = "aw-label";
+      label.style.left = round(50 + (RL / 400) * 100 * Math.cos(a)) + "%";
+      label.style.top = round(50 + (RL / 400) * 100 * Math.sin(a)) + "%";
+      part.lines.forEach((line, k) => {
+        if (k > 0) label.appendChild(document.createElement("br"));
+        label.appendChild(document.createTextNode(line));
+      });
+      labels.push(label);
+      fig.appendChild(label);
+    });
+
+    const coreEl = document.createElement("div");
+    coreEl.className = "aw-core";
+    const coreMain = document.createElement("div");
+    coreMain.className = "aw-core-main";
+    coreMain.textContent = spec.core.name;
+    coreEl.appendChild(coreMain);
+    const coreSub = document.createElement("div");
+    coreSub.className = "aw-core-sub";
+    spec.core.words.forEach((word, k) => {
+      if (k > 0) coreSub.appendChild(document.createElement("br"));
+      coreSub.appendChild(document.createTextNode(word));
+    });
+    coreEl.appendChild(coreSub);
+    fig.appendChild(coreEl);
+
+    wrap.appendChild(fig);
+    wrap.appendChild(card);
+    select(-1);
+    return wrap;
+  }
+
   function appendDocBlock(block, parent) {
     const type = block[0];
     if (type === "t") {
@@ -4507,7 +5950,8 @@
   function buildEntryEl(entry, withHeading) {
     const entryEl = document.createElement("div");
     entryEl.className = "doc-entry";
-    if (withHeading) {
+    // 図だけの項目は見出しを持たない（「図」という見出しに意味がないため）。
+    if (withHeading && entry.h3) {
       const h3 = document.createElement("h3");
       h3.textContent = entry.h3;
       entryEl.appendChild(h3);
@@ -6112,6 +7556,8 @@
   const proSheetEl = document.getElementById("pro-sheet");
   const proTabForecast = document.getElementById("pro-tab-forecast");
   const proTabSheet = document.getElementById("pro-tab-sheet");
+  const proFeelEl = document.getElementById("pro-feel");
+  const proTabFeel = document.getElementById("pro-tab-feel");
   const proForecastResultEl = document.getElementById("pro-forecast-result");
   const proForecastErrorEl = document.getElementById("pro-forecast-error");
   const proSheetErrorEl = document.getElementById("pro-sheet-error");
@@ -6140,16 +7586,341 @@
     el.classList.toggle("hidden", !message);
   }
 
+  // 🚨 タブは3つ。増やしたら、下の3行すべてに名前を足すこと。
   function proShowTab(which) {
-    const forecast = which === "forecast";
-    proForecastEl.classList.toggle("hidden", !forecast);
-    proSheetEl.classList.toggle("hidden", forecast);
-    proTabForecast.setAttribute("aria-selected", String(forecast));
-    proTabSheet.setAttribute("aria-selected", String(!forecast));
+    proForecastEl.classList.toggle("hidden", which !== "forecast");
+    proSheetEl.classList.toggle("hidden", which !== "sheet");
+    proFeelEl.classList.toggle("hidden", which !== "feel");
+    proTabForecast.setAttribute("aria-selected", String(which === "forecast"));
+    proTabSheet.setAttribute("aria-selected", String(which === "sheet"));
+    proTabFeel.setAttribute("aria-selected", String(which === "feel"));
+    // 図は重いので、開かれたときに初めて組む。
+    if (which === "feel") buildFeel();
   }
 
   proTabForecast.addEventListener("click", () => proShowTab("forecast"));
   proTabSheet.addEventListener("click", () => proShowTab("sheet"));
+  proTabFeel.addEventListener("click", () => proShowTab("feel"));
+  // ---------------- 気持ちから読む（鑑定の機能・有料） ----------------
+  // 🚨 2026-09-03、依頼者の指示で資料（無料）から鑑定の機能（有料）へ移した。
+  //    「サブスク契約してよかったと思ってもらえるように」（依頼者）。
+  // 🚨 3つの図は別々の資料ではなく、**1つの順番**として組んである。
+  //    その方の数字（誰か）→ ① どの気持ちか → ② どのくらい重いか → ③ 怒りだけ下へ
+  // 🚨 かけたい言葉は **NUMBER_WORDS（依頼者の言葉）**からしか出さない。
+  //    段の名前は **LADDER（もとの並び）**からしか出さない。**AIの作文を混ぜない。**
+  const feelWheelEl = document.getElementById("feel-wheel");
+  const feelLadderEl = document.getElementById("feel-ladder");
+  const feelAngerEl = document.getElementById("feel-anger");
+  const feelWhoOutEl = document.getElementById("feel-who-out");
+  const feelTabs = {
+    wheel: document.getElementById("feel-tab-wheel"),
+    ladder: document.getElementById("feel-tab-ladder"),
+    anger: document.getElementById("feel-tab-anger"),
+  };
+  let feelBuilt = false;
+  // いま観ているお客様の控え。端末の中だけで持ち、残すまで保存しない。
+  const feelState = { birth: null, life: null, soul: null, destiny: null, feel: null, step: null };
+
+  // 記録は端末の localStorage だけ。サーバーへは送らない。
+  // 🚨 お客様の生年月日が入る。必ず消せるようにしておくこと。
+  const FEEL_LOG_KEY = "numerology-feel-log";
+
+  function readFeelLog() {
+    try {
+      const raw = localStorage.getItem(FEEL_LOG_KEY);
+      const parsed = raw ? JSON.parse(raw) : null;
+      return parsed && typeof parsed === "object" ? parsed : {};
+    } catch (err) {
+      return {};
+    }
+  }
+
+  function writeFeelLog(log) {
+    try {
+      localStorage.setItem(FEEL_LOG_KEY, JSON.stringify(log));
+    } catch (err) {
+      /* 覚えられない端末でも、その日の鑑定は続けられる */
+    }
+  }
+
+  function feelHeading(text) {
+    const h = document.createElement("p");
+    h.className = "feel-h";
+    h.textContent = text;
+    return h;
+  }
+
+  function feelList(title, items, cls) {
+    const box = document.createElement("div");
+    box.className = "feel-block" + (cls ? " " + cls : "");
+    const h = document.createElement("p");
+    h.className = "feel-block-h";
+    h.textContent = title;
+    box.appendChild(h);
+    const ul = document.createElement("ul");
+    items.forEach((text) => {
+      const li = document.createElement("li");
+      li.textContent = text;
+      ul.appendChild(li);
+    });
+    box.appendChild(ul);
+    return box;
+  }
+
+  // 生年月日が入るたびに、その方の数字と言葉を出し直す。
+  function feelUpdateWho() {
+    const birth = proReadDate("feel-year", "feel-month", "feel-day");
+    feelWhoOutEl.innerHTML = "";
+    if (!birth) {
+      feelState.birth = null;
+      feelState.life = null;
+      feelWhoOutEl.classList.add("hidden");
+      return;
+    }
+    feelState.birth = [birth.year, birth.month, birth.day].join("-");
+    // 🚨 怒りの出どころは3つ（依頼者・2026-09-03）。名前が無ければライフパスだけ。
+    const romaji = (document.getElementById("feel-last").value.trim() + " "
+      + document.getElementById("feel-first").value.trim()).trim();
+    const p = compatProfile(birth.year, birth.month, birth.day, romaji ? nameLetters(romaji) : []);
+    const life = p.lifePath;
+    feelState.life = life;
+    feelState.soul = p.soul;
+    feelState.destiny = p.destiny;
+    feelWhoOutEl.classList.remove("hidden");
+
+    const num = document.createElement("div");
+    num.className = "feel-num";
+    const label = document.createElement("span");
+    label.className = "feel-num-label";
+    label.textContent = "ライフパス";
+    const value = document.createElement("span");
+    value.className = "feel-num-value";
+    value.textContent = String(life);
+    num.appendChild(label);
+    num.appendChild(value);
+    feelWhoOutEl.appendChild(num);
+
+    const w = NUMBER_WORDS[life];
+    if (w) {
+      if (w.say.length) feelWhoOutEl.appendChild(feelList("かけたい言葉", w.say, "is-say"));
+      if (w.stuck.length) feelWhoOutEl.appendChild(feelList("つまずきやすいところ", w.stuck));
+      // 空のときは、見出しごと出さない。
+      // ⚠️ 「まだ伺えていません」はこちらの都合。買った人には意味が分からない。
+      if (w.act.length) feelWhoOutEl.appendChild(feelList("してみるとよいこと", w.act));
+      if (w.note) {
+        const note = document.createElement("p");
+        note.className = "feel-note";
+        note.textContent = w.note;
+        feelWhoOutEl.appendChild(note);
+      }
+    }
+
+    feelWhoOutEl.appendChild(feelRenderLog());
+    feelRenderShould();
+  }
+
+  // 前に同じ方を観たときの控え。2回目からが、この機能のいちばん効くところ。
+  function feelRenderLog() {
+    const box = document.createElement("div");
+    box.className = "feel-log";
+    const log = readFeelLog();
+    const rows = (log[feelState.birth] || []).slice(-3).reverse();
+
+    if (rows.length) {
+      rows.forEach((row) => {
+        const p = document.createElement("p");
+        p.className = "feel-log-line";
+        const when = row.d ? row.d.slice(5).replace("-", "/") : "";
+        const step = row.step ? row.step + "　" + LADDER[row.step - 1] : "";
+        p.textContent = when + "　" + [row.feel, step].filter(Boolean).join("　／　");
+        box.appendChild(p);
+      });
+      const del = document.createElement("button");
+      del.type = "button";
+      del.className = "feel-log-del";
+      del.textContent = "この方の記録を消す";
+      del.addEventListener("click", () => {
+        const now = readFeelLog();
+        delete now[feelState.birth];
+        writeFeelLog(now);
+        feelUpdateWho();
+      });
+      box.appendChild(del);
+    } else {
+      const p = document.createElement("p");
+      p.className = "feel-log-line";
+      p.textContent = "この方の記録は、まだありません。";
+      box.appendChild(p);
+    }
+
+    const note = document.createElement("p");
+    note.className = "feel-log-note";
+    note.textContent = "記録はこの端末の中だけに残ります。外へは出ません。";
+    box.appendChild(note);
+    return box;
+  }
+
+  function feelSaveToday() {
+    if (!feelState.birth) return "生年月日を入れると、残せます";
+    const log = readFeelLog();
+    const rows = log[feelState.birth] || [];
+    rows.push({
+      d: new Date().toISOString().slice(0, 10),
+      feel: feelState.feel,
+      step: feelState.step,
+    });
+    log[feelState.birth] = rows.slice(-20);
+    writeFeelLog(log);
+    feelUpdateWho();
+    return "残しました";
+  }
+
+  // 怒りの根っこにある「べき」。生年月日が入っているときだけ出す。
+  // 🚨 当てるためではなく、**伺うため**に出す。「思い当たることはありますか」で終わる。
+  const feelShouldEl = document.createElement("div");
+  feelShouldEl.className = "feel-should hidden";
+
+  // 🚨 怒りの出どころは3つ（依頼者・2026-09-03）。向きが違う。
+  //    ライフパス … ずっと持っている芯／ソウル … 自分に向く／デスティニー … 人に向く
+  const FEEL_POINTS = [
+    ["life", "ライフパス", "生き方の芯"],
+    ["soul", "ソウル", "本音。自分に向く怒り"],
+    ["destiny", "デスティニー", "人との関わり。人に向く怒り"],
+  ];
+
+  function feelRenderShould() {
+    const rows = FEEL_POINTS
+      .map(([key, label, note]) => [feelState[key], label, note])
+      .filter(([num]) => num && NUMBER_WORDS[num] && NUMBER_WORDS[num].anger);
+    if (!rows.length) {
+      feelShouldEl.classList.add("hidden");
+      return;
+    }
+    feelShouldEl.innerHTML = "";
+    feelShouldEl.classList.remove("hidden");
+
+    const h = document.createElement("p");
+    h.className = "feel-block-h";
+    h.textContent = "怒りの出どころ";
+    feelShouldEl.appendChild(h);
+
+    const lead = document.createElement("p");
+    lead.className = "feel-should-lead";
+    lead.textContent = "怒りは、その人が大事にしていることが踏まれたときに出る、とされています。";
+    feelShouldEl.appendChild(lead);
+
+    rows.forEach(([num, label, note]) => {
+      const box = document.createElement("div");
+      box.className = "feel-point";
+      const top = document.createElement("p");
+      top.className = "feel-point-top";
+      top.textContent = label + " " + num + "　" + note;
+      const word = document.createElement("p");
+      word.className = "feel-should-word";
+      word.textContent = NUMBER_WORDS[num].anger;
+      box.appendChild(top);
+      box.appendChild(word);
+      feelShouldEl.appendChild(box);
+    });
+
+    if (!feelState.soul || !feelState.destiny) {
+      const more = document.createElement("p");
+      more.className = "feel-should-why";
+      more.textContent = "お名前を入れると、ソウルとデスティニーの「べき」も出ます。";
+      feelShouldEl.appendChild(more);
+    }
+
+    const why = document.createElement("p");
+    why.className = "feel-should-why";
+    why.textContent = "この方に当てはまるかどうかは、ご本人にしか分かりません。"
+      + "「あなたはこう思っています」とは言わずに、「思い当たることはありますか」と伺ってください。";
+    feelShouldEl.appendChild(why);
+  }
+
+  // goto("anger") / goto("ladder", 段) で、押した先へそのまま移る。
+  // 鑑定の最中に、画面を探させないため。
+  function feelGoto(where, step) {
+    if (where === "ladder") {
+      feelShow("ladder", step);
+      return;
+    }
+    if (where === "anger") {
+      feelShow("anger");
+      return;
+    }
+    feelShow("wheel");
+  }
+
+  function feelShow(which, step) {
+    ["wheel", "ladder", "anger"].forEach((key) => {
+      feelTabs[key].setAttribute("aria-selected", String(key === which));
+    });
+    feelWheelEl.classList.toggle("hidden", which !== "wheel");
+    feelLadderEl.classList.toggle("hidden", which !== "ladder");
+    feelAngerEl.classList.toggle("hidden", which !== "anger");
+    // 段を指して移ってきたときは、はしごを組み直してその段を選んでおく。
+    if (which === "ladder") {
+      feelLadderEl.innerHTML = "";
+      feelLadderEl.appendChild(feelHeading("② いま、どのあたりか"));
+      // 🚨 もとの教え方そのまま（2026-09-03 に確かめた）。
+      //    「いつも喜びでいるための決まりではなく、いまの場所を知って1段だけ上を目指す地図」。
+      //    ⚠️ これが無いと「軽いほうが良い」と読まれ、お客様を急かす形になる。
+      const map = document.createElement("p");
+      map.className = "feel-should-lead";
+      map.textContent = "いつも軽いところにいるための決まりではありません。いまの場所を知って、ひとつだけ隣を目指すための地図です。";
+      feelLadderEl.appendChild(map);
+      feelLadderEl.appendChild(buildLadder(feelGoto, step, (n) => { feelState.step = n; }, feelSaveToday));
+    }
+    if (which === "anger") feelRenderShould();
+    window.scrollTo(0, 0);
+  }
+
+  function buildFeel() {
+    if (feelBuilt) return;
+    feelBuilt = true;
+    feelWheelEl.appendChild(feelHeading("① いま、どれに近いですか"));
+    feelWheelEl.appendChild(buildWheel(WHEELS.plutchik, feelGoto, (name) => { feelState.feel = name; }));
+    feelAngerEl.appendChild(feelHeading("③ 怒りの下にある気持ち"));
+    feelAngerEl.appendChild(buildWheel(WHEELS.anger, feelGoto));
+    feelAngerEl.appendChild(feelShouldEl);
+    feelShow("wheel");
+  }
+
+  feelTabs.wheel.addEventListener("click", () => feelShow("wheel"));
+  feelTabs.ladder.addEventListener("click", () => feelShow("ladder"));
+  feelTabs.anger.addEventListener("click", () => feelShow("anger"));
+
+  ["feel-year", "feel-month", "feel-day", "feel-last", "feel-first"].forEach((id) => {
+    const el = document.getElementById(id);
+    el.addEventListener("input", feelUpdateWho);
+    el.addEventListener("blur", feelUpdateWho);
+  });
+
+  document.getElementById("feel-fill-btn").addEventListener("click", () => {
+    document.getElementById("feel-year").value = birthYearInput.value;
+    document.getElementById("feel-month").value = birthMonthInput.value;
+    document.getElementById("feel-day").value = birthDayInput.value;
+    // 計算画面の名前は、もうヘボン式に変わっている。そのまま持ってくる。
+    document.getElementById("feel-last").value = document.getElementById("last-name").value;
+    document.getElementById("feel-first").value = document.getElementById("first-name").value;
+    feelUpdateWho();
+  });
+
+  // 名前の欄も、他の画面と同じ扱いにする（カナ→ヘボン式、苗字→名前へ送る）。
+  ["feel-last", "feel-first"].forEach((id) => setupCompatNameInput(document.getElementById(id)));
+  setupNameSplit("feel-last", "feel-first");
+
+  // お客様にお見せするあいだは、鑑定士向けの手引きを隠す。
+  // 🚨 携帯を渡した先で、こちらの覚え書きとお客様の生年月日が読まれないようにするため。
+  document.getElementById("feel-present-btn").addEventListener("click", () => {
+    feelShow("wheel");
+    document.body.classList.add("feel-present");
+    window.scrollTo(0, 0);
+  });
+  document.getElementById("feel-present-end").addEventListener("click", () => {
+    document.body.classList.remove("feel-present");
+    window.scrollTo(0, 0);
+  });
 
   proOpenBtn.addEventListener("click", () => {
     // 🚨 払っていないお客様には開かない。ボタンは見えているので、ここで必ず止める。
@@ -6159,7 +7930,9 @@
       // 🚨 支度が済むまでは、押せないボタンを出さずに、お声がけの案内にする。
       note.textContent = STRIPE_READY
         ? "「鑑定の機能」は、月1,500円でお使いいただけます。"
-        : "「鑑定の機能」は、月1,500円でお使いいただけます。ご希望の場合は、直接お声がけください。";
+        // 🚨 支度が済むまでは、値段を出さない（依頼者・2026-09-03）。
+        //    まずは無料でお使いいただく人を増やす方向にしたため。
+        : "「鑑定の機能」は準備中です。整いましたら、お知らせします。";
       note.classList.remove("hidden");
       joinBtn.classList.toggle("hidden", !STRIPE_READY);
       return;
