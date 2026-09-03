@@ -7933,6 +7933,8 @@
     window.scrollTo(0, 0);
   });
 
+  // ==有料ここまで==
+
   proOpenBtn.addEventListener("click", () => {
     // 🚨 払っていないお客様には開かない。ボタンは見えているので、ここで必ず止める。
     //    見た目（is-locked）だけで止めると、クラスを外すだけで開けてしまう。
@@ -7969,8 +7971,6 @@
     proShowTab("forecast");
     window.scrollTo(0, 0);
   });
-
-  // ==有料ここまで==
 
   proBackBtn.addEventListener("click", () => {
     proEl.classList.add("hidden");

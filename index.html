@@ -6924,6 +6924,43 @@
   proTabSheet.addEventListener("click", () => proShowTab("sheet"));
   if (proTabFeel) proTabFeel.addEventListener("click", () => proShowTab("feel"));
 
+  proOpenBtn.addEventListener("click", () => {
+    // 🚨 払っていないお客様には開かない。ボタンは見えているので、ここで必ず止める。
+    //    見た目（is-locked）だけで止めると、クラスを外すだけで開けてしまう。
+    if (!isPaidRole(currentRole)) {
+      const note = document.getElementById("nav-locked-note");
+      // 🚨 支度が済むまでは、押せないボタンを出さずに、お声がけの案内にする。
+      note.textContent = STRIPE_READY
+        ? "「鑑定の機能」は、月1,500円でお使いいただけます。"
+        // 🚨 支度が済むまでは、値段を出さない（依頼者・2026-09-03）。
+        //    まずは無料でお使いいただく人を増やす方向にしたため。
+        : "「鑑定の機能」は準備中です。整いましたら、お知らせします。";
+      note.classList.remove("hidden");
+      joinBtn.classList.toggle("hidden", !STRIPE_READY);
+      return;
+    }
+    // 開くたびに「いつまで」を入れ直す。控えの期限は、置き場に確かめるたびに動く。
+    const untilEl = document.getElementById("pro-until");
+    const member = readMember();
+    if (member && member.expiresAt) {
+      untilEl.textContent = memberUntilText(member.expiresAt);
+      untilEl.classList.remove("hidden");
+    } else {
+      // 依頼者ご自身（管理者）は会員ではないので、何も出さない。
+      untilEl.classList.add("hidden");
+    }
+
+    // 開くたびに「見たい日」を今日に戻す。日をまたいで開きっぱなしのことがある。
+    const now = new Date();
+    document.getElementById("pro-target-year").value = String(now.getFullYear());
+    document.getElementById("pro-target-month").value = String(now.getMonth() + 1);
+    document.getElementById("pro-target-day").value = String(now.getDate());
+    appEl.classList.add("hidden");
+    proEl.classList.remove("hidden");
+    proShowTab("forecast");
+    window.scrollTo(0, 0);
+  });
+
   proBackBtn.addEventListener("click", () => {
     proEl.classList.add("hidden");
     appEl.classList.remove("hidden");
