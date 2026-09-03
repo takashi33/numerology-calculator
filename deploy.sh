@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 # 数秘電卓アプリを GitHub Pages へ公開する。
 #
-# 公開されるのはリポジトリ直下の index.html / sw.js の2つだけ。
+# 公開されるのは index.html（無料版）/ r9x4t7m2.html（有料版）/ sw.js の3つ。
+# 🚨 直すのは app.html だけ。公開する2つは build.js が app.html から作る（2026-09-03）。
+#    有料の中身を、公開のURL（index.html）に置かないため。
 # 🚨 invite-card.html（体験カード）は 2026-08-30 に消した。コードの入力そのものが無くなったため。
 # GitHub の Web UI から手作業でアップロードしていた工程を置き換えるもので、
 # 認証は Windows 資格情報マネージャー（Git Credential Manager）に保存済みの
@@ -14,7 +16,7 @@ set -euo pipefail
 
 cd "$(dirname "$0")"
 
-PUBLISHED=(index.html sw.js)
+PUBLISHED=(index.html r9x4t7m2.html sw.js)
 SITE="https://takashi33.github.io/numerology-calculator"
 
 say() { printf '\n\033[1m%s\033[0m\n' "$1"; }
@@ -32,6 +34,9 @@ done
 # 本体と確認用ページを手で両方直していたため、当て忘れで中身がずれた（2026-08-21）。
 # 公開のたびに本体から作り直し、ずれようがなくする。
 # 目印が見つからなければ make-preview.js 側で止まるので、そのまま公開させない。
+say "0/5 無料版と有料版を app.html から作る"
+node build.js || die "公開ファイルを作れませんでした。上の案内にしたがって直してください。"
+
 say "0/5 確認用ページを本体に合わせる"
 node make-preview.js || die "確認用ページを作れませんでした。上の案内にしたがって直してください。"
 
@@ -57,7 +62,7 @@ fi
 # ---- 3. 差分を見せる --------------------------------------------------------
 say "2/5 公開ファイルの差分"
 if git diff --quiet -- "${PUBLISHED[@]}" && git diff --cached --quiet -- "${PUBLISHED[@]}"; then
-  echo "  公開ファイル（index.html / sw.js）に変更はありません。"
+  echo "  公開ファイルに変更はありません。"
   PUBLISHED_CHANGED=0
 else
   git diff --stat HEAD -- "${PUBLISHED[@]}"
@@ -67,7 +72,7 @@ fi
 say "3/5 その他の変更"
 # 公開ファイルは pathspec で除外する。パス文字列で grep すると
 # webapp/index.html のような「別ファイルだが名前を含む」ものまで消えてしまう。
-OTHER=$(git status --short -- . ':!index.html' ':!sw.js')
+OTHER=$(git status --short -- . ':!index.html' ':!r9x4t7m2.html' ':!sw.js')
 [ -n "$OTHER" ] && echo "$OTHER" || echo "  なし"
 
 if [ "$CHECK_ONLY" -eq 1 ]; then

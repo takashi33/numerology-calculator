@@ -17,7 +17,8 @@
 const fs = require("fs");
 const path = require("path");
 
-const SRC = path.join(__dirname, "index.html");
+// 🚨 元は app.html（2026-09-03 に無料版・有料版へ分けた）。index.html は作られたほう。
+const SRC = path.join(__dirname, "app.html");
 const DEST = path.join(__dirname, "preview", "index.html");
 
 const RULES = [

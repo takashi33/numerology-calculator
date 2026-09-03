@@ -2730,7 +2730,9 @@
   <div class="record-tabs" role="tablist">
     <button type="button" class="record-tab" id="pro-tab-forecast" role="tab" aria-selected="true">その方のこれから</button>
     <button type="button" class="record-tab" id="pro-tab-sheet" role="tab" aria-selected="false">鑑定書</button>
+    <!-- ==有料ここから== -->
     <button type="button" class="record-tab" id="pro-tab-feel" role="tab" aria-selected="false">気持ちから読む</button>
+    <!-- ==有料ここまで== -->
   </div>
 
   <div id="pro-forecast">
@@ -2792,6 +2794,7 @@
     </div>
   </div>
 
+  <!-- ==有料ここから== -->
   <!-- 🚨 気持ちから読む（有料）。2026-09-03、依頼者の指示で資料から移した。
        「サブスクにしてよかった」と思っていただくための、鑑定中に開く画面。
        図は画像にしない（図形＝SVG／文字＝HTML）。→ 仕様.md「鑑定の機能」 -->
@@ -2839,6 +2842,7 @@
     <div id="feel-ladder" class="hidden"></div>
     <div id="feel-anger" class="hidden"></div>
   </div>
+  <!-- ==有料ここまで== -->
 </div>
 
 <div id="record" class="hidden">
@@ -5252,6 +5256,7 @@
   //    絵の中へ文字を焼き込むと、携帯では字が小さくなり、拡大しないと読めない。
   //    **図形は SVG、文字は HTML** に分けてある。大きさの決まりは CSS の .aw-label 付近。
   // 🚨 図の中に入れるのは気持ちの名前だけ。説明は下のカードに出す。
+  // ==有料ここから==
   const WHEELS = {};
 
   WHEELS.anger = {};
@@ -5883,6 +5888,8 @@
     select(-1);
     return wrap;
   }
+
+  // ==有料ここまで==
 
   function appendDocBlock(block, parent) {
     const type = block[0];
@@ -7589,20 +7596,22 @@
   }
 
   // 🚨 タブは3つ。増やしたら、下の3行すべてに名前を足すこと。
+  // ⚠️ 無料版には「気持ちから読む」が無い。**無いときに落ちないようにしておく。**
   function proShowTab(which) {
     proForecastEl.classList.toggle("hidden", which !== "forecast");
     proSheetEl.classList.toggle("hidden", which !== "sheet");
-    proFeelEl.classList.toggle("hidden", which !== "feel");
     proTabForecast.setAttribute("aria-selected", String(which === "forecast"));
     proTabSheet.setAttribute("aria-selected", String(which === "sheet"));
-    proTabFeel.setAttribute("aria-selected", String(which === "feel"));
+    if (proFeelEl) proFeelEl.classList.toggle("hidden", which !== "feel");
+    if (proTabFeel) proTabFeel.setAttribute("aria-selected", String(which === "feel"));
     // 図は重いので、開かれたときに初めて組む。
-    if (which === "feel") buildFeel();
+    if (which === "feel" && typeof buildFeel === "function") buildFeel();
   }
 
   proTabForecast.addEventListener("click", () => proShowTab("forecast"));
   proTabSheet.addEventListener("click", () => proShowTab("sheet"));
-  proTabFeel.addEventListener("click", () => proShowTab("feel"));
+  if (proTabFeel) proTabFeel.addEventListener("click", () => proShowTab("feel"));
+  // ==有料ここから==
   // ---------------- 気持ちから読む（鑑定の機能・有料） ----------------
   // 🚨 2026-09-03、依頼者の指示で資料（無料）から鑑定の機能（有料）へ移した。
   //    「サブスク契約してよかったと思ってもらえるように」（依頼者）。
@@ -7960,6 +7969,8 @@
     proShowTab("forecast");
     window.scrollTo(0, 0);
   });
+
+  // ==有料ここまで==
 
   proBackBtn.addEventListener("click", () => {
     proEl.classList.add("hidden");
