@@ -7257,6 +7257,7 @@
   });
 
   (function () {
+    if (!ADMIN_PASSCODE) return;
     const title = document.getElementById("app-title");
     if (!title) return;
     let taps = 0;
