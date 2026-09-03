@@ -8,13 +8,6 @@
 <meta name="apple-mobile-web-app-title" content="数秘電卓">
 <meta name="theme-color" content="#1b1039">
 <style>
-  /* ------------------------------------------------------------------
-     Studio Lantern — 数秘電卓 (Numerology Calculator)
-     Deliberately single-world: a dark, cosmic, gold-lit "night sky"
-     aesthetic that suits a numerology tool. Not a light/dark toggle —
-     the whole point is the sense of stepping into a lantern-lit study
-     at night, so it stays fixed regardless of the viewer's OS theme.
-     ------------------------------------------------------------------ */
   :root {
     --bg-0: #12081f;
     --bg-1: #1b1039;
@@ -26,8 +19,6 @@
     --ink-soft: #cbb9f0;
     --ink-faint: #9c88c2;
     --card: rgba(255, 255, 255, 0.055);
-    /* 🚨 枠の色（2026-08-28 依頼者の指示で金色へ）。
-       アプリ中の枠は 40 か所以上がこれを見ている。ここだけ直せば全部変わる。 */
     --card-border: #d9a94a;
     --input-bg: #faf7ff;
     --input-ink: #221542;
@@ -45,10 +36,6 @@
     min-height: 100vh;
   }
 
-  /* 🚨 縦スクロールバーのぶんの幅を、いつも空けておく。
-     空けないと、短い画面（資料メニュー・鑑定の機能）ではバーが消えて画面が広がり、
-     中身が右へ寄る。画面を移るたびに「← 戻る」が数px跳ねて見える。
-     ⚠️ iPhone はバーが上に浮くので、もともとずれない。これは大きい画面のための手当て。 */
   html {
     scrollbar-gutter: stable;
   }
@@ -80,13 +67,9 @@
     }
   }
 
-  /* ---------------- Main app ---------------- */
-
   #app {
     max-width: 460px;
     margin: 0 auto;
-    /* viewport-fit=cover で画面の端まで描くため、上は時計や電池の帯を避ける。
-       帯が無い端末では env() が 0 になるので、見た目は変わらない。 */
     padding: calc(32px + env(safe-area-inset-top)) 20px 48px;
     animation: fadeIn 0.5s ease;
   }
@@ -188,18 +171,10 @@
     text-align: center;
     font-variant-numeric: tabular-nums;
     min-width: 0;
-    /* 🚨 中身は真ん中寄せなので、左右の余白は見た目に出ない。
-       それでいて4桁分の幅を食う。「文字を大きく」を1番大きくすると、
-       年の「1958」が切れた（2026-09-01・依頼者のご指摘）。
-       ⚠️ zoom は画面を拡げるぶん、並べられる幅（CSSの px）が減る。
-          固定の余白は減らないので、こういう場所から先に足りなくなる。 */
     padding-left: 4px;
     padding-right: 4px;
   }
 
-  /* 🚨 年は4桁ぶんの幅が要る。**画面ごとの id で書かない。**
-     2026-09-01 に計算画面だけ直したが、他の画面には当たっていなかった
-     （2026-09-03、気持ちから読むの欄が崩れたときに気づいた）。 */
   .date-input-group input[id$="-year"] {
     flex: 1.6;
   }
@@ -209,14 +184,6 @@
     flex: 1;
   }
 
-  /* 🚨 「第4期のチャンス（人生後半・52歳〜）」は、かっこの中が11文字ある。
-     日本語の行の決まりで「（」は行末に、「）」は行頭に置けないため、
-     **かっこの中はひと固まりのまま**扱われ、途中で折り返せない。
-     字間（0.04em）がその固まりを5px押し広げ、「文字を大きく」の2段目ではみ出した
-     （2026-09-01・依頼者「1番大きくすると4桁の数字が切れる」と同じ回のご指摘）。
-     ⚠️ `overflow-wrap: anywhere` も `line-break: anywhere` も効かなかった。
-        効いたのは字間を詰めることだけ。
-     ⚠️ **ふつうの大きさでは何も変えない。**大きくしたときだけ詰める。 */
   body.text-lg .result-label,
   body.text-xl .result-label {
     letter-spacing: 0;
@@ -227,10 +194,6 @@
     font-size: 15px;
   }
 
-  /* 🚨 各画面の「主役のボタン」は、ここ1か所で決める。
-     以前は計算画面と相性診断に同じ指定が別々に書いてあり、あとから足した
-     鑑定の2つには何も当たっていなかった（＝標準の灰色ボタンのまま）。
-     依頼者の指摘（2026-08-31）。**画面を足したら、ここに名前を足す。** */
   #calc-btn,
   #compat-btn,
   #pro-forecast-btn,
@@ -363,13 +326,6 @@
     background: rgba(0, 0, 0, 0.18);
     max-height: 320px;
     overflow-y: auto;
-    /* 🚨 依頼者「文字を大きくすると左右に揺れる」（2026-09-01）。
-       ⚠️ **手元では再現できていない。**この環境のスクロール棒は幅を取らない形
-          （スマホと同じ）で、棒が出入りしても中の幅が変わらないため。
-       ⚠️ **Windows のブラウザは棒が幅を取る。**中身の高さが境目をまたぐたびに
-          棒が出入りし、そのぶん中の幅が変わって **5列が計算し直されて横に動く。**
-          stable は、棒の場所を最初から空けておく指定。**そこを狙った直し。**
-       🚨 **再現できていないので、直ったかどうかは依頼者の端末でしか確かめられない。** */
     scrollbar-gutter: stable;
   }
 
@@ -435,23 +391,12 @@
     color: var(--ink-soft);
   }
 
-  /* 🚨 依頼者「文字を大きくすると、ローマ字表が左右に揺れる」（2026-09-01・iPhone）。
-     ⚠️ **手元では再現できなかった。**次の5つを小数まで測って、すべて外れた——
-        スクロール棒の幅／貼り付いた帯のずれ／画面の横はみ出し／表の中のはみ出し／列の再計算。
-     🚨 残ったのは **「拡大（zoom）」と「入れ子のスクロール」の組み合わせ**。
-        iPhone は、拡大した中にスクロールする箱があると、指の動きの横成分が
-        外側まで伝わることがある。**表の中のスクロールをやめれば、組み合わせが消える。**
-     → 大きくしたときだけ、表を全部の高さで出し、**ページごと縦にスクロールしてもらう。**
-        窓が小さいままより読みやすくもなる。
-     ⚠️ **ふつうの大きさでは何も変えない。** */
   body.text-lg .romaji-table,
   body.text-xl .romaji-table {
     max-height: none;
     overflow-y: visible;
   }
 
-  /* 上で入れ子のスクロールをやめるため、貼り付ける相手が画面になってしまう。
-     大きくしたときは、ふつうに流す。 */
   body.text-lg .romaji-table-actions,
   body.text-xl .romaji-table-actions {
     position: static;
@@ -463,8 +408,6 @@
     margin-top: 14px;
     position: sticky;
     bottom: 0;
-    /* 🚨 帯そのものに背景が無く、ボタンのすき間から下の字が透けていた。
-       文字を大きくすると帯が高くなり、重なりがはっきり出る（2026-09-01）。 */
     padding: 6px 0;
     background: rgba(18, 8, 31, 0.95);
   }
@@ -543,16 +486,10 @@
 
   .card-grid {
     display: grid;
-    /* minmax(0, 1fr) にしないと、1fr の最小幅が min-content 扱いになり、
-       「3・5・8」のように数字を並べるカード（.result-number は nowrap）が
-       列を押し広げてグリッドごと親からはみ出す。 */
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 12px;
   }
 
-  /* Basic-3 group: Birthday / Life Path (main) / Challenge side by side,
-     with the Life Path column given extra width since it's the headline
-     number of the three. */
   #group-basic3 {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr) minmax(0, 1fr);
   }
@@ -569,7 +506,6 @@
     grid-column: 1 / -1;
   }
 
-
   .result-card.main .result-number {
     font-size: 48px;
   }
@@ -584,8 +520,6 @@
     box-shadow: 0 0 18px rgba(244, 217, 139, 0.35);
   }
 
-  /* マスターナンバーの金とは意味が違うので、上部のカルマナンバー帯と同じ
-     紫系でそろえ、見分けがつくようにする。 */
   .result-card.karmic {
     border: 1px solid var(--card-border);
     background: rgba(120, 60, 140, 0.3);
@@ -604,10 +538,6 @@
     line-height: 1.4;
   }
 
-  /* 🚨 右上の ⓘ の場所を空けておく。カードの隅に浮かせてあるだけなので、
-     名前が長いと1行目が ⓘ の下へ潜り込む（狭い画面の「基本の3数字」で起きる）。
-     ⚠️ padding では2行目以降まで狭くなり、折り返しが増える。
-     1行目の右上だけを空ける形にする。 */
   .result-label::before {
     content: "";
     float: right;
@@ -655,8 +585,6 @@
     cursor: pointer;
   }
 
-  /* 🚨 ID で display を書いたら、必ず .hidden の打ち消しも書く。
-     書き忘れると隠す指示が効かない（2026-08-28 に事故） */
   #self-open-btn.hidden,
   #push-btn.hidden,
   #admin-open-btn.hidden {
@@ -777,19 +705,12 @@
   #push-do:disabled,
   #push-send:disabled { opacity: 0.5; cursor: default; }
 
-  /* 🚨 上の #push-do は ID なので、.hidden（クラス）より強い。打ち消しを
-     書かないと classList.add("hidden") が効かず、押せてはいけない場面でも
-     ボタンが出たままになる。
-     2026-08-28、これが原因で iPhone の Safari から「受け取りを始める」を
-     押せてしまい、Notification が無くて英語の例外になっていた。 */
   #push-do.hidden,
   #push-send.hidden,
   #push-to-self.hidden,
   #self-store.hidden,
   #push-stop.hidden { display: none; }
 
-  /* 「止める」は取り消しの操作。金色の主役ボタンと同じ見た目にすると、
-     押してほしい方に見える。**枠線だけの控えめな形にする。** */
   #push-stop {
     color: var(--ink-soft);
     background: none;
@@ -853,29 +774,14 @@
     color: var(--ink-faint);
   }
 
-  /* 別窓の本文は、改行をそのまま活かす（言葉の説明も行を分けて書いてある）。 */
   #info-modal-body {
     white-space: pre-line;
   }
 
-  /* ---------------- Library (reference docs) ----------------
-     算出方法・深堀解説・ローマ字の詳細は、どれも読み物としての長さがある。
-     カード単位のⓘモーダルに入れると読みきれず、計算画面に並べると入力欄が
-     下へ押し出されるため、別画面（メニュー→記事）として切り分けている。 */
-
-  /* トップ画面の入口。1本の細い帯にまとめる。
-     🚨 縦積みにしない。入力欄が画面外へ押し出され、何をする画面かが分からなくなる。
-     🚨 2026-08-29、カードを並べる形をやめた。依頼者の指摘「不細工」。
-        カード4枚だと入口だけで203px使い、入力欄が438pxまで下がっていた。
-        いまは54pxで、入力欄は223px。→ docs の「入口の並び」
-     4つが同じ幅を分け合うので、名前の長さが違っても必ず揃う。
-     そのために名前は漢字2文字（資料・相性・手帳・鑑定）にしてある。 */
   .app-nav {
     display: flex;
     margin: 2px 0 22px;
     padding: 14px 0;
-    /* 🚨 線の色は他の枠と同じ var(--card-border)。ここだけ薄い金にしていて、
-       依頼者に「色が違う」と指摘された（2026-08-29）。 */
     border-top: 1px solid var(--card-border);
     border-bottom: 1px solid var(--card-border);
   }
@@ -893,8 +799,6 @@
     color: var(--gold);
     text-align: center;
   }
-  /* 区切りのひし形。境目の真ん中に置き、幅を取らせない。
-     幅を取らせると4等分が崩れて、名前の位置がずれる。 */
   .app-nav-btn + .app-nav-btn::before {
     content: "◆";
     position: absolute;
@@ -906,9 +810,6 @@
     color: var(--gold-deep);
     opacity: 0.55;
   }
-  /* 有料の「鑑定」を、無料の方にも出しておく（依頼者・2026-08-29）。
-     🚨 押しても開かない。開かない仕掛けは JS 側（proOpenBtn の click）。
-        見た目だけで止めてはいけない。 */
   .app-nav-btn.is-locked { opacity: 0.55; }
   .app-nav-btn .nav-lock {
     font-size: 10px;
@@ -917,7 +818,6 @@
   }
   .app-nav-btn:not(.is-locked) .nav-lock { display: none; }
 
-  /* 鑑定を押したのに開けなかったときの一言。押した所のすぐ下に出す。 */
   .nav-locked-note {
     margin: -14px 0 18px;
     font-size: 12px;
@@ -927,7 +827,6 @@
   }
   .nav-locked-note.hidden { display: none; }
 
-  /* お申し込みのボタン。鍵の案内のすぐ下に、控えめに置く。 */
   .join-btn {
     display: block;
     margin: -8px auto 18px;
@@ -995,8 +894,6 @@
   .pro-months tr.now td,
   .pro-months tr.now th { background: rgba(255, 255, 255, 0.05); }
 
-  /* 管理者用のQR。お客様の端末で読み取っていただくので、大きく・白地で出す。
-     🚨 暗い背景のまま出すと読み取れないことがある（過去にQRが読めなかった事故がある）。 */
   #admin-mint-url {
     width: 100%;
     min-height: 84px;
@@ -1012,8 +909,6 @@
     word-break: break-all;
   }
 
-  /* 🚨 QRは画面いっぱいにしない（依頼者・2026-09-01）。
-     白い箱が端まで届くと、画面が箱に埋まって見える。左右に余白を残す。 */
   .admin-qr {
     background: #FBFAF7;
     border-radius: 14px;
@@ -1025,7 +920,6 @@
   }
   .admin-qr img { width: 100%; max-width: 260px; height: auto; display: block; }
 
-  /* 下にも余白。読み終わりが画面の縁で切れないように。 */
   #admin { padding-bottom: 96px; }
   #admin .pro-h2 { margin-top: 34px; }
 
@@ -1060,14 +954,6 @@
     background: rgba(255, 255, 255, 0.12);
   }
 
-  /* 🚨 別画面の土台。ここに名前を並べてある画面は、すべて同じ位置から始まる。
-     ⚠️ 画面を足したら、必ずこの並びに名前を足すこと。
-        書き忘れると、その画面だけ余白が無くなり、
-        「← 戻る」が iPhone の時計に潜り込んで押せなくなる。
-        （記録画面で一度、鑑定の機能で二度目を踏んだ） */
-  /* 🚨 画面を足したら、必ずここに名前を足す。
-     入れ忘れると余白も上端の逃げも効かず、「← 戻る」の位置が崩れる。
-     2026-08-28・08-29・09-01 と、同じ見落としを繰り返している。 */
   #library,
   #compat,
   #pro,
@@ -1120,8 +1006,6 @@
     gap: 12px;
   }
 
-  /* .hidden と同じ詳細度なので、後勝ちで display:flex に戻ってしまう。
-     記事を開いたときにメニューを隠せるよう、明示的に上書きしておく。 */
   .library-menu.hidden {
     display: none;
   }
@@ -1222,11 +1106,6 @@
     cursor: default;
   }
 
-  /* ---------------- 相性診断 ---------------- */
-
-  /* 🚨 入力の並びは、どの画面も同じ間隔にする。
-     鑑定の2つはここに入っておらず、ボタンが入力欄に密着していた（間隔0px）。
-     依頼者の指摘（2026-08-31）。**画面を足したら、ここに名前を足す。** */
   #compat-form,
   #pro-forecast-form,
   #pro-sheet-form {
@@ -1235,8 +1114,6 @@
     gap: 16px;
   }
 
-  /* fieldset はブラウザ既定で min-width:min-content が効いており、これを外さないと
-     中の入力欄の最小幅の合計まで横に広がって画面外へはみ出す（スマホ幅で顕著）。 */
   .compat-person {
     margin: 0;
     min-width: 0;
@@ -1256,8 +1133,6 @@
     color: var(--gold);
   }
 
-  /* グリッド項目の既定 min-width:auto（＝min-content）も同様に縮小を止めるため、
-     トラックを minmax(0,1fr) にして入力欄が列幅に収まるようにする。 */
   .compat-names {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
@@ -1268,7 +1143,6 @@
   .compat-names input {
     min-width: 0;
   }
-
 
   .compat-summary {
     margin: 24px 0 16px;
@@ -1290,7 +1164,6 @@
     margin-bottom: 10px;
   }
 
-  /* 同じ数字だった項目は、読みどころとして先に目に入ってほしいので目立たせる。 */
   .compat-row.same {
     border-color: var(--gold);
     background: rgba(244, 217, 139, 0.09);
@@ -1330,7 +1203,6 @@
     color: var(--ink-soft);
     line-height: 1.95;
     margin: 0 0 24px;
-    /* 導入文は段落を分けたいことがあるので、改行をそのまま活かす。 */
     white-space: pre-line;
   }
 
@@ -1375,8 +1247,6 @@
     margin-bottom: 0;
   }
 
-  /* 1項目が1ページになったぶん本文が長い。項目の中を小見出しで区切らないと
-     読みどころが分からなくなるため、h4を1段だけ使う。 */
   .doc-sub {
     font-size: 12px;
     font-weight: 700;
@@ -1410,16 +1280,6 @@
     margin: 9px 0 0;
   }
 
-  /* ---------------- 怒りの輪（資料） ----------------
-     🚨 画像にしないこと。図を1枚の絵にすると、中の文字が携帯で小さくなって読めない。
-        **図形＝SVG／文字＝HTML** で分けてある。文字の大きさはここで決まる。
-     🚨 文字を収めるために大きさを下げないこと（依頼者の指示・2026-09-02）。
-        収まらないときは、円を大きくする → 文字を減らす → 説明を図の外へ、の順。
-     ⚠️ 拡大（zoom）が掛かると、CSSの px はそのままで**入れ物のほうが縮む。**
-        そのため text-lg / text-xl では字を少し下げてある。
-        下げても、実際に見える大きさは 22px 相当を下回らない（20×1.18／18×1.38）。 */
-  /* 🚨 画面の余白（#library の 20px）を左右へ食い破って、円を画面幅いっぱいに使う。
-     ⚠️ 100vw は使わない。拡大時に viewport の幅がそのまま入ってきて右へはみ出す。 */
   .aw-fig {
     position: relative;
     width: calc(100% + 40px);
@@ -1449,7 +1309,6 @@
     outline-offset: -3px;
   }
 
-  /* 文字は当たり判定を持たない。押されるのは下の扇形のほう。 */
   .aw-label {
     position: absolute;
     transform: translate(-50%, -50%);
@@ -1488,8 +1347,6 @@
     color: var(--ink-soft);
   }
 
-  /* 🚨 選ばれた気持ちは、図の中でも大きく金色に（依頼者・2026-09-03）。
-     ⚠️ +2px が上限。これ以上だと、320px幅で扇形からはみ出す。 */
   .aw-label.is-on {
     font-size: 24px;
     color: var(--gold);
@@ -1511,7 +1368,6 @@
   body.text-xl .aw-core-main { font-size: 28px; }
   body.text-xl .aw-core-sub { font-size: 12px; }
 
-  /* 説明は図の中に入れない。押された気持ちの分だけ、ここに出す。 */
   .aw-card {
     background: var(--card);
     border: 1px solid var(--card-border);
@@ -1519,7 +1375,6 @@
     padding: 14px 16px;
   }
 
-  /* 🚨 .doc-entry p（12.5px）より強くしないと当たらない。図は資料の項目の中にある。 */
   .aw-card .aw-card-name {
     font-family: var(--font-display);
     font-size: 20px;
@@ -1544,7 +1399,6 @@
     margin-bottom: 0;
   }
 
-  /* ---------------- その方の数字と、かけたい言葉 ---------------- */
   .feel-who {
     background: var(--card);
     border: 1px solid var(--card-border);
@@ -1600,7 +1454,6 @@
     margin-bottom: 4px;
   }
 
-  /* かけたい言葉は、鑑定の最中にいちばん見るところ。ここだけ大きくする。 */
   .feel-block.is-say li {
     font-size: 18px;
     line-height: 1.75;
@@ -1724,8 +1577,6 @@
     min-width: 0;
   }
 
-  /* お客様にお見せするあいだは、鑑定士向けの手引きを全部隠す。
-     🚨 携帯を渡した先で、こちらの覚え書きが読まれないようにするため。 */
   .feel-present-end {
     display: none;
     width: 100%;
@@ -1758,7 +1609,6 @@
     display: none !important;
   }
 
-  /* ①②③ は残す。ただし、お客様の前では控えめにする。 */
   body.feel-present #pro-feel > .record-tabs {
     margin-bottom: 16px;
   }
@@ -1767,11 +1617,6 @@
     display: block !important;
   }
 
-  /* ---------------- 感情の22段階 ----------------
-     🚨 ここも画像にしない。段の色はCSS、文字はHTML。
-     ⚠️ 22行あるので、1行を短く保つこと。長い言い方を足すと携帯で3行に割れる。 */
-  /* ---------------- 気持ちから読む（鑑定の機能） ----------------
-     🚨 鑑定の最中に開く画面。迷わせないため、順番を先に出してから図を出す。 */
   .feel-order {
     margin: 0 0 12px;
     padding-left: 1.3em;
@@ -1812,7 +1657,6 @@
     border-bottom: 1px solid var(--card-border);
   }
 
-  /* いまの段と、次に向かう段。ここが鑑定でいちばん見るところ。 */
   .lad-panel {
     margin-bottom: 14px;
   }
@@ -1879,9 +1723,6 @@
     border-color: var(--gold);
   }
 
-  /* 🚨 選ばれた行は、別窓が開くときのように浮き出させる（依頼者・2026-09-03）。
-     影を濃くするだけでは浮かない。**まわりを引かせて、選んだ行だけを前に出す。**
-     ⚠️ 1.06倍まで。これ以上だと、左のバーや画面の端に触れる（320px幅で実測）。 */
   .lad-rows.has-pick .lad-row:not(.is-on) {
     opacity: 0.42;
   }
@@ -1906,7 +1747,6 @@
   body.text-lg .lad-row.is-on .lad-w { font-size: 20px; }
   body.text-xl .lad-row.is-on .lad-w { font-size: 19px; }
 
-  /* 🚨 .aw-go はこの下にある。同じ強さだと負けるので、2つ重ねて強くする。 */
   .aw-go.aw-go-sub {
     background: none;
     border: 1px solid var(--card-border);
@@ -1914,19 +1754,12 @@
     margin-top: 8px;
   }
 
-  /* 🚨 軽い・重いは、左の縦バーで見せる（依頼者・2026-09-03）。
-     上ほど薄く、下ほど濃い。**22行のどこを見ていても、左を見れば向きが分かる。**
-     ⚠️ 前は上と下に文字を置いていたので、真ん中では何も見えなかった。 */
   .lad-body {
     display: flex;
     gap: 10px;
     align-items: stretch;
   }
 
-  /* 🚨 バーを太くして、文字を中に入れる（依頼者・2026-09-03）。
-     細いバーの外に小さく置くと、文字が読めなかった。
-     🚨 軽いほうは金。金はこのアプリで「良いほう」を指す色。
-     ⚠️ 上は金地なので字は濃く、下は暗い地なので字は明るく。**同じ色にしない。** */
   .lad-scale {
     flex: 0 0 44px;
     display: flex;
@@ -1942,9 +1775,6 @@
       hsl(268, 34%, 14%) 100%);
   }
 
-  /* 🚨 縦書きにする（依頼者・2026-09-03）。バーが縦なので、文字も縦に流す。
-     ⚠️ 横書きだと、バーの幅に収めるために字を小さくするしかなかった。
-        縦書きなら、幅は字1つぶんで足りる。**大きくできる。** */
   .lad-scale-top,
   .lad-scale-bottom {
     writing-mode: vertical-rl;
@@ -1968,7 +1798,6 @@
   body.text-xl .lad-scale-top,
   body.text-xl .lad-scale-bottom { font-size: 16px; }
 
-  /* ⚠️ 拡大するとバーだけ太くなり、22行の幅を食う。太さのほうを詰める。 */
   body.text-lg .lad-scale { flex-basis: 40px; }
   body.text-xl .lad-scale { flex-basis: 36px; }
 
@@ -1977,10 +1806,6 @@
     min-width: 0;
   }
 
-  /* 🚨 7と8の間の区切り（依頼者・2026-09-03）。押すと説明が開く。
-     線だけでは何の線か分からず、飾りに見える。 */
-  /* ⚠️ 見えるのは線だけ。ただし2pxは指で押せないので、
-        押せる範囲を上下に広げてある（padding）。 */
   .lad-split {
     display: block;
     width: 100%;
@@ -2005,7 +1830,6 @@
     height: 3px;
   }
 
-  /* 押せる帯。ボタンなので、幅と字の寄せを戻しておかないと中身の幅で縮む。 */
   .lad-row {
     display: flex;
     width: 100%;
@@ -2035,9 +1859,6 @@
     color: var(--gold);
   }
 
-  /* 🚨 長い言葉は、削らずに折る（依頼者・2026-09-03「言葉は捨てないでください」）。
-     ⚠️ 320px幅で、22番を1行に描くには315px要る。使える幅は175px。**1行は物理的に無理。**
-     → text-wrap: balance で、2行の長さをそろえる。**崩れて見えないようにする。** */
   .lad-w {
     font-size: 18px;
     line-height: 1.45;
@@ -2045,8 +1866,6 @@
     text-wrap: balance;
   }
 
-  /* 🚨 中黒のところでだけ折る（依頼者・2026-09-03「みが下の段にいってる」）。
-     これが無いと「深い悲し／み」のように、言葉の真ん中で切れる。 */
   .lad-w.is-parts,
   .lad-step-w.is-parts {
     word-break: keep-all;
@@ -2088,8 +1907,6 @@
   body.text-lg .lad-w { font-size: 17px; }
   body.text-xl .lad-w { font-size: 16px; }
 
-  /* 気持ちの強さ。弱い言い方から強い言い方まで、並べて向きを見せる。
-     🚨 「弱いとき／そのまま／強いとき」と書いたら伝わらなかった（依頼者・2026-09-03）。 */
   .aw-lv-lead {
     font-size: 13px;
     line-height: 1.8;
@@ -2103,15 +1920,12 @@
     flex-wrap: wrap;
   }
 
-  /* 🚨 塗った四角はやめた（依頼者・2026-09-03「安っぽいです」）。
-     文字だけを並べ、区切りは細い縦線1本。強さは字の明るさで見せる。 */
   .aw-lv-item {
     position: relative;
     padding: 2px 10px;
     font-size: 16px;
     line-height: 1.75;
     letter-spacing: 0.02em;
-    /* ⚠️ 言葉の途中では折らない。折るなら言葉と言葉のあいだで。 */
     white-space: nowrap;
   }
 
@@ -2181,9 +1995,6 @@
     line-height: 1.65;
   }
 
-  /* 見出し列は折り返さず、値の列は折り返す。ローマ字の対比表のような短い表は
-     どちらでも同じだが、対応表は値が長いので、横スクロールより折り返しのほうが
-     読みやすい。 */
   .doc-table th {
     white-space: nowrap;
   }
@@ -2193,25 +2004,15 @@
     font-weight: 700;
     background: rgba(255, 255, 255, 0.05);
   }
-  /* ---------------- 記録（カレンダー） ----------------
-     画面の作りは相性診断（#compat）に合わせてある。保存先は端末の
-     localStorage だけで、サーバーへは何も送らない。日付・祝日・月表の
-     描き方は、推し活カレンダーで実機に載っているものを流用している。 */
   #record {
-    /* 左右と下だけ詰める。空いた分はすべてカレンダーの枠に回る。
-       🚨 上は詰めない。土台と同じにしておかないと「← 戻る」の高さがずれる。 */
     padding-left: 10px;
     padding-right: 10px;
     padding-bottom: 12px;
-    /* 画面の高さいっぱいに積み、余った高さはカレンダーへ渡す。
-       枠の大きさを横幅から決めていたため、下に大きく余白が残っていた。 */
     display: flex;
     flex-direction: column;
     min-height: 100dvh;
     box-sizing: border-box;
   }
-  /* 縦に積む作りにしたため、放っておくと戻るボタンが横いっぱいに伸びる。 */
-  /* 🚨 左右を10px詰めたぶんを戻し、他の画面と「← 戻る」の左端をそろえる。 */
   #record > .library-back { align-self: flex-start; margin-left: 10px; }
   #record-cal {
     display: flex;
@@ -2243,7 +2044,6 @@
   }
   .cal-grid {
     display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px;
-    /* 1行目は曜日なので伸ばさない。2行目から下が均等に高さを分け合う。 */
     grid-template-rows: auto; grid-auto-rows: 1fr;
     flex: 1 1 auto; min-height: 0;
   }
@@ -2251,10 +2051,7 @@
   .cal-dow.sun { color: #e8a8a8; }
   .cal-dow.sat { color: #a8bfe8; }
   .cal-cell {
-    /* 高さは行から受け取る。横幅に縛ると、画面の下が余ってしまう。 */
     position: relative; min-height: 46px;
-    /* 枠が縦に伸びるので、数字は上に寄せる。真ん中だと枠の中で浮いて見え、
-       記録の印を置く余地も無くなる。 */
     display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 3px;
     font-family: var(--font-body); font-size: 17px; color: var(--ink);
     background: rgba(255, 255, 255, 0.04); border: 1px solid transparent;
@@ -2264,23 +2061,19 @@
   .cal-cell.sun, .cal-cell.holi { color: #e8a8a8; }
   .cal-cell.sat { color: #a8bfe8; }
   .cal-cell.today { border-color: var(--gold); }
-  /* 自分の誕生日。数字や予定に重ならないよう、右上の隅に小さく置く。 */
   .cal-birth {
     position: absolute; top: 1px; right: 2px;
     font-size: 9px; line-height: 1;
     pointer-events: none;
   }
   .cal-cell.sel { background: rgba(244, 217, 139, 0.18); border-color: var(--gold-deep); }
-  /* 記録の印。マスの中身が増えたので、右上へ逃がす。 */
   .cal-mark { position: absolute; top: 6px; right: 5px; width: 5px; height: 5px; border-radius: 50%; background: var(--gold); }
   .cal-date { position: relative; z-index: 1; }
-  /* その日の数字を、マスの地の模様として敷く。月を開くだけで数字の流れが見える。 */
   .cal-num {
     position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-54%);
     text-align: center; font-family: var(--font-display); font-size: 30px;
     color: var(--gold); opacity: 0.2; pointer-events: none;
   }
-  /* 予定のある日は、数字を少し上げて小さくする。文字と重なって読みにくくなるため。 */
   .cal-cell.has-plans .cal-num { top: 40%; font-size: 23px; opacity: 0.17; }
   .cal-plans {
     position: absolute; left: 3px; right: 3px; bottom: 4px; z-index: 1;
@@ -2292,7 +2085,6 @@
   }
   .cal-plans .cal-more { color: var(--ink-faint); }
 
-  /* 予定の入力。時刻と内容をその場で直せるようにし、保存ボタンは置かない。 */
   .plan-block { margin: 14px 0 2px; }
   .plan-title { font-size: 11.5px; color: var(--ink-faint); margin-bottom: 6px; }
   .plan-row { display: flex; align-items: center; gap: 6px; margin-bottom: 5px; }
@@ -2300,7 +2092,6 @@
   .plan-text { flex: 1 1 auto; min-width: 0; }
   .plan-time, .plan-text {
     padding: 7px 8px; box-sizing: border-box;
-    /* 🚨 16px を下回らせない。iPhoneは小さい文字の欄に触れると画面ごと拡大する。 */
     font-family: var(--font-body); font-size: 16px; color: var(--input-ink);
     background: var(--input-bg); border: 1px solid var(--card-border); border-radius: 8px;
   }
@@ -2314,7 +2105,6 @@
 
   .cal-hint { margin: 12px 0 0; font-size: 11.5px; color: var(--ink-faint); text-align: center; }
 
-  /* 題名と「？」を横に並べる。説明を隠したぶん、カレンダーを大きくしている。 */
   .record-title-row {
     display: flex; align-items: center; justify-content: center; gap: 8px;
     margin: 0 0 10px;
@@ -2331,7 +2121,6 @@
     display: flex; align-items: center; justify-content: center; padding: 20px;
     background: rgba(18, 8, 31, 0.62);
   }
-  /* .hidden と同じ詳細度なので、明示しないと後勝ちで display:flex に戻る。 */
   .help-mask.hidden { display: none; }
   .help-panel {
     position: relative; width: 100%; max-width: 420px;
@@ -2352,20 +2141,16 @@
     border: 1px solid var(--card-border); border-radius: 10px; cursor: pointer;
   }
   .tool-note { margin: 6px 0 0; font-size: 11.5px; line-height: 1.8; color: var(--ink-faint); }
-  /* 推しごとカレンダーから受け取った予定。自分で書いたものと見分けが付くようにする。 */
   .cal-plans .from-oshi { color: var(--ink-faint); }
   .plan-readonly { display: flex; align-items: center; gap: 6px; margin-bottom: 5px; font-size: 12.5px; color: var(--ink-faint); }
   .plan-readonly b { flex: none; width: 44px; font-weight: 400; }
 
-  /* 🚨 2026-08-28 依頼者の指示：画面の中央に出す。
-     それまでは下から出していた（小さい画面のときだけ）。 */
   .day-mask {
     position: fixed; inset: 0; z-index: 40;
     display: flex; align-items: center; justify-content: center;
     padding: 20px;
     background: rgba(18, 8, 31, 0.62);
   }
-  /* .hidden と同じ詳細度なので、明示しないと後勝ちで display:flex に戻る。 */
   .day-mask.hidden { display: none; }
   .day-panel {
     position: relative;
@@ -2373,7 +2158,6 @@
     padding: 18px 16px;
     background: #1b1039; border: 1px solid var(--card-border);
     border-radius: 18px;
-    /* 中を最後までスクロールしたあと、裏の本体まで動き出さないようにする */
     overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
   }
   .day-close {
@@ -2382,11 +2166,8 @@
     color: var(--ink-soft); background: rgba(255, 255, 255, 0.07);
     border: 1px solid var(--card-border); border-radius: 50%; cursor: pointer;
   }
-  /* パネルを開いている間、裏の画面を動かさない。位置は JS が覚えて元に戻す。 */
   body.day-locked { position: fixed; width: 100%; overflow: hidden; }
 
-  /* 🚨 右だけ余白を足すと、中身が左に寄って見える（2026-08-28 依頼者の指摘）。
-     × を避ける必要があるのは、いちばん上の見出しの行だけなので、そこだけ避ける。 */
   .day-sheet h3 { margin: 0 0 12px; padding-right: 34px; font-family: var(--font-display); font-size: 16px; color: var(--gold); font-weight: 400; }
   .day-sheet h3 .day-holi { font-size: 12px; color: #e8a8a8; margin-left: 8px; }
   .day-sheet h3 .day-birth { font-size: 12px; color: var(--gold); margin-left: 8px; }
@@ -2395,7 +2176,6 @@
   .day-num span { display: block; font-size: 10.5px; color: var(--ink-faint); }
   .day-num strong { font-family: var(--font-display); font-size: 21px; color: var(--gold); font-weight: 400; }
 
-  /* その日に届いた言葉。記録と並べて見えることに意味があるので、同じ欄に置く。 */
   .day-word {
     margin: 0 0 16px; padding: 12px 13px;
     background: rgba(244, 217, 139, 0.08);
@@ -2414,19 +2194,15 @@
   }
   .day-choice[aria-pressed="true"] { color: var(--input-ink); background: var(--gold); border-color: var(--gold); }
   .day-note-label { display: block; font-size: 11.5px; color: var(--ink-faint); margin-top: 14px; }
-  /* 保存できたことの合図。書いたまま閉じても消えないと目で分かるようにする。 */
   .day-saved {
     margin-left: 8px; font-size: 11px; color: var(--gold-deep);
     opacity: 0; transition: opacity 0.25s;
   }
   .day-saved.is-on { opacity: 1; }
-  /* 保存できなかったとき。自動では消さない（消し方は JS 側）。 */
   .day-saved.is-warn { color: #b3261e; font-weight: 700; }
   @media (prefers-reduced-motion: reduce) { .day-saved { transition: none; } }
   .day-note {
     width: 100%; margin-top: 5px; padding: 9px 10px; box-sizing: border-box;
-    /* 🚨 16px を下回らせない。iPhoneは小さい文字の欄に触れると画面ごと拡大する。
-       他の入力欄（.field input）は16pxにしてあり、ここだけ漏れていた。 */
     font-family: var(--font-body); font-size: 16px; color: var(--input-ink);
     background: var(--input-bg); border: 1px solid var(--card-border);
     border-radius: 8px; resize: vertical; min-height: 58px;
@@ -2434,8 +2210,6 @@
   .day-note-hint { margin: 6px 0 0; font-size: 11.5px; line-height: 1.7; color: var(--ink-faint); }
   .day-msg { margin: 12px 0 0; font-size: 12.5px; line-height: 1.8; color: var(--ink-soft); }
 
-  /* 「あなたの過ごし方」。順位は付けない。並び順は選択肢の並びで固定し、
-     一度も選んでいないものは出さない（0が並ぶ画面にしないため）。 */
   .sum-lead { margin: 0 0 4px; font-size: 13px; line-height: 1.8; color: var(--ink-soft); }
   .sum-days { margin: 0 0 16px; font-size: 11.5px; color: var(--ink-faint); }
   .sum-rows { display: flex; flex-direction: column; gap: 9px; }
@@ -2457,12 +2231,6 @@
     border-radius: 12px; font-size: 13px; line-height: 1.9; color: var(--ink-soft);
   }
   .record-empty strong { display: block; font-family: var(--font-display); font-size: 16px; color: var(--gold); margin-bottom: 8px; font-weight: 400; }
-  /* 🚨 老眼のお客様から「字が小さい」とご指摘（2026-09-01・奥様の講座、お一人目）。
-     ⚠️ 文字の大きさだけを上げると、余白や枠との釣り合いが崩れる（依頼者の指摘）。
-        zoom は画面まるごとを同じ比率で拡げるので、**釣り合いはそのまま**大きくなる。
-        だから px の指定は1つも触っていない。触らないこと。
-     ⚠️ body に当てる。画面は #app・#record・#pro… と横並びで、
-        どれか1つに当てても他が置いていかれる。 */
   body.text-lg { zoom: 1.18; }
   body.text-xl { zoom: 1.38; }
 
@@ -2488,24 +2256,15 @@
   <h1 id="app-title">数秘電卓<span class="subtitle">Numerology Calculator</span></h1>
   <p class="lead">生年月日と名前（カナ）から、現代数秘術のさまざまな数字を計算します。</p>
 
-  <!-- 🚨 押すたびに「大きく → もっと大きく → もとに戻す」と回る。
-       ボタンの文字は**次に何が起きるか**にする（いまの状態ではなく）。 -->
   <button type="button" id="text-size-btn" class="text-size-btn">文字を大きく</button>
 
-  <!-- 入口は横1列にまとめる。縦に3つ並べると、計算の入力欄が画面の外へ
-       押し出されて「何をする画面か」が分からなくなるため。 -->
   <nav class="app-nav" aria-label="ほかの画面">
     <button type="button" id="library-open-btn" class="app-nav-btn">資料</button>
     <button type="button" id="compat-open-btn" class="app-nav-btn">相性</button>
     <button type="button" id="record-open-btn" class="app-nav-btn">手帳</button>
-    <!-- 🚨 無料の方にも出しておく（依頼者・2026-08-29）。以前は隠していた。
-         有料があることに気づいていただくため。鍵を付け、押しても開かない。
-         開かない仕掛けは JS 側。見た目だけで止めてはいけない。 -->
     <button type="button" id="pro-open-btn" class="app-nav-btn"><span class="nav-lock" aria-hidden="true">🔒</span>鑑定</button>
   </nav>
   <p id="nav-locked-note" class="nav-locked-note hidden" role="status"></p>
-  <!-- 🚨 お申し込みの入口。Stripe の支度が済むまでは出さない（JS 側の STRIPE_READY）。
-       出しておいて押せない・失敗するのが、いちばん不親切なため。 -->
   <button type="button" id="join-btn" class="join-btn hidden">お申し込みへ進む</button>
 
   <form id="calc-form">
@@ -2536,15 +2295,10 @@
     </label>
     <p id="name-warning" class="name-warning hidden"></p>
 
-    <!-- 🚨 自分情報（2026-08-28 依頼者の指示）。鑑定で他の方を入れたあと、
-         自分の生年月日と氏名を打ち直す手間を無くす。毎朝のお便りも、
-         ここに登録した生年月日から選ぶ（→ #self-modal）。 -->
     <div class="self-row">
       <button type="button" id="self-clear" class="self-btn">お客様を入れる</button>
       <button type="button" id="self-fill" class="self-btn hidden">自分に戻す</button>
     </div>
-    <!-- 🚨 知らせをボタンの上に出さない（2026-08-28）。文字を入れ替えると、
-         押した瞬間に別のボタンに見えるうえ、続けて押したときに元の文字を見失う。 -->
     <p id="self-msg" class="self-msg hidden"></p>
 
     <div class="romaji-helper">
@@ -2590,7 +2344,6 @@
       <div class="card-grid" id="group-combined"></div>
     </section>
 
-    <!-- 該当があったときだけ開く。 -->
     <section class="result-group hidden" id="group-karmic-wrap" data-tier="paid">
       <h2>カルマナンバー</h2>
       <div class="card-grid" id="group-karmic"></div>
@@ -2728,9 +2481,7 @@
   <div class="record-tabs" role="tablist">
     <button type="button" class="record-tab" id="pro-tab-forecast" role="tab" aria-selected="true">その方のこれから</button>
     <button type="button" class="record-tab" id="pro-tab-sheet" role="tab" aria-selected="false">鑑定書</button>
-    <!-- ==有料ここから== -->
     <button type="button" class="record-tab" id="pro-tab-feel" role="tab" aria-selected="false">気持ちから読む</button>
-    <!-- ==有料ここまで== -->
   </div>
 
   <div id="pro-forecast">
@@ -2792,10 +2543,6 @@
     </div>
   </div>
 
-  <!-- ==有料ここから== -->
-  <!-- 🚨 気持ちから読む（有料）。2026-09-03、依頼者の指示で資料から移した。
-       「サブスクにしてよかった」と思っていただくための、鑑定中に開く画面。
-       図は画像にしない（図形＝SVG／文字＝HTML）。→ 仕様.md「鑑定の機能」 -->
   <div id="pro-feel" class="hidden">
     <button type="button" id="feel-present-end" class="feel-present-end">お見せするのを終わる</button>
     <p class="pro-lead">お客様が何を感じておられるかを、その場でたどるための画面です。生年月日を入れると、その方にかけたい言葉まで出ます。</p>
@@ -2840,7 +2587,6 @@
     <div id="feel-ladder" class="hidden"></div>
     <div id="feel-anger" class="hidden"></div>
   </div>
-  <!-- ==有料ここまで== -->
 </div>
 
 <div id="record" class="hidden">
@@ -2889,8 +2635,6 @@
     </div>
   </div>
 
-  <!-- 説明は普段は隠し、「？」を押したときだけ中央に出す。常に出しておくと
-       カレンダーの入る高さがその分減るため。 -->
   <div id="record-help" class="help-mask hidden">
     <div class="help-panel" role="dialog" aria-modal="true" aria-labelledby="record-help-title">
       <button type="button" id="record-help-close" class="day-close" aria-label="閉じる">×</button>
@@ -2902,10 +2646,6 @@
     </div>
   </div>
 
-  <!-- 選んだ日の中身は画面の中央に出す（2026-08-28 依頼者の指示）。
-       表の下に置くと画面の外に出てしまい、開いたことに気づけない。
-       ⚠️ 文字を打つときに鍵盤（キーボード）が下半分を覆うため、
-       中の欄に触れたら、その欄が見えるところまで自分で寄せる（JS 側）。 -->
   <div id="day-mask" class="day-mask hidden">
     <div class="day-panel" role="dialog" aria-modal="true" aria-label="選んだ日の記録">
       <button type="button" id="day-close" class="day-close" aria-label="閉じる">×</button>
@@ -2915,9 +2655,6 @@
 
 </div>
 
-<!-- 🚨 自分の情報は、この別窓だけで管理する（2026-08-28 依頼者の指示）。
-     計算画面に登録ボタンを置くと、押す場面でないときにも目に入って迷う。
-     毎朝のお便りの持ち主も、ここで登録した生年月日で決まる。 -->
 <div id="self-modal" class="hidden">
   <div class="info-modal-card">
     <button id="self-modal-close" type="button" aria-label="閉じる">×</button>
@@ -2964,11 +2701,7 @@
       下の共有ボタン → 「ホーム画面に追加」→ 追加したアイコンから開き直して、もう一度この画面を開いてください。
     </div>
 
-    <!-- 🚨 生年月日はここに置かない（2026-08-28）。「自分の情報」の別窓が正本で、
-         同じ欄を2か所に置くと必ず片方が古くなる。ここは今の登録内容を出すだけ。 -->
     <p id="push-owner" class="push-hint"></p>
-    <!-- 🚨 いつ届いたかを、この端末に残った記録から出す（2026-08-31）。
-         送った側の記録はこちらで見られるが、**端末に出た時刻は端末にしか残らない**。 -->
     <p id="push-arrived" class="push-hint hidden"></p>
     <div id="push-nosel" class="push-status hidden">
       先に <strong>「自分の情報」</strong>を登録してください。<br>
@@ -2977,15 +2710,9 @@
     <button id="push-to-self" type="button" class="hidden">自分の情報を登録する</button>
 
     <button id="push-do" type="button">受け取りを始める</button>
-    <!-- 🚨 受け取っている場合だけ出す（2026-08-31）。お金をいただく以上、
-         「やめる」を自分でできない形にしない。押すと、この端末の通知を止め、
-         預かっている届け先も置き場から消す。 -->
     <button id="push-stop" type="button" class="hidden">毎朝のお便りを止める</button>
     <div id="push-msg" class="push-status hidden"></div>
 
-    <!-- 合言葉の渡し方。送り先（HANDOFF_MAIL）が決まっていれば、押すだけで
-         送り先の入ったメールが開く。決まっていなければコピーだけの画面になる。
-         文言は JS 側で入れ直す（呼び名を入れるかどうかが変わるため）。 -->
     <div id="push-handoff" class="hidden">
       <p id="push-handoff-lead">下の合言葉をコピーして、お送りください。届くようになります。</p>
       <button id="push-send" type="button" class="hidden">メールで送る</button>
@@ -3006,18 +2733,6 @@
 
 <script>
 (() => {
-  // ---------------- だれとして開いているか ----------------
-  // 🚨 コードの入力はやめた（依頼者の決定・2026-08-30）。
-  //    お支払いのあとの「一度きりのリンク」（`?p=...`）だけで有料が開く。
-  //    ふつうに開いた場合は、そのまま無料で電卓を使える（扉は無い）。
-  //
-  // 役割は3つ。
-  //   subscriber … ふつうに開いた場合。電卓・資料・相性・手帳・毎朝のお便りまで
-  //   paid       … お支払いが済んだ場合。「鑑定の機能」も開く
-  //   admin      … 依頼者ご自身。paid と同じものが開く。入り方は下の `?a=`
-  //
-  // 🚨 これは「守り」ではない。役は端末の中で決まるし、このページは公開されている。
-  //    本当に守るのは、有料の中身を出す側（置き場）で会員かどうかを見ること。
   const ADMIN_PASSCODE = "523451";
   const SESSION_KEY = "numerology-gate-role";
   let currentRole = null;
@@ -3025,21 +2740,14 @@
   const appEl = document.getElementById("app");
   const proOpenBtn = document.getElementById("pro-open-btn");
 
-  // 「鑑定の機能」を開けるのは有料の場合だけ。
-  // 管理者を含めるのは、依頼者ご自身が確かめるため。
   function isPaidRole(role) {
     return role === "paid" || role === "admin";
   }
 
-  // 見た目と currentRole を、渡された役に合わせる。
-  // 開いたあとで期限が切れた場合にも、ここを呼んで元に戻す。
   function setRole(role) {
     const paid = isPaidRole(role);
-    // 🚨 隠さない。無料の場合にも「鑑定」を見せ、鍵を付けておく（依頼者・2026-08-29）。
-    //    開かせない仕掛けは proOpenBtn の click 側。ここは見た目だけ。
     proOpenBtn.classList.toggle("is-locked", !paid);
     proOpenBtn.setAttribute("aria-label", paid ? "鑑定の機能" : "鑑定の機能（準備中）");
-    // 管理者用の入口は、管理者のときだけ出す。
     const adminBtn = document.getElementById("admin-open-btn");
     if (adminBtn) adminBtn.classList.toggle("hidden", role !== "admin");
     currentRole = role;
@@ -3049,25 +2757,10 @@
     appEl.classList.remove("hidden");
     setRole(role);
     document.getElementById("nav-locked-note").classList.add("hidden");
-    // 🚨 id で引く。joinBtn の const はこのファイルのずっと下にあり、
-    //    起動のときに名前で触ると、まだ作られていなくて落ちる。
     document.getElementById("join-btn").classList.add("hidden");
-    // 通知から来た人を、その日の手帳へ送る。起動のときは手帳の部品がまだ
-    // 組み立たっていないので、そのときは何もしない（組み立てが終わった時点で、
-    // 下の techoReady のところから改めて呼ぶ）。
     if (techoReady) openPendingTecho();
   }
 
-  // 端末に残っている役割を読む。読むのは管理者だけ。
-  //
-  // 🚨 "paid" はもうここでは見ない（2026-09-01 期限を付けたため）。
-  //    以前は端末に "paid" と書いておけば期限なく開いてしまった。
-  //    お支払いが続いているかどうかは、下の「会員」の側だけで決める。
-  // localStorage を先に見る。sessionStorage はタブ（ホーム画面から開いた場合は
-  // アプリ）を閉じると消えるため、開くたびに管理者が外れてしまう。
-  //
-  // 🚨 読み書きは失敗することがある（ブラウザの設定など）。落ちても
-  //    起動そのものは続けられるよう、どちらも try で包む。
   const ELEVATED_ROLES = ["admin"];
   function getRememberedRole() {
     for (const store of ["localStorage", "sessionStorage"]) {
@@ -3075,19 +2768,11 @@
         const role = window[store].getItem(SESSION_KEY);
         if (ELEVATED_ROLES.includes(role)) return role;
       } catch (err) {
-        // Ignore: 次の保存先を試す。どちらも読めなければ、無料として開くだけ。
       }
     }
     return null;
   }
 
-  // ---------------- 会員（お支払いの続いているお客様） ----------------
-  // 🚨 月1,500円なので、期限を持たせる（依頼者・2026-09-01）。
-  //    端末が持つのは「会員の合言葉」と「いつまでか」の2つだけ。
-  //    合言葉は置き場に照らして確かめる。期限は、圏外でも使っていただくための控え。
-  //
-  // ⚠️ これも「守り」ではない。端末の中の日付は書き替えられる。
-  //    本当に守るのは、有料の中身を出す側で会員かどうかを見ること。
   const MEMBER_KEY = "numerology-member";
 
   function readMember() {
@@ -3105,7 +2790,6 @@
     try {
       localStorage.setItem(MEMBER_KEY, JSON.stringify({ token: token, expiresAt: expiresAt || null }));
     } catch (err) {
-      // Ignore: 覚えられなくても、この回は開いた状態で使っていただける。
     }
   }
 
@@ -3113,7 +2797,6 @@
     try { localStorage.removeItem(MEMBER_KEY); } catch (err) { /* ignore */ }
   }
 
-  // 控えの期限がまだ先かどうか。置き場に聞けないとき（圏外など）の拠りどころ。
   function memberLooksActive(m) {
     if (!m) return false;
     if (!m.expiresAt) return false;
@@ -3121,19 +2804,15 @@
     return !isNaN(until) && until > Date.now();
   }
 
-  // 端末に残す。いま残すのは管理者だけ（有料は会員の側で持つ）。
   function rememberRole(role) {
     for (const store of ["localStorage", "sessionStorage"]) {
       try {
         window[store].setItem(SESSION_KEY, role);
       } catch (err) {
-        // Ignore: この回だけ、その役で開いた状態になる。
       }
     }
   }
 
-  // 文字の大きさ。押すたびに ふつう → 大きい → もっと大きい と回り、その端末が覚える。
-  // 🚨 変えるのは zoom だけ。px の指定には触らない（釣り合いを崩さないため）。
   (function () {
     const KEY = "numerology-text-size";
     const STEPS = [
@@ -3155,7 +2834,6 @@
       const saved = parseInt(localStorage.getItem(KEY), 10);
       if (saved >= 0 && saved < STEPS.length) step = saved;
     } catch (err) {
-      // Ignore: 覚えていなければ、ふつうの大きさで始める。
     }
     apply(step);
 
@@ -3166,9 +2844,6 @@
     });
   })();
 
-  // 依頼者ご自身の入り方（`?a=...`）。画面にコードを入れる場所は無いので、
-  // ご自身で確かめるときはこの形のURLで開く。読んだらアドレス欄からすぐ消す
-  // （画面を人に見せたり、URLをそのまま渡したりしたときに、一緒に渡らないため）。
   function unlockAsAdminFromUrl() {
     let code = null;
     try {
@@ -3176,7 +2851,7 @@
     } catch (err) {
       return false; // 読めない環境なら、ふつうに開いたのと同じ扱いにする
     }
-    if (code !== ADMIN_PASSCODE) return false;
+    if (!ADMIN_PASSCODE || code !== ADMIN_PASSCODE) return false;
     rememberRole("admin");
     unlock("admin");
     try {
@@ -3184,22 +2859,12 @@
       url.searchParams.delete("a");
       window.history.replaceState(null, "", url.pathname + url.search + url.hash);
     } catch (err) {
-      // Ignore: 消せなくても、開くところまでは済んでいる。
     }
     return true;
   }
 
-  // 一度きりのリンクを作るには、置き場の合言葉が要る。
-  // 🚨 合言葉をこのファイルに書かない。書くと、公開しているHTMLから誰でも読めて、
-  //    払っていない人がリンクを作れてしまう。
   const MINT_PASS_KEY = "numerology-mint-pass";
 
-  // 依頼者ご自身の合言葉を、URLから受け取る（`?mp=...`）。
-  // 🚨 合言葉は32文字以上の自動で作った文字列で、人が覚えて打てるものではない。
-  //    以前は画面が聞いていたが、**打たせる形そのものが誤りだった**（依頼者・2026-09-01
-  //    「合言葉は使いたくないです」）。ブックマークを一度押せば、その端末が覚える。
-  // 🚨 ここで読むのは `?p=` と同じ理由。下の readTechoDate() がアドレス欄を
-  //    書き替えるとき、問い合わせ部分ごと消えてしまう。順番を入れ替えないこと。
   (function readMintPassFromUrl() {
     let raw = null;
     try {
@@ -3211,25 +2876,15 @@
     try {
       localStorage.setItem(MINT_PASS_KEY, raw);
     } catch (err) {
-      // Ignore: 覚えられない端末でも、この回は下の readMintPass() が拾えないだけ。
     }
-    // アドレス欄から消す。画面を人に見せたときに、一緒に見えないようにするため。
     try {
       const url = new URL(window.location.href);
       url.searchParams.delete("mp");
       window.history.replaceState(null, "", url.pathname + url.search + url.hash);
     } catch (err) {
-      // Ignore: 消せなくても、覚えるところまでは済んでいる。
     }
   })();
 
-  // 買った方の専用URL（`?p=...`）。お支払いのあと、この形のURLへ飛ぶ。
-  //
-  // 🚨 ここで読むのは、下の readTechoDate() がアドレス欄を書き替えるときに
-  //    問い合わせ部分ごと消えてしまうため。順番を入れ替えないこと。
-  //
-  // 本物かどうかは置き場に聞く（通信が要る）ので、ここでは持っておくだけ。
-  // 実際に聞きに行くのは、置き場の住所が決まったあと（ファイルのずっと下）。
   let pendingPaidToken = (function readPaidToken() {
     let raw = null;
     try {
@@ -3238,24 +2893,15 @@
       return null; // 読めない環境なら、ふつうに開いたのと同じ扱いにする
     }
     if (!raw || !/^[A-Za-z0-9_-]{16,128}$/.test(raw)) return null;
-    // アドレス欄から消す。画面を人に見せたり、URLをそのまま渡したりしたときに、
-    // 一緒に渡らないようにするため。
     try {
       const url = new URL(window.location.href);
       url.searchParams.delete("p");
       window.history.replaceState(null, "", url.pathname + url.search + url.hash);
     } catch (err) {
-      // Ignore: 消せなくても、このあとの手順は進む。
     }
     return raw;
   })();
 
-  // お支払いを済ませて戻ってきた方の印（`?m=...`）。
-  //
-  // 🚨 これも `?p=` と同じで、readTechoDate() がアドレス欄を書き替える前に読む。
-  //    順番を入れ替えないこと。
-  //
-  // この印だけでは開かない。置き場に「もう払い終わっているか」を聞いてから開く。
   let pendingMemberToken = (function readMemberToken() {
     let raw = null;
     try {
@@ -3264,22 +2910,15 @@
       return null; // 読めない環境なら、ふつうに開いたのと同じ扱いにする
     }
     if (!raw || !/^[A-Za-z0-9_-]{16,128}$/.test(raw)) return null;
-    // アドレス欄から消す。画面を人に見せたり、URLをそのまま渡したりしたときに、
-    // 一緒に渡らないようにするため。
     try {
       const url = new URL(window.location.href);
       url.searchParams.delete("m");
       window.history.replaceState(null, "", url.pathname + url.search + url.hash);
     } catch (err) {
-      // Ignore: 消せなくても、このあとの手順は進む。
     }
     return raw;
   })();
 
-  // 通知から「その日の手帳」を開くための日付（`?d=2026-08-22`）。
-  //
-  // 手帳の部品はこのファイルのずっと下で組み立てるので、受け取っても
-  // すぐには開けない。開ける状態になるまで持っておく。
   let techoReady = false;
   let pendingTechoDate = (function readTechoDate() {
     let raw = null;
@@ -3294,43 +2933,24 @@
     if (dt.getFullYear() !== parts[0] || dt.getMonth() !== parts[1] - 1 || dt.getDate() !== parts[2]) {
       return null; // 2026-02-31 のような日付は捨てる
     }
-    // 日付だけをアドレス欄から消す。読み込み直すたびに開き直すのを防ぐため。
     try {
       const url = new URL(window.location.href);
       url.searchParams.delete("d");
       window.history.replaceState(null, "", url.pathname + url.search + url.hash);
     } catch (err) {
-      // Ignore: 消せなくても、開く動作そのものには影響しない。
     }
     return raw;
   })();
 
-  // ここで役割を決める。判断は3つだけ。
-  //   1. 依頼者ご自身の `?a=` か
-  //   2. 期限がまだ先の会員か
-  //   3. どちらでもなければ、無料
-  //
-  // 🚨 ここでは置き場に聞かない。通信を待つ間、画面が出ないのを避けるため。
-  //    控えの期限だけで先に開き、続いているかどうかは、あとから
-  //    refreshMembership() が置き場に確かめて直す。
   if (!unlockAsAdminFromUrl()) {
     unlock(getRememberedRole() || (memberLooksActive(readMember()) ? "paid" : "subscriber"));
   }
 
-  // ---------------- Numerology calculator ----------------
   const form = document.getElementById("calc-form");
   const birthYearInput = document.getElementById("birth-year");
   const birthMonthInput = document.getElementById("birth-month");
   const birthDayInput = document.getElementById("birth-day");
 
-  // 生年月日を、この端末にだけ覚えておく（2026-08-22 依頼者の決定）。
-  // 通知から手帳を開いた人に、毎回打ち直させないため。予定・記録と同じ扱いで、
-  // 🚨 端末の外へは出さない。アドレス欄にも載せない。
-  // 覚え直すには、欄を書き替えて「計算する」を押せばよい。
-  // 🚨 自分情報（2026-08-28 依頼者の指示）。
-  //    鑑定で他の方を入れたあと、自分の生年月日と氏名を打ち直さずに戻せるようにする。
-  //    毎朝のお便りも、ここに入っている生年月日から選ぶ（入っていなければ入力欄）。
-  //    🚨 端末の外へは出さない。届け先を預けるときにも含めない。
   const SELF_KEY = "numerology-self";
   function readSelf() {
     try {
@@ -3350,7 +2970,6 @@
       return false;
     }
   }
-  // 毎朝のお便りの持ち主。「1985-3-12」の形。
   function selfBirthParts() {
     const self = readSelf();
     if (!self || !/^[0-9]{4}-[0-9]{1,2}-[0-9]{1,2}$/.test(self.birth || "")) return null;
@@ -3363,7 +2982,6 @@
     try {
       localStorage.setItem(BIRTH_KEY, [year, month, day].join("-"));
     } catch (err) {
-      // Ignore: 保存できなくても、その場の計算には影響しない。
     }
   }
   (function restoreBirth() {
@@ -3375,7 +2993,6 @@
     }
     if (!raw || !/^[0-9]{4}-[0-9]{1,2}-[0-9]{1,2}$/.test(raw)) return;
     const parts = raw.split("-");
-    // 打ちかけの人の入力を、覚えていた値で上書きしない。
     if (birthYearInput.value || birthMonthInput.value || birthDayInput.value) return;
     birthYearInput.value = parts[0];
     birthMonthInput.value = String(Number(parts[1]));
@@ -3383,19 +3000,12 @@
   })();
   const lastNameInput = document.getElementById("last-name");
   const firstNameInput = document.getElementById("first-name");
-  // タップ表・お試しボタンは1つしかないため、直前にフォーカスしていた方の
-  // 欄（苗字／名前）に対して操作する。既定は苗字欄。
   let activeNameInput = lastNameInput;
   const nameWarningEl = document.getElementById("name-warning");
   const nameModeToggleBtn = document.getElementById("name-mode-toggle");
   const lastNameLabelEl = document.getElementById("last-name-label");
   const firstNameLabelEl = document.getElementById("first-name-label");
 
-  // 名前の入力方法。既定は「カナ入力」＝ヘボン式へ自動変換する。「手入力」は
-  // 自動変換を止め、綴りを本人に委ねるモード（パスポートで例外的に認められた
-  // OH 表記など、この電卓のヘボン式とは違う綴りで計算したい場合のため）。
-  // 綴りが変われば出る数字も変わるので、どちらのモードで計算したかは結果の
-  // 再現性に直結する。
   const NAME_MODE_KEY = "numerology-name-mode";
   const NAME_MODE_TEXT = {
     kana: {
@@ -3411,9 +3021,6 @@
       error: "名前にかな・漢字が残っています。手入力では自動変換されないため、ローマ字に直してから計算してください。",
     },
   };
-  // 漢字の切れ目をまたぐ母音の重なりは、かなだけでは長音と区別できない。
-  // 自動変換は長音として1文字にまとめるため、松浦は MATSURA、井上は INOE に
-  // なる。綴りが変われば出る数字も変わるので、疑わしいときはこれを出す。
   const BOUNDARY_WARNING = "同じ母音が続いたので、長音として1文字にまとめました。漢字の切れ目にあたる名字（松浦＝MATSUURA、福浦＝FUKUURA など）はこの綴りでは足りません。当てはまる場合は「ローマ字を手入力する」をオンにして直してください。";
   const MANUAL_MODE_NOTICE = "手入力モードです。カナを入れても自動でローマ字に変換されません。自動変換に戻すには、上の「ローマ字を手入力する」をオフにしてください。";
   let nameInputMode = "kana";
@@ -3473,31 +3080,13 @@
     11: "感じ取ったことや気づきを通じて、自分自身と深く向き合うことが課題になるとされています。",
   };
 
-  // 🚨 文言の決まり（2026-08-28 依頼者）。3回の直しを経た形なので、勝手に緩めない。
-  //    ① 罰・借り・怠けなど、責める語は使わない
-  //    ② ただし甘くしない。カルマは「越えるべき課題」として正面から書く
-  //    ③ 越えた先に何があるかを、必ず後ろに置く
-  //    ④ 断定しない（「〜とされています」で締める。景品表示法まわり）
-  //    ⑤ 「受け取る」のような、鑑定の場で聞き返される言葉を使わない。
-  //       依頼者の実務：「受け取ってください」と言うと「どういうこと？」と返る
   const KARMIC_DEBT_MEANINGS = {
-    // 🚨 4つとも「その人がどうしてしまうか」から書き出す（2026-08-28 依頼者の読み）。
-    //    13＝近道を選べない人／14＝自由に動いてしまう人／16＝築いたものを壊す・壊される人／
-    //    19＝助けてと言えない人。**性質を先に、越えた先をあとに。**この順を崩さない。
     13: "近道を選べない人が持つ数字とされています。遠回りに見えても、そうして積み上げたものだけが、あなたの強みになります。",
     14: "自由に動いてしまう人が持つ数字とされています。動きたいように動いた分だけ振り回されますが、自分で加減を決められるようになったとき、その自由が本物になります。",
     16: "築いたものを壊す人、あるいは壊される人が持つ数字とされています。一度なくしてから、それでも残るものを見た人だけが、次は壊れないものを建て直せます。",
     19: "助けてと言えない人が持つ数字とされています。困ったときに「助けて」と言えたとき、あなたの強さがはじめて本当の力になります。",
   };
 
-
-  // 🚨 出どころ別の読み（2026-08-28 依頼者の指示）。同じ16でも、人生全体に出るのと
-  //    内側に出るのとでは読み方が変わるため、カードの文を場所ごとに分ける。
-  //    書き方の決まりは KARMIC_DEBT_MEANINGS の上に同じものを置いてある。加えて：
-  //    🚨 画面に出ていないものと比べない。その方に出ているカードしか並ばないため、
-  //       「4つの中で」「他より」は読み手に伝わらない（2026-08-28 依頼者の指摘）。
-  //    ⚠️ ここに無い組み合わせは、共通の文（KARMIC_DEBT_MEANINGS）が出る。
-  //    ⚠️ まとめ帯は値ごとに1つしか出せないので、帯は共通の文のまま。
   const KARMIC_BY_SOURCE = {
     "ライフパスナンバー": {
       13: "人生そのものが、近道を選べない道すじになりやすいとされています。遠回りに見えても、そうして積み上げたものが生き方の芯になります。",
@@ -3543,9 +3132,6 @@
     9: "博愛の心や広い視野を、意識して育てていく課題があるとされています。",
   };
 
-  // Tapped from any result card to explain what that category of number is,
-  // as opposed to the result-desc text which explains what the specific
-  // digit (1-9 etc.) means. Keyed per card type, not per digit.
   const GLOSSARY = {
     lifePath: {
       title: "ライフパスナンバーとは？",
@@ -3621,9 +3207,6 @@
     i: 9, r: 9,
   };
 
-  // Modern-style (Hepburn) romanization, not the older 訓令式 (e.g. し=shi,
-  // not si; ちゃ=cha, not tya) — this is the whole point of the table, since
-  // that's the exact confusion it exists to prevent.
   const KANA_SECTIONS = [
     {
       title: "清音",
@@ -3667,8 +3250,6 @@
       ],
     },
     {
-      // ヴ（外来語のv音）：日本語にv音はなく、ヘボン式の一般的な慣例に
-      // 合わせてbで代用する（例：ヴィヴィアン→bibian、ヴォードレール→bodoreru）。
       title: "ヴ（外来語）",
       items: [
         ["ヴァ", "ba"], ["ヴィ", "bi"], ["ヴ", "bu"], ["ヴェ", "be"], ["ヴォ", "bo"],
@@ -3728,10 +3309,6 @@
     return reduceToSingleOrMaster(day);
   }
 
-  // Feeds only the "4 life periods" detail breakdown below (第1〜第4チャレンジ),
-  // not the basic-3 "チャレンジナンバー" card — that one uses the 未来数-style
-  // calcChallengeNumber (singular) instead. The two intentionally use
-  // different formulas and can produce different values for the same date.
   function calcChallengeNumbers(rMonth, rDay, rYear) {
     const c1 = reduceToSingleOrMaster(Math.abs(rMonth - rDay));
     const c2 = reduceToSingleOrMaster(Math.abs(rDay - rYear));
@@ -3740,12 +3317,6 @@
     return [c1, c2, c3, c4];
   }
 
-  // The basic-3 "チャレンジナンバー": breaks the month and day into individual
-  // digits and adds them all together (year excluded), then reduces. This is
-  // the calculation commonly called 未来数 (future number) in Japanese
-  // numerology, and is often used interchangeably with the name
-  // "チャレンジナンバー" there — distinct from the Western subtraction-based
-  // Challenge Number used in the 4-period detail breakdown above.
   function calcChallengeNumber(month, day) {
     const raw = digitsOf(month).concat(digitsOf(day)).reduce((sum, d) => sum + d, 0);
     return reduceToSingleOrMaster(raw);
@@ -3778,11 +3349,6 @@
     return reduceToSingleOrMaster(rMonth + rDay + rTargetYear);
   }
 
-  // 🚨 マスターナンバー（11・22・33）を残すのは「年周り」＝パーソナルイヤーだけ。
-  //    パーソナルマンスとパーソナルデイは、必ず1桁まで還元する。
-  //    足す前の月・日も還元する。
-  //    （2026-08-22 依頼者に確認。それ以前は月・日を還元せず、マンス・デイにも
-  //     マスターを残していたため、パーソナルデイが年間の約13.6%の日で違っていた）
   function reduceToSingleDigit(n) {
     let value = Math.abs(n);
     while (value > 9) {
@@ -3799,14 +3365,6 @@
     return reduceToSingleDigit(personalMonth + reduceToSingleDigit(targetDay));
   }
 
-  // 🚨 毎朝の言葉（MORNING_WORDS）を選ぶためだけの数字。画面には出さない。
-  //    （2026-08-22 依頼者の決定）画面のパーソナルデイは必ず1桁まで還元するが、
-  //    **還元する前に 11・22・33 になる日には、その数字の文章を出す。**
-  //    38 → 3＋8 ＝ 11 のように、足し直した先が 11・22・33 の日も含める。
-  //
-  //    足す日（1〜31）は還元しない。還元すると合計が最大18にしかならず、
-  //    22・33 の日が永久に来なくなるため。1〜9 に落ち着く日は、還元してもしなくても
-  //    同じ値になる（各桁を足す操作は、1桁への落ち先を変えないため）。
   function calcMorningWordDay(personalMonth, targetDay) {
     return reduceToSingleOrMaster(personalMonth + targetDay);
   }
@@ -3817,8 +3375,6 @@
     return { value: reduceToSingleOrMaster(raw), raw };
   }
 
-  // Destiny/Soul/Personality all return the pre-reduction total as well: the
-  // karmic-debt check looks at that raw sum, not the reduced value.
   function calcSoulNumber(letters) {
     const vowels = letters.filter((l) => VOWELS.has(l));
     if (vowels.length === 0) return null;
@@ -3838,10 +3394,6 @@
     return reduceToSingleOrMaster(lifePath + destiny);
   }
 
-  // The digits (1-9) that never appear among the name's letter values —
-  // areas the name doesn't naturally cover, which this lifetime is said to
-  // ask you to develop deliberately. Can be an empty list (every digit is
-  // covered) or several digits at once.
   function calcLifeLessonNumbers(letters) {
     if (letters.length === 0) return null;
     const present = new Set(letters.map((l) => LETTER_VALUES[l]).filter(Boolean));
@@ -3852,9 +3404,6 @@
     return missing;
   }
 
-  // The digit(s) that occur most often among the name's letter values —
-  // where the name's energy is most concentrated. Usually a single digit,
-  // but ties are possible and are all returned.
   function calcIntensityNumbers(letters) {
     if (letters.length === 0) return null;
     const counts = {};
@@ -3880,7 +3429,6 @@
     if (!entry) return;
     card.addEventListener("click", () => openInfoModal(entry));
   }
-
 
   function createResultCard(label, value, meaningMap, wide, main, glossaryKey) {
     const card = document.createElement("div");
@@ -3908,28 +3456,16 @@
     return card;
   }
 
-  // For numbers that can come back as zero, one, or several digits at once
-  // (Life Lesson Number, Intensity Number), rather than always exactly one.
-  // 行の最後に1枚だけ残ったカードは、右側に空白が出て収まりが悪いうえ、
-  // 半分の幅なので文字も折り返しがちになる。横いっぱいに広げて両方を解消する。
-  //
-  // グループによっては .wide のカードが混ざるため、枚数が偶数か奇数かでは
-  // 判定できない（例：デスティニーが横長 → 残り4枚でも行の割れ方が変わる）。
-  // 実際に描画された行の位置で「同じ行に自分しかいないか」を見る。表示して
-  // からでないと位置が取れないので、必ず結果を開いたあとに呼ぶこと。
   function stretchLonelyCards() {
     document.querySelectorAll("#results .card-grid").forEach((grid) => {
       const cards = [...grid.children];
       if (cards.length === 0) return;
-      // 1枚だけの行は末尾とは限らない（名前が母音だけでパーソナリティが
-      // 出ないと、途中の行が1枚になる）。行ごとにまとめてから判定する。
       const rows = new Map();
       cards.forEach((card) => {
         const top = card.offsetTop;
         if (!rows.has(top)) rows.set(top, []);
         rows.get(top).push(card);
       });
-      // 1枚だけの行を広げても、そのカードは同じ行に留まるので他は動かない。
       rows.forEach((row) => {
         if (row.length === 1) row[0].classList.add("wide");
       });
@@ -3938,8 +3474,6 @@
 
   function createMultiNumberCard(label, values, meaningMap, emptyText, wide, glossaryKey) {
     const card = document.createElement("div");
-    // 「3・5・8」のように3つ以上並ぶと、半分の幅では数字も解説文も収まらない。
-    // その場合だけ横いっぱいに使う（ライフレッスンは該当数が多くなりやすい）。
     const needsWide = wide || values.length >= 3;
     card.className = "result-card" + (needsWide ? " wide" : "");
     if (values.some(isMaster)) card.classList.add("master");
@@ -3971,10 +3505,6 @@
     }
   });
 
-  // Birthdate is split into 3 numeric-only boxes (year/month/day) so it can
-  // be typed as one continuous run of digits, like "19781214": each box
-  // auto-advances to the next once it's full, and Backspace on an empty box
-  // jumps back to the previous one.
   function digitsOnly(value) {
     return value.replace(/[^0-9]/g, "");
   }
@@ -3997,8 +3527,6 @@
     });
   }
 
-  // 年→月→日と、ひとりでに進む。戻るときは、空のところで消すと前へ戻る。
-  // nextId … 日を入れ終えたあとに進む先（名前の欄や、次の日付）。
   function setupDateGroup(yId, mId, dId, nextId) {
     const y = document.getElementById(yId);
     const m = document.getElementById(mId);
@@ -4011,8 +3539,6 @@
     setupBackspaceToPrevious(d, m);
   }
 
-  // 苗字の欄から名前の欄へ送る。区切りは**空白**か**確定キー**。
-  // 🚨 字数では決められない。勝手には送らない。
   function setupNameSplit(lastId, firstId) {
     const last = document.getElementById(lastId);
     const first = document.getElementById(firstId);
@@ -4026,8 +3552,6 @@
       last.value = head;
       if (tail) first.value = tail + first.value;
       first.focus();
-      // ⚠️ ここで blur を出さないこと。**送った先で控えるカナより先に**
-      //    苗字がローマ字へ変わってしまい、鑑定書の宛名から苗字が消えた（2026-09-03）。
       if (tail) first.dispatchEvent(new Event("input", { bubbles: true }));
       return true;
     }
@@ -4036,10 +3560,7 @@
       if (e.isComposing) return;
       split();
     });
-    // 🚨 携帯の日本語入力では、空白は変換の途中に打たれる。確定したところで見る。
     last.addEventListener("compositionend", () => { split(); });
-    // 確定キーでも次へ送る。押した人が「進む」つもりでいるため。
-    // ⚠️ preventDefault を忘れると、そのまま計算や鑑定書作りが走ってしまう。
     last.addEventListener("keydown", (e) => {
       if (e.key !== "Enter" || e.isComposing) return;
       e.preventDefault();
@@ -4047,9 +3568,6 @@
     });
   }
 
-  // 🚨 日付の欄を足したら、必ずこの並びに名前を足すこと。
-  //    2026-09-03、鑑定の3か所と「気持ちから読む」が抜けていて、依頼者に言われて気づいた。
-  //    （画面の枠の指定と同じで、**一覧にしないと必ず取りこぼす**）
   [
     ["birth-year", "birth-month", "birth-day", "last-name"],        // 計算画面 → 苗字
     ["a-year", "a-month", "a-day", "a-last"],                       // 相性・お一人目 → 苗字
@@ -4061,7 +3579,6 @@
     ["feel-year", "feel-month", "feel-day"],                        // 鑑定・気持ちから読む（名前は無い）
   ].forEach((ids) => setupDateGroup(ids[0], ids[1], ids[2], ids[3]));
 
-  // 苗字 → 名前（空白で送る）。日付と同じで、**足したらこの並びに名前を足すこと。**
   [
     ["last-name", "first-name"],
     ["a-last", "a-first"],
@@ -4070,8 +3587,6 @@
     ["pro-sheet-last", "pro-sheet-first"],
   ].forEach((ids) => setupNameSplit(ids[0], ids[1]));
 
-  // Pasting a full date (e.g. "19781214") into the year box distributes the
-  // digits across all 3 boxes instead of overflowing into just the year box.
   birthYearInput.addEventListener("paste", (e) => {
     const pasted = digitsOnly((e.clipboardData || window.clipboardData).getData("text"));
     if (pasted.length < 5) return;
@@ -4104,20 +3619,13 @@
     }
 
     rememberBirth(year, month, day);
-    // 貯めてある「日付 → 言葉」も作り直す。生年月日が変われば言葉も変わるため。
     saveMorningPlan();
 
-    // かな→ローマ字の自動変換は、打鍵が止まってから走る（拗音・ヴ行が壊れる
-    // のを防ぐため）。ボタンを押した時点でまだ変換待ちが残っている可能性が
-    // あるので、計算に入る前に確実に流し込んでおく。
     clearTimeout(autoConvertTimers.get(lastNameInput));
     runAutoConvert(lastNameInput);
     clearTimeout(autoConvertTimers.get(firstNameInput));
     runAutoConvert(firstNameInput);
 
-    // 漢字など変換できない文字が残ったまま計算すると、その欄が丸ごと計算から
-    // 抜け落ちた数字が「正しい結果」として表示されてしまう。苗字だけ漢字で
-    // 名前はかな、といった混在で特に危険なため、計算せずに止める。
     const UNCONVERTED_PATTERN = /[぀-ヿ一-鿿]/;
     if (UNCONVERTED_PATTERN.test(lastNameInput.value)
         || UNCONVERTED_PATTERN.test(firstNameInput.value)) {
@@ -4136,24 +3644,12 @@
     const allValues = [];
     const karmicHits = [];
 
-    // カルマナンバーは「どのナンバーに出ているか」まで込みで意味を持つため、
-    // 値だけでなく出どころのラベルも一緒に持つ。判定するのは還元する前の
-    // 合計値であって、カードに表示している還元後の値ではない。
-    //
-    // 対象は、いわゆるコアナンバー（ライフパス／デスティニー／ソウル／
-    // パーソナリティ／バースデー）に絞っている。マチュリティナンバーは「すでに還元済みの
-    // 数字どうしの和」で桁の合計ではないため、パーソナルイヤー系は毎日
-    // 変わってしまい生涯のテーマを表すこの数字の性質と合わないため、
-    // どちらも判定対象から外している。
     function checkKarmic(label, raw) {
       if (KARMIC_DEBT_NUMBERS.includes(raw)) karmicHits.push({ label, raw });
     }
 
-    // Basic-3 group is displayed left to right as Birthday / Life Path
-    // (main, emphasized) / Challenge.
     const birthday = calcBirthdayNumber(day);
     allValues.push(birthday);
-    // バースデーだけは合計ではなく、生まれた日そのもの（13・14・16・19日）で判定する。
     checkKarmic("バースデーナンバー", day);
     groupBasic3El.appendChild(createResultCard("バースデーナンバー", birthday, NUMBER_MEANINGS, false, false, "birthday"));
 
@@ -4272,10 +3768,7 @@
     }
 
     if (karmicHits.length > 0) {
-      // 同じ13でもライフパスに出ているのかソウルに出ているのかで読み方が
-      // 変わるため、カードは出どころごとに1枚ずつ立てる（値では束ねない）。
       karmicHits.forEach((hit) => {
-        // 出どころ別の文があればそちらを、無ければ共通の文を使う。
         const meanings = KARMIC_BY_SOURCE[hit.label] || KARMIC_DEBT_MEANINGS;
         const card = createResultCard(hit.label, hit.raw, meanings, false, false, "karmicDebt");
         card.classList.add("karmic");
@@ -4283,7 +3776,6 @@
       });
       groupKarmicWrapEl.classList.remove("hidden");
 
-      // 上部のサマリーは「何が出ているか」の一覧なので、こちらは値で束ねる。
       const notes = [...new Set(karmicHits.map((hit) => hit.raw))]
         .map((n) => `${n}（${KARMIC_DEBT_MEANINGS[n]}）`)
         .join(" ");
@@ -4298,13 +3790,6 @@
     stretchLonelyCards();
   });
 
-  // ---------------- Library (reference docs) ----------------
-  // 本文はデータとして持ち、DOMは textContent で組み立てる（結果カードと同じ
-  // 方針）。ブロックの型は "p"（本文）／"f"（式・変換例）／"n"（補足）／
-  // "t"（表）の4つだけに絞ってある。
-  //
-  // 算出方法の計算例は、すべて「1990年5月23日生まれ／YAMADA TARO」で統一し、
-  // 実際の計算関数に通して値を検証済み。式を変えたときは例の値も見直すこと。
   const LIBRARY_DOCS = [
     {
       id: "how",
@@ -5249,12 +4734,6 @@
   const libraryH1 = document.getElementById("library-h1");
   const librarySub = document.getElementById("library-sub");
 
-  // ---------------- 怒りの輪 ----------------
-  // 🚨 1枚の絵にしないこと（依頼者の指示・2026-09-02）。
-  //    絵の中へ文字を焼き込むと、携帯では字が小さくなり、拡大しないと読めない。
-  //    **図形は SVG、文字は HTML** に分けてある。大きさの決まりは CSS の .aw-label 付近。
-  // 🚨 図の中に入れるのは気持ちの名前だけ。説明は下のカードに出す。
-  // ==有料ここから==
   const WHEELS = {};
 
   WHEELS.anger = {};
@@ -5269,8 +4748,6 @@
     link: { doc: "plutchik", label: "8つの気持ちの輪へ" },
   };
 
-  // lines … 図の中での改行位置。🚨 1行3文字まで。
-  //   狭い画面（320px）でも扇形からはみ出さない上限がここ。増やすと文字が切れる。
   WHEELS.anger.parts = [
     { name: "不安", lines: ["不安"], items: ["先が見えない", "心配になる", "気が張っている"] },
     { name: "恐れ", lines: ["恐れ"], items: ["どうなるか怖い", "また同じことが起きそう", "近づきたくない"] },
@@ -5285,11 +4762,6 @@
   WHEELS.anger.coreFill = "hsl(268, 40%, 20%)";
   WHEELS.anger.hint = "気持ちを押すと、下に説明が出ます。";
 
-  // ---------------- 8つの気持ちの輪（プルチック） ----------------
-  // 🚨 3段の強さ（弱い・そのまま・強い）は依頼者の図から取っている。
-  //    ⚠️ 並び順だけは、いただいた図と一般に知られている並びが食い違う箇所がある。
-  //    **依頼者の確認待ち**（→ docs の「決めたこと.md」2026-09-02）。
-  // 🚨 説明の文はここに書かない。いただいた語だけを出す。
   WHEELS.plutchik = {};
   WHEELS.plutchik.core = {
     name: "気持ち",
@@ -5310,31 +4782,13 @@
     { name: "怒り", lines: ["怒り"], levels: ["いらだち", "怒り", "激怒"], step: 17, link: { doc: "anger", label: "怒りの下にある気持ちへ" } },
     { name: "期待", lines: ["期待"], levels: ["関心", "期待", "警戒"], step: 4 },
   ];
-  // もとの図の色の並び（黄・緑・青緑・青・紫・赤紫・赤・橙）を、暗い地に合う濃さで。
   WHEELS.plutchik.hue = (i) => "hsl(" + [48, 100, 160, 205, 262, 300, 353, 26][i] + ", 40%, 40%)";
   WHEELS.plutchik.coreFill = "hsl(268, 40%, 20%)";
   WHEELS.plutchik.hint = "お客様が選ばれた気持ちを、押してください。";
 
-  // ---------------- 数字ごとの言葉（依頼者の言葉） ----------------
-  // 🚨 **ここは全部、依頼者ご自身の言葉です。AIの下書きは1行も入れていません。**
-  //    正本は docs/numerology-calculator/解釈ルール-たたき台.md（2026-09-01 に12個そろった）。
-  //    ⚠️ 直すときは、必ず正本のほうを先に直すこと。ここは写しです。
-  // 🚨 **画面に出さないと決めた語は、ここに入れていない**
-  //    （「男性性」1／「部下か味方か敵か」8／「他人に興味が薄い」7／「認知行動療法」11）。
-  // ⏳ **言い換え待ちの語も外してある**
-  //    （「破壊」「嘘」5／「メリハリ」22／「施し」6）。言い換えをいただいたら足す。
-  // say … かけたい言葉／stuck … つまずきやすいところ／act … してみるとよいこと
-  // note … 鑑定士が外さないための覚え（依頼者の決めごと）
-  // anger … 何をされると腹が立つか（怒りの出どころ）
-  // 🚨 **「〜すべき」の形で12個そろえるのは無理があった**（依頼者・2026-09-03）。
-  //    型に合わせると言葉がねじれる。**腹が立つことそのものを書く。**
-  // 🚨 **stuck（つまずき）から裏返して作らないこと。**
-  //    つまずきは「自分の中で困っていること」、怒りは「外からされて腹が立つこと」。
-  //    こちらは4つ続けて外した（8・4・3・7）。**依頼者に一つずつ伺う。**
-  // ✅ = 依頼者の言葉／⏳ = こちらの下書き（確認待ち）
   const NUMBER_WORDS = {
     1: {
-      anger: "すぐに動けないこと", // ⏳ こちらの下書き
+      anger: "すぐに動けないこと",
       say: ["「遠足の前の日」のように、まだ何も始まっていないのに心のほうが先に動いている",
             "「種まきの日」", "「習慣を始める日」"],
       stuck: ["周りを気にすることが苦手", "予定通りに動くことが苦手"],
@@ -5342,35 +4796,35 @@
       note: "「子どものよう」とは言わない。場面だけを借りる。",
     },
     2: {
-      anger: "相談なしに、勝手に決められること", // ⏳ こちらの下書き
+      anger: "相談なしに、勝手に決められること",
       say: ["休みを取って", "自分が疲れない接し方を探そう", "合わせてしまうときの感情を書き出してみて"],
       stuck: ["人に合わせすぎて疲れる"],
       act: ["共感する", "受け取る", "目の前の人に寄り添う"],
       note: "合わせること自体は、直す対象ではない。「はっきり言おう」ではなく、消耗の側へ寄せる。",
     },
     3: {
-      anger: "相手の気持ちを考えずに、輪を乱されること", // ✅ 依頼者の言葉
+      anger: "相手の気持ちを考えずに、輪を乱されること",
       say: ["一人だけ、明るくしなくていい相手を作って"],
       stuck: ["気が散って続かない", "本心を見せない"],
       act: ["楽しむ", "インスピレーションを大切にする", "クリエイティブに動く"],
       note: "つまずきの2つは向きが逆。外へ出しすぎる面と、内に隠す面がある。",
     },
     4: {
-      anger: "決まりを守らないこと", // ✅ 依頼者の言葉
+      anger: "決まりを守らないこと",
       say: ["できる範囲で構わないから", "小さい一歩を進んでみてください"],
       stuck: ["枠にはまりやすい。変化を嫌う", "0→1が苦手"],
       act: ["決まりごとを守る", "ルールに沿って進める", "今の枠組みを再確認する"],
       note: "「今日の一段」とは言わない。「小さい一歩」と言う。4は決められない人ではない。足りないのは理由。",
     },
     5: {
-      anger: "進め方を、細かく縛られること", // ⏳ こちらの下書き
+      anger: "進め方を、細かく縛られること",
       say: ["あとで読み返すと面白いよ", "動いた量が見えるよ"],
       stuck: ["飽きて続かない", "落ち着かない", "自由を守ろうとして約束や関係から逃げる", "発言が大きくなりがち"],
       act: ["自己主張する"],
       note: "直させるための言葉ではない。「面白いから」「見えるから」という誘い方をする。",
     },
     6: {
-      anger: "身近な人が、ないがしろにされること", // ⏳ こちらの下書き
+      anger: "身近な人が、ないがしろにされること",
       say: ["大切な人ほど、線が引きにくくなるよね", "できないことは抱えなくていい",
             "自分がどう感じているかを優先に考えてみる"],
       stuck: ["世話を焼きすぎる", "完璧を求めて疲れる", "近い人にだけ厳しくなる", "自分を置き去りにする"],
@@ -5378,28 +4832,28 @@
       note: "「自分を大切にする」が要。ここが抜けると、6のつまずきをそのまま押すことになる。",
     },
     7: {
-      anger: "不必要に、自分の時間を奪われること", // ✅ 依頼者の言葉
+      anger: "不必要に、自分の時間を奪われること",
       say: ["みんなと仲良くしなくていい", "苦手だって先に言っておけばいい"],
       stuck: ["人を入れない", "理屈で人を追い詰める"],
       act: ["読書", "分析", "内省"],
       note: "「みんなと仲良くしなくていい」は、人の輪に入るのが特に苦手な相手にかける言葉。全員には向かない。",
     },
     8: {
-      anger: "効率が悪いこと", // ✅ 依頼者の言葉
+      anger: "効率が悪いこと",
       say: ["一つだけ人に任せていい", "休んでいい", "受け取っていい"],
       stuck: ["対応が、相手には圧になりやすい", "止まることを自分に許せない"],
       act: ["ことわらず受け取る", "自分に許す（休む・楽しむ・使う）", "一つだけ人に任せる"],
       note: "8は自分に許可を出しにくい。許す言い方が効く。相手によって言葉尻を変える（元気な相手には強く、静かな相手には優しく。見分けはバースデー。2・4・6は静かめ）。「これは訓練です」とは言わない。",
     },
     9: {
-      anger: "一度決まったことを、覆されること", // ⏳ こちらの下書き
+      anger: "一度決まったことを、覆されること",
       say: ["「それでいいと思う？」と問い返す"],
       stuck: ["頑固", "人の話を聞かない", "線を引けない", "手放すのが苦手"],
       act: ["取捨選択する", "自己犠牲をやめる", "明日始めることを決める"],
       note: "5は書いて残す、9は思い返す。終わりで止めない。3つ目が「明日始めることを決める」。",
     },
     11: {
-      anger: "気づいているのに、なかったことにされること", // ⏳ こちらの下書き
+      anger: "気づいているのに、なかったことにされること",
       say: ["感じたことを、まず残しておこう", "当たってるかどうかは、今決めなくていい",
             "感じすぎて疲れてない？", "機嫌取りは休んでいい"],
       stuck: ["人の気持ちを拾いすぎて疲れる", "思いついても形にしない", "自分の感覚を信じ切れない"],
@@ -5407,14 +4861,14 @@
       note: "「直感」を11の言い換えに使わない。11は感じ取るほう。正誤を問う言い方は、その人の体験とずれる。",
     },
     22: {
-      anger: "話を、まともに聞いてもらえないこと", // ⏳ こちらの下書き
+      anger: "話を、まともに聞いてもらえないこと",
       say: ["全部分かってもらおうとしなくていい"],
       stuck: ["周りに伝わらない"],
       act: ["大きな空想を書き出す"],
       note: "22の困りごとは本人の中ではなく、人との間にある。「まず一歩から」ではなく「どう伝えるか」の側へ。",
     },
     33: {
-      anger: "助けが要る人が、放っておかれること", // ⏳ こちらの下書き
+      anger: "助けが要る人が、放っておかれること",
       say: ["自分にも同じことをしてあげて"],
       stuck: ["自分を後回しにしすぎる", "断れない", "何とかしてあげなきゃと思いすぎる"],
       act: [],
@@ -5422,16 +4876,6 @@
     },
   };
 
-  // ---------------- 感情の22段階（エイブラハム） ----------------
-  // 🚨 画像にしない。段の色はCSS、文字はHTML（→ 2枚の輪と同じ考え方）。
-  // 🚨 言葉はこちらで置き直したもの。**訳文を書き写していない**（AGENTS.md 1章）。
-  //    もとは公に知られている並べ方で、番号と順番はそれに沿っている。
-  // ⚠️ 効き目を約束する言い方をしないこと（景品表示法）。「上がる」「良くなる」と書かない。
-  // 🚨 1行を短く保つ。22行あるので、長くすると携帯で崩れる。
-  // 🚨 順番はもとの並べ方のまま。言葉だけ、日本語で重さの順に読めるように置き直した。
-  //    2026-09-03、依頼者から「失望と落胆が逆では？」とご指摘。
-  //    もとは 12 が「期待が外れる」、16 が「気持ちがくじける」で、順番は合っていた。
-  //    日本語の「失望」が重く読めたため、12 を「がっかり」、16 を「くじける気持ち」にした。
   const LADDER = [
     "喜び・感謝・自由・愛",
     "情熱",
@@ -5457,11 +4901,6 @@
     "恐れ・深い悲しみ・絶望・無力感",
   ];
 
-  // お客様の言葉から、段を見つけるための手がかり。
-  // ⚠️ **依頼者の言葉ではない。**一般に言われている目安を、こちらで短く置いたもの。
-  //    鑑定の言葉として読み上げるためのものではなく、**段を当てるための目印。**
-  // 🚨 8段目の「特に何もない」に注意。
-  //    依頼者が「お客様が悩みがない時が1番困る」と言われた場面が、ここに当たる。
   const LADDER_CUES = [
     "ありがたい／いまが楽しい",
     "これがやりたくてたまらない",
@@ -5487,11 +4926,6 @@
     "どうにもならない／何をしても無駄",
   ];
 
-  // goto(id) … 別の画面へ渡すときに呼ぶ（"anger" / "plutchik" / "ladder"）。
-  // pick … 開いたときに選んでおく段（1〜22）。8つの気持ちの輪から飛んできたとき用。
-  // onPick … 段が選ばれたことを外へ伝える。onSave … 「今日の分を残す」を押されたとき。
-  // 中黒で区切られた言葉は、**中黒のところでだけ折る。**
-  // ⚠️ 中黒が無い言葉に keep-all を当てると、折れずにはみ出す。だから分けている。
   function putLadderWord(el, word) {
     if (word.indexOf("・") < 0) {
       el.textContent = word;
@@ -5510,14 +4944,10 @@
   function buildLadder(goto, pick, onPick, onSave) {
     const frag = document.createDocumentFragment();
 
-    // 🚨 いちばん要るのは「いまどこか」ではなく「次にどこを目指すか」。
-    //    ひとつ上の段を大きく出す。段の言葉はもとの並びから引くだけで、
-    //    こちらで作った文章は入れていない。
     const panel = document.createElement("div");
     panel.className = "lad-panel";
     frag.appendChild(panel);
 
-    // 左の縦バー（上ほど薄く、下ほど濃い）と、その右に22行。
     const body = document.createElement("div");
     body.className = "lad-body";
     const scale = document.createElement("div");
@@ -5600,8 +5030,6 @@
         const save = document.createElement("button");
         save.type = "button";
         save.className = "lad-save";
-        // 🚨 「今日の分」では何が残るのか分からない（依頼者・2026-09-03）。
-        //    **残る中身をそのままボタンに出す。**
         save.textContent = "「" + (i + 1) + "　" + LADDER[i] + "」を、今日の記録に残す";
         save.addEventListener("click", () => {
           const said = onSave();
@@ -5616,7 +5044,6 @@
       const row = document.createElement("button");
       row.type = "button";
       row.className = "lad-row";
-      // 上ほど明るく、下ほど暗い。段の重さがそのまま見えるようにするため。
       const light = 40 - (i / (LADDER.length - 1)) * 22;
       row.style.background = "hsl(268, 34%, " + light.toFixed(1) + "%)";
 
@@ -5638,8 +5065,6 @@
       row.addEventListener("click", () => select(i));
       rows.push(row);
       list.appendChild(row);
-      // 🚨 7と8の間に線を引く（依頼者・2026-09-03）。
-      //    もとの並べ方で、ここが向きの変わり目にあたる。
       if (i === 6) {
         const split = document.createElement("button");
         split.type = "button";
@@ -5661,7 +5086,6 @@
     return frag;
   }
 
-  // goto(id) … 別の画面へ渡すときに呼ぶ。
   function buildWheel(spec, goto, onPick) {
     const NS = "http://www.w3.org/2000/svg";
     const C = 200;      // 中心
@@ -5695,7 +5119,6 @@
     };
     const round = (n) => Math.round(n * 100) / 100;
 
-    // 背景の円（濃紺〜紫。土台の色をそのまま使う）
     const disc = document.createElementNS(NS, "circle");
     disc.setAttribute("cx", C);
     disc.setAttribute("cy", C);
@@ -5721,9 +5144,6 @@
         });
         card.appendChild(ul);
       } else {
-        // 🚨 同じ気持ちの、弱い言い方から強い言い方まで。
-        //    2026-09-03、依頼者に「弱いとき／そのまま／強いとき」が伝わらなかった。
-        //    言葉で説明せず、**並べて向きを見せる**形にした。
         const lead = document.createElement("p");
         lead.className = "aw-lv-lead";
         lead.textContent = "お客様は、こんな言い方をされるかもしれません";
@@ -5731,10 +5151,7 @@
 
         const row = document.createElement("div");
         row.className = "aw-lv-row";
-        // 気持ちの深さは、その気持ちの色の濃さで見せる。言葉では言わない。
-        // showCard は index を受け取らないので、並びから引く。
         const base = (spec.hue(Math.max(0, spec.parts.indexOf(part))).match(/-?\d+(\.\d+)?/g) || ["268", "40", "40"]).map(Number);
-        // 暗い地なので、**強いほうを明るく**する（塗りのときとは向きが逆）。
         part.levels.forEach((word, i) => {
           const item = document.createElement("span");
           item.className = "aw-lv-item";
@@ -5750,7 +5167,6 @@
           + "「イライラする」と言われたのに「激怒ですね」と返すと、遠く感じられることがあります。";
         card.appendChild(why);
       }
-      // もう一方の図へ渡す。2枚を別々の記事にしているので、押して移れるようにする。
       if (part.link) {
         const go = document.createElement("button");
         go.type = "button";
@@ -5759,8 +5175,6 @@
         go.addEventListener("click", () => goto(part.link.doc));
         card.appendChild(go);
       }
-      // 22段階に同じ言葉が載っている気持ちは、その段へ飛べるようにする。
-      // 🚨 当てはめではない。**同じ言葉が実際に載っている段**だけを指している。
       if (part.step && goto) {
         const toLad = document.createElement("button");
         toLad.type = "button";
@@ -5773,7 +5187,6 @@
 
     const sectors = [];
     const labels = [];
-    // 選ばれた扇形は、中心から 1.06 倍に伸びる。円の外へ少し出る形になる。
     const GROW = "translate(" + C + " " + C + ") scale(1.06) translate(-" + C + " -" + C + ")";
 
     function select(index) {
@@ -5782,8 +5195,6 @@
       sectors.forEach((s, i) => {
         s.setAttribute("fill-opacity", i === index ? "0.95" : "0.55");
         s.setAttribute("aria-pressed", i === index ? "true" : "false");
-        // 🚨 選ばれた扇形に、太い金の縁を付けない（依頼者・2026-09-03「安っぽいです」）。
-        //    縁はどれも同じ細さのまま。**大きくなることと、色が濃くなることだけで見せる。**
         if (i === index) {
           s.setAttribute("transform", GROW);
         } else {
@@ -5809,7 +5220,6 @@
         " L" + round(x2) + " " + round(y2) +
         " A" + RI + " " + RI + " 0 0 0 " + round(x3) + " " + round(y3) + " Z"
       );
-      // 紫〜赤紫の中で少しずつ振る。色数は増やすが、系統は土台から出さない。
       path.setAttribute("fill", spec.hue(i));
       path.setAttribute("fill-opacity", "0.55");
       path.setAttribute("stroke", "#d9a94a");
@@ -5850,7 +5260,6 @@
     svg.appendChild(core);
     fig.appendChild(svg);
 
-    // 文字は SVG の外（HTML）に置く。SVG の中に入れると viewBox と一緒に縮む。
     spec.parts.forEach((part, i) => {
       const deg = START + STEP * i + STEP / 2;
       const a = (deg * Math.PI) / 180;
@@ -5886,8 +5295,6 @@
     select(-1);
     return wrap;
   }
-
-  // ==有料ここまで==
 
   function appendDocBlock(block, parent) {
     const type = block[0];
@@ -5930,7 +5337,6 @@
     const el = document.createElement("p");
     if (type === "f") el.className = "doc-formula";
     else if (type === "n") el.className = "doc-note";
-    // 式は改行位置に意味がある（「→」で計算の段が変わる）ため、そのまま残す。
     if (type === "f") el.style.whiteSpace = "pre-line";
     el.textContent = block[1];
     parent.appendChild(el);
@@ -5952,12 +5358,9 @@
     return sectionEl;
   }
 
-  // withHeading=false は「1項目だけを開いている画面」用。見出しは画面タイトル
-  // 側に出るので、カードの中で重ねて出さない。
   function buildEntryEl(entry, withHeading) {
     const entryEl = document.createElement("div");
     entryEl.className = "doc-entry";
-    // 図だけの項目は見出しを持たない（「図」という見出しに意味がないため）。
     if (withHeading && entry.h3) {
       const h3 = document.createElement("h3");
       h3.textContent = entry.h3;
@@ -5967,7 +5370,6 @@
     return entryEl;
   }
 
-  // 目次を使わない記事（ローマ字の説明）は、従来どおり1ページに全部並べる。
   function buildDoc(doc) {
     const frag = document.createDocumentFragment();
     frag.appendChild(buildLead(doc.lead));
@@ -5979,9 +5381,6 @@
     return frag;
   }
 
-  // 目次を使う記事（算出方法・深堀解説）は項目数が多く、1ページに並べると
-  // 目的の項目にたどり着くまで延々スクロールすることになる。見出しだけを
-  // 並べ、選んだ項目だけを開く。
   function flattenEntries(doc) {
     const list = [];
     doc.sections.forEach((section) => {
@@ -6014,8 +5413,6 @@
     return frag;
   }
 
-  // 1〜9の数字のように、順番に読んでいきたい項目がある。毎回目次へ戻らずに
-  // 隣の項目へ移れるよう、記事の末尾に前後の移動を置く。
   function buildEntryNav(index) {
     const nav = document.createElement("div");
     nav.className = "doc-nav";
@@ -6058,8 +5455,6 @@
     });
   }
 
-  // "menu"（資料メニュー）→ "toc"（記事の目次）→ "entry"（項目）の3階層。
-  // 目次を使わない記事は "toc" の位置に全文が入る。
   let libraryView = "menu";
   let currentDoc = null;
   let currentEntries = [];
@@ -6115,8 +5510,6 @@
     showLibraryMenu();
   });
 
-  // 項目 → 目次 → メニュー → 電卓 と、1つのボタンで1段ずつ戻す（端末の戻る
-  // ボタンと同じ感覚で押せるようにするため）。
   libraryBackBtn.addEventListener("click", () => {
     if (libraryView === "entry") {
       showDocToc(currentDoc);
@@ -6131,11 +5524,6 @@
     window.scrollTo(0, 0);
   });
 
-  // ---------------- 相性診断 ----------------
-  // 「相性がよい／わるい」は流派によって言うことが違い、根拠を示せない。そこで
-  // 優劣は付けず、2つの数字が並んだときに役割がどう分かれるかだけを書く。
-  // 45通り（1〜9の組み合わせ、同じ数字どうしを含む）を持ち、どの種類の
-  // ナンバーを比べるときも同じ表を引く。マスターナンバーは1桁へ還元して引く。
   const PAIR_NOTES = {
     "1-1": "同じ数字。どちらも前に出るため、方向が合えば速く進み、割れると譲り合いにくい組み合わせとされます。",
     "1-2": "進める人と支える人。役割が自然に分かれやすく、噛み合いやすい組み合わせとされます。",
@@ -6242,13 +5630,6 @@
     b: ["b-year", "b-month", "b-day", "b-last", "b-first"].map((id) => document.getElementById(id)),
   };
 
-  // ⚠️ 相性診断の日付は、上の setupDateGroup の一覧でまとめて当てている。
-  //    ここで二重に当てると、1文字打つたびに2回動く。
-
-  // 名前欄の自動変換。メイン画面のものと同じ変換規則・同じモード（手入力の
-  // オン／オフ）に従うが、タップ表の入力先（activeNameInput）は動かさない。
-  // 相性診断の画面からはタップ表を開けないため、動かすとメイン画面に戻った
-  // ときの入力先が意図せず変わってしまう。
   const compatFlushers = [];
   function setupCompatNameInput(inputEl) {
     let timer = null;
@@ -6278,7 +5659,6 @@
     return PAIR_NOTES[key] || "";
   }
 
-  // 生年月日と（任意の）名前から、比較に使う数字だけをまとめて出す。
   function compatProfile(year, month, day, letters) {
     const lifePath = calcLifePathNumber(year, month, day);
     const destinyResult = letters.length > 0 ? calcDestinyNumber(letters) : null;
@@ -6403,14 +5783,8 @@
     window.scrollTo(0, 0);
   });
 
-  // ---------------- 記録（カレンダー） ----------------
-  // 保存先は端末の localStorage だけ。サーバーへは何も送らない。
-  // 日付の計算・祝日・月表の描き方は、推し活カレンダーで実機に載っている
-  // ものを流用している（同じことを二度書かないため）。
   const RECORD_KEY = "numerology-records-v1";
 
-  // 手帳の予定。記録とは別に持ち、役割にかかわらず書ける。
-  // かたち: { "2026-08-20": [ { t: "14:00", s: "面接" }, ... ] }
   const PLAN_KEY = "numerology-plans-v1";
   let planStoreOK = true;
   function loadPlans() {
@@ -6436,7 +5810,6 @@
     }
   }
   let myPlans = loadPlans();
-  // 時刻の無い予定（終日）を先に、あとは時刻の早い順。手帳の並びに合わせる。
   function plansOn(key) {
     return (myPlans[key] || []).slice().sort((a, b) => (a.t || "").localeCompare(b.t || ""));
   }
@@ -6453,34 +5826,21 @@
     return savePlans();
   }
 
-  // 回数と棒を出し始める件数。これ未満のうちは選択肢の名前だけを並べる。
-  // 数件ぶんの偏りは偶然でも出るため、それを傾向として読ませないための線。
   const SUMMARY_MIN = 10;
 
-  // 「どう過ごしましたか？」の8つ。順序も語句も変えない。
-  // ⚠️ 数字との対応表はここに持たせない。持つと「数字どおりでしたね」と
-  // 言いたくなり、記録が数秘術を肯定するだけの装置になる。
   const RECORD_CHOICES = [
     "決めた・進めた", "人に合わせた", "表した・話した", "こつこつ取り組んだ",
     "動いた・変えた", "人の力になった", "ひとりで考えた", "休んだ・ゆるめた",
   ];
 
-  // 毎朝の言葉（ライフパス × パーソナルデイ ＝ 144通）。
-  // 2026-08-24、依頼者の規則（見出しは言い切る／本文は問いかけ）で全144通を書き直した。
-  // 原本は docs/numerology-calculator/144通_書き直し-2026-08-24.md。
-  // 🚨 文章を直したら、必ず原本の側を直してからここへ入れ直すこと。
-  //    ここだけ直すと、次の差し替えで元に戻る。
   const MORNING_WORDS = {"1":{"1":["決めたことを、口に出してください。","胸の中では決まっているのに、まだ誰にも言ってないことはありますか？今日は一人だけに伝えてみてください。"],"2":["今日は決めなくて大丈夫です。","早く白黒つけたくなってませんか？相手の出方を見ていて構いません。"],"3":["思いついたことを、書き出してください。","動きながら浮かんだことを、そのまま流してませんか？今日はカレンダーに残してみてください。"],"4":["小さい一歩で構いません。","大きく動かないと進んだ気がしない、ということはありませんか？今日は一歩だけで十分です。"],"5":["決めた道から、外れて大丈夫です。","自分で決めた通りに進めないと落ち着かない、ということはありませんか？今日は別の道で構いません。"],"6":["引き受ける前に、確かめてください。","自分でやったほうが早い、と手を出してませんか？今日は何が必要かを先に聞いてみてください。"],"7":["決める前に、一人になってください。","勢いで決めたくなってませんか？今日は誰にも相談せず、自分の中で見てみてください。"],"8":["注ぎ先を、ひとつに決めてください。","新しいことに手が伸びて、どれも半分になってませんか？今日はどこへ注ぐかをひとつ選んでください。"],"9":["次を始めるために、手放してください。","次に始めたいことが、もう浮かんでませんか？始める場所を空けるほうが、先です。"],"11":["説明できないほうを、選んで大丈夫です。","理由が言えないと動けない、としてませんか？今日は最初に浮かんだほうで構いません。"],"22":["全部言わずに、始めてください。","分かってもらってから動こうとしてませんか？今日は説明を後にして構いません。"],"33":["自分のために、決めてください。","誰かのため、が理由になってませんか？今日は自分がしたいことから決めて大丈夫です。"]},"2":{"1":["相手を待たずに、動いてみてください。","相手の出方を見てから決める癖が、出てませんか？今日は自分の考えから先に動いて大丈夫です。"],"2":["合わせるのをやめなくて大丈夫です。","相手に合わせた自分を、あとから責めてませんか？相手に合わせられた自分を褒めてください。"],"3":["自分の思いつきを、口に出してください。","相手の話に合わせるうちに、自分の考えが引っ込んでませんか？今日はひとつだけ言ってみてください。"],"4":["続けてきたやり方のままで大丈夫です。","相手に合わせて、自分のやり方を変えようとしてませんか？無理に変えなくて構いません。"],"5":["誘われたほうへ、行ってみてください。","相手に合わせるうちに、自分が行きたい場所を忘れてませんか？今日は面白そうなほうを選んで大丈夫です。"],"6":["断って大丈夫です。","頼まれると、つい引き受けてませんか？今日ひとつだけ、断ってみてください。"],"7":["合わせなくていい相手がいます。","全員と上手くやろうとしてませんか？合わない人とは、離れたままで大丈夫です。"],"8":["今日は受け取ってください。","差し出されると、先に返してませんか？ひとつだけ、ことわらずに受け取ってみてください。"],"9":["相手の答えを、待ってください。","言われる前に、察して動いてませんか？今日は相手が言うまで待って大丈夫です。"],"11":["機嫌取りは休んでいいです。","相手の様子を見て、先に動いてませんか？今日は気づいても、そのままで大丈夫です。"],"22":["全部分かってもらおうとしなくていいです。","伝わらなくて、間が悪くなってませんか？相手に関わるところだけで大丈夫です。"],"33":["自分の順番を、先にしてください。","相手の予定に合わせるうちに、自分の分が消えてませんか？今日はひとつだけ済ませて大丈夫です。"]},"3":{"1":["思いついた入り口から始めてください。","どこから手をつけるか、決まらないままになってませんか？いちばん面白そうな入り口で構いません。"],"2":["話す前に、聞いてみてください。","場を明るくしようとして、先に口が出てませんか？今日は相手の話が終わるまで待ってみてください。"],"3":["明るくしなくていい日です。","しんどいのに、いつもの調子で返してませんか？親友のような相手に、今日は一言だけ伝えてみてください。"],"4":["ひとつだけ、終わらせてください。","次の思いつきに移って、途中のものが増えてませんか？今日はひとつだけ終わりまで運んでください。"],"5":["面白そうなほうを選んでください。","役に立つかどうかで選んで、気が乗らないままになってませんか？今日は心が動いたほうを選んでください。"],"6":["明るく引き受けなくて大丈夫です。","場の空気で、つい返事をしてませんか？今日は返す前に、ひと呼吸だけ挟んでください。"],"7":["話さない時間を作ってください。","人といる時間で一日が埋まってませんか？今日は誰にも会わない時間をひとつ取ってみてください。"],"8":["ひとつに絞ってみてください。","面白そうなものが増えて、どれも進んでませんか？今日はひとつだけ選んで大丈夫です。"],"9":["続いた話を、閉じてください。","長く続いた話を、まだ引きずってませんか？今日で終わりにして構いません。"],"11":["言葉にする前に、書き留めてください。","すぐ人に話して、形が変わってませんか？今日は誰にも言わず、書き留めるだけにしてください。"],"22":["一部だけ、話してみてください。","話すうちに広がって、要点が消えてませんか？今日はひとつの話だけで構いません。"],"33":["受け取る側に回ってください。","場を明るくする役ばかりしてませんか？今日は誰かの話を、そのまま受け取って大丈夫です。"]},"4":{"1":["段取りがつく前に、始めてください。","全部の順番が決まらないと動けない、ということはありませんか？今日は最初の一手だけで十分です。"],"2":["決まらないままで大丈夫です。","結論が出ないと落ち着かない、ということはありませんか？今日は決めずに、そのままで構いません。"],"3":["順番の外のことも、残してください。","決まった手順にないものを、切り捨ててませんか？今日はカレンダーに書くだけで構いません。"],"4":["できる範囲で構いません。","全部やらないと意味がない、と思ってませんか？今日は手を付けた事でokです。"],"5":["やめてもいい、で始めてみてください。","続けられる形が見えないと、始められないほうですか？やめる自由は、いつでも手元にあります。"],"6":["抱える量を、先に決めてください。","できるところまで、と曖昧なまま引き受けてませんか？今日はどこまでかを決めてから受けてください。"],"7":["手順から離れて、考えてください。","決まったやり方の中だけで考えてませんか？今日は順番を忘れて、一度ゆっくり見てみてください。"],"8":["効率が見えてしまう日です。","人に任せるより自分でやったほうが早い、と思ってませんか？人に預ける訓練が必要な日です。"],"9":["なぜ手放すのかを、確かめてください。","手放す理由が、まだはっきりしてないのではありませんか？なぜ要らないのかを、書き出してみてください。"],"11":["説明できないものも、残してください。","根拠が無いものを、書かないようにしてませんか？判定はせずに、残すだけで構いません。"],"22":["手順の形にして見せてください。","言葉で伝わらなくて、困ってませんか？今日は順番に書き出して渡してみてください。"],"33":["自分の分を、段取りに入れてください。","人の用事だけで一日が埋まってませんか？今日は自分のひとつも並べて構いません。"]},"5":{"1":["やめてもいいので、始めてください。","続くかどうかが気になって、まだ始めてないことはありますか？今日は入り口だけ触ってみてください。"],"2":["ひとりの相手と、長くいてください。","次の場所へ動きたくなってませんか？今日は目の前の一人と、じっくり過ごしてみてください。"],"3":["面白かったことを、残してください。","動いた先で見たものを、そのままにしてませんか？今日はひとつだけ書き留めてみてください。"],"4":["同じことを、もう一度してください。","飽きたやり方を、すぐ変えたくなってませんか？今日はもう一度だけ、同じ手順でやってみてください。"],"5":["予定が崩れやすい日です。","決めたとおりに進まないと、失敗した気になってませんか？崩れたほうを、選び直してみてください。"],"6":["付き合わなくて大丈夫です。","誘われた流れで、人の用事に乗ってませんか？今日は自分の行き先を選んで構いません。"],"7":["動かない一日にしてください。","出かけないと何も起きない、と思ってませんか？今日は同じ場所で過ごして大丈夫です。"],"8":["力の向け先を決めてください。","あちこちに動きたくなってませんか？今日はひとつだけ決めて、そこへ注いでみてください。"],"9":["荷物をひとつ、減らしてください。","動きにくくなっているものが、ありませんか？今日は身軽なほうを選んで大丈夫です。"],"11":["気になったものを、書き留めてください。","動いた先で感じたことが、そのままになってませんか？今日はひとつだけ残してみてください。"],"22":["伝わらなくても、動いて大丈夫です。","分かってもらえないから、と止まってませんか？今日は説明せずに進んで構いません。"],"33":["自分の行きたい場所へ行ってください。","誘われた先に付き合うばかりになってませんか？今日は自分が面白いほうを選んで大丈夫です。"]},"6":{"1":["自分の用事から始めてください。","人の頼みごとを先に片づけようとしてませんか？今日は自分のことから手をつけて大丈夫です。"],"2":["手を出す前に、聞いてみてください。","頼まれる前に動こうとしてませんか？今日は何が必要かを、先に聞いてみてください。"],"3":["自分が話す側に回ってください。","相手の話を聞くばかりになってませんか？今日は自分のことを、ひとつ話してみてください。"],"4":["自分の分を、先に済ませてください。","人の用事から手をつけようとしてませんか？今日は自分のひとつを終わらせて大丈夫です。"],"5":["誰の用事でもない時間を作ってください。","一日が人の予定で埋まってませんか？今日は自分だけの時間をひとつ空けて大丈夫です。"],"6":["出来ない事は抱えなくていいです。","頼まれていないことまで、引き受けてませんか？できない分は、断って大丈夫です。"],"7":["誰の相談も受けなくて大丈夫です。","人の話を聞く一日になってませんか？今日は自分のことだけ考えて構いません。"],"8":["受け取ることを、自分に許してください。","してあげてばかりで、してもらうのが苦手じゃないですか？誰かの親切を、ひとつ受け取ってください。"],"9":["手放しても、冷たくはありません。","人のために持ち続けているものは、ありませんか？それを手放しても、あなたの優しさは減りません。"],"11":["気づいても、動かなくて大丈夫です。","相手の変化に気づいて、先回りしてませんか？今日は気づくだけで十分です。"],"22":["相手に関わるところだけ、話してください。","全部伝えようとして、相手が黙ってませんか？必要なところだけで大丈夫です。"],"33":["抱えるのを、今日はやめて大丈夫です。","できないことまで引き受けてませんか？断って構いません。"]},"7":{"1":["考えたことを、外に出してください。","頭の中で何度も確かめて、そのままになってませんか？今日は一人だけに話してみてください。"],"2":["理屈より、間合いを見てください。","正しさで決めようとしてませんか？今日は相手の様子のほうを見ていてください。"],"3":["誰かに話してみてください。","一人で考えて、まとまらないままになってませんか？今日は一人だけに話してみてください。"],"4":["考えるより、手を動かしてください。","段取りを頭の中で組み直してませんか？今日は先に一手だけ動かしてみてください。"],"5":["知らない場所へ行ってみてください。","いつもの範囲から出ないままになってませんか？今日は初めての場所をひとつ選んでみてください。"],"6":["正しさで、引き受けないでください。","やるべきだから、と決めてませんか？今日は自分がどう感じるかを先に見てください。"],"7":["今日は一人で考えてください。","人に相談しないといけない気がしてませんか？一人で考える時間は、あなたに必要な時間です。"],"8":["ひとつだけ、人に任せてください。","説明する手間を考えて、自分で抱えてませんか？今日ひとつだけ渡して大丈夫です。"],"9":["答えを出さないまま、手放して大丈夫です。","正しいかどうかを、まだ確かめようとしてませんか？答えが出なくても、手放して大丈夫です。"],"11":["理屈にせず、そのまま持っていてください。","説明のつかないものを、切り捨ててませんか？今日は答えを出さなくて大丈夫です。"],"22":["伝えるのを、今日はやめて大丈夫です。","説明しても届かなくて、疲れてませんか？自分の中に持ったままで構いません。"],"33":["自分の時間を、先に取ってください。","人のために時間が消えてませんか？今日はひとりの時間を決めて大丈夫です。"]},"8":{"1":["始めることを、自分に許してください。","結果が見えないと動かない、としてませんか？今日は形にならなくても始めていいです。"],"2":["今日は譲って大丈夫です。","早く決めて進めたくなってませんか？相手の速さに合わせて構いません。"],"3":["まとめずに、出してみてください。","形にならないと言わない、としてませんか？今日は途中のままで話して大丈夫です。"],"4":["今日は小さく進めてください。","一気に片づけたくなってませんか？一歩だけで構いません。"],"5":["効率で選ばなくて大丈夫です。","早いほう・確実なほうで決めてませんか？今日は面白いほうを選んで構いません。"],"6":["任せることを、自分に許してください。","自分でやったほうが早いと思ってませんか？今日ひとつだけ、人に渡して大丈夫です。"],"7":["答えを言う前に、待ってください。","早く決めて動かしたくなってませんか？今日は結論を出さないままで大丈夫です。"],"8":["先ずは深呼吸してください。","よかれと思った対応が、相手には圧になってませんか？返事をする前に、ひと呼吸だけ挟んでみてください。"],"9":["終えることを、自分に許してください。","まだ足りない、と続けてませんか？今日で終わりにして大丈夫です。"],"11":["感じたことを、まず残してください。","使えるかどうかで選んでませんか？今日は判定せずに、書き留めるだけで構いません。"],"22":["使うところだけ、渡してください。","全体を分かってもらおうとしてませんか？今日は相手が使う部分だけで十分です。"],"33":["受け取っていい日です。","してあげてばかりで、してもらうのが苦手じゃないですか？今日はことわらずに受け取ってください。"]},"9":{"1":["新しいほうへ、目を向けてください。","終わったことの続きばかり考えてませんか？今日は次に始めたいことを、ひとつ書いてみてください。"],"2":["相手の話を、最後まで聞いてください。","言われる前に、答えができてませんか？今日は途中で切らずに聞いてみてください。"],"3":["今日の言い方を、書き留めてください。","自分が何と言ったか、覚えてますか？今日はひとつだけ思い返して、書いてみてください。"],"4":["途中のものを、仕上げてください。","終わったことばかり気にして、手元が止まってませんか？あと少しのものから片づけてみてください。"],"5":["終わったやり方を、変えてください。","続けてきたから、というだけで続けてませんか？今日はひとつだけ変えてみてください。"],"6":["相手に、聞いてから動いてください。","何が必要かを、先に決めつけてませんか？今日は本人に確かめてみてください。"],"7":["正しさを、一度しまってください。","正しいことを言ったのに相手に伝わらないことがありませんか？遠回りな伝え方を試してみて。"],"8":["休んでいい日です。","やり切らないと終われない、としてませんか？今日は途中で止めて大丈夫です。"],"9":["今日は手放すと良い日です。","もう終わっているのに、まだ気にしている事はありませんか？今日ひとつだけ、手放してみてください。"],"11":["決める前に、感じたほうを見てください。","先に答えを作ってませんか？今日は最初に浮かんだほうを、書き留めてみてください。"],"22":["分からせようとしなくて大丈夫です。","相手の理解を、先に決めつけてませんか？今日は伝わらないままで構いません。"],"33":["役目をひとつ、下ろしてください。","誰かのために続けている役が、まだありませんか？今日で終わりにして大丈夫です。"]},"11":{"1":["浮かんだことに、手をつけてください。","感じただけで終わらせてませんか？今日はひとつだけ、実際に動かしてみてください。"],"2":["感じたことに、動かなくて大丈夫です。","相手の気持ちに気づくと、そのまま動いてませんか？今日は気づくだけで十分です。"],"3":["感じたことを、書き留めてください。","気のせいかもしれない、と流してませんか？判定はせずに、残すだけで大丈夫です。"],"4":["浮かんだものを、形にしてください。","感じたままで、そこから動いてないことはありませんか？今日はひとつだけ手順にしてみてください。"],"5":["気になったほうへ、動いてください。","理由が言えないから、と止まってませんか？説明できなくても行って大丈夫です。"],"6":["気づいても、動かなくて大丈夫です。","相手の困りごとに気づいて、先回りしてませんか？今日は気づくだけで十分です。"],"7":["感じたことを、言葉にしないでください。","すぐ説明しようとしてませんか？今日は言葉にせず、そのまま持っていて大丈夫です。"],"8":["感じたことより、決めたことを。","迷いが増えて、動けなくなってませんか？今日はひとつだけ決めて、そこへ力を向けてください。"],"9":["感じ取ったものを、抱えないでください。","人から受け取った重さが、残ってませんか？今日ひとつだけ手放して大丈夫です。"],"11":["感じたことが当たっているかを、今は決めなくていいです。","当たったかどうかを、すぐ確かめたくなりませんか？答え合わせは、今日はしなくて大丈夫です。"],"22":["見えているものを、一部だけ出してください。","全部を言おうとして、言葉が追いつかないことはありませんか？今日はひとつだけで大丈夫です。"],"33":["人の重さを、持ち帰らないでください。","気づいた分だけ背負ってませんか？今日は自分の側に戻って構いません。"]},"22":{"1":["粗いままで、始めてください。","見えている形に届かないから、まだ手をつけてないことはありますか？今日は入り口だけで構いません。"],"2":["全部伝えなくて大丈夫です。","分かってもらおうとして、説明が長くなってませんか？今日は相手に関わるところだけで構いません。"],"3":["頭の中のものを、外に出してください。","自分にしか見えていない景色を、抱えたままになってませんか？今日は一部だけ話してみてください。"],"4":["今日の分だけで構いません。","全体が見えているぶん、手が止まってませんか？今日できるところまでで十分です。"],"5":["大きさを気にせず、動いてください。","小さいことをしても意味がない、と思ってませんか？今日は目の前の一歩で構いません。"],"6":["全部は引き受けなくて大丈夫です。","自分がやらないと形にならない、と思ってませんか？今日は一部だけで構いません。"],"7":["全部説明しなくて大丈夫です。","分かってもらおうとして、疲れてませんか？今日は伝えるのをやめて構いません。"],"8":["今日の一手に、力を向けてください。","大きいほうばかり見て、手元が止まってませんか？今日できるひとつに注いで構いません。"],"9":["抱えている構想を、ひとつ降ろしてください。","形にならないまま持っているものが、ありませんか？今日は手放して構いません。"],"11":["浮かんだものを、ひとつ動かしてください。","感じただけで終わってませんか？今日は小さくても手をつけて大丈夫です。"],"22":["周りに伝わりにくい日です。","見えているものを話して、困った顔をされてませんか？言葉より、小さく作って見せてみてください。"],"33":["自分のために、形にしてください。","誰かのためでないと作れない、としてませんか？今日は自分の分を作って大丈夫です。"]},"33":{"1":["自分のために、始めてください。","誰かのためでないと動きにくい、ということはありませんか？今日は自分のためだけに始めて大丈夫です。"],"2":["今日は自分の側にいてください。","相手の都合ばかり考えてませんか？自分がどうしたいかを、先に決めて大丈夫です。"],"3":["自分の話をしてください。","人の話ばかり聞く一日になってませんか？今日は自分のことを、ひとつ話して大丈夫です。"],"4":["自分の順番も入れてください。","人の分を先に片づける段取りになってませんか？今日は自分のひとつも並べて大丈夫です。"],"5":["縛られてはいません。","誰かのために続けなければ、と思ってませんか？やめる自由は、あなたにもあります。"],"6":["自分の順番を、今日は優先してください。","人の用事が終わってから、と思っているうちに一日が終わってませんか？自分のことをひとつ、先に済ませてください。"],"7":["苦手だと先に言ってください。","合うと後で重くなりますよね？今日は一言だけ、伝えてください。"],"8":["今日は受け取る側に回ってください。","差し出すばかりになってませんか？誰かの申し出を、ひとつ受け取ってみてください。"],"9":["果たした役目を、手放してください。","もう終わった役目を、まだ続けてませんか？今日ひとつだけ、そっと下ろして大丈夫です。"],"11":["感じすぎて疲れてないですか。","人の気持ちを受け取るうちに、自分が重くなってませんか？今日は人と離れる時間を取ってください。"],"22":["説明を、短くして大丈夫です。","分かってもらおうとして、長く話してませんか？今日は一言だけで構いません。"],"33":["自分の順番を、今日は優先してください。","人の用事が終わってから、と思っているうちに一日が終わってませんか？自分のことをひとつ、先に済ませてください。"]}};
 
-  // 日付はすべてローカル時刻で扱う。UTCへ直すと日本の朝が前日にずれる。
   const pad2 = (n) => String(n).padStart(2, "0");
   const ymd = (d) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
   const fromYmd = (s) => { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d); };
   const addDays = (s, n) => { const d = fromYmd(s); d.setDate(d.getDate() + n); return ymd(d); };
   const DOW = ["日", "月", "火", "水", "木", "金", "土"];
 
-  // 祝日（祝日法にもとづく計算。春分・秋分の近似式が有効な1980〜2099年が対象）。
-  // ⚠️ 式典などの臨時の祝日、法改正による移動は含まない。
   const holidayCache = {};
   function holidaysOf(year) {
     if (holidayCache[year]) return holidayCache[year];
@@ -6501,14 +5861,12 @@
       [10, nthMonday(10, 2), "スポーツの日"],
       [11, 3, "文化の日"], [11, 23, "勤労感謝の日"],
     ].forEach(([m, d, name]) => { map[key(m, d)] = name; });
-    // 振替休日：日曜と重なった祝日の、次にくる休日でない日
     Object.keys(map).sort().forEach((k) => {
       if (fromYmd(k).getDay() !== 0) return;
       let d = addDays(k, 1);
       while (map[d]) d = addDays(d, 1);
       map[d] = "振替休日";
     });
-    // 国民の休日：祝日と祝日に挟まれた日（日曜を除く）
     Object.keys(map).sort().forEach((k) => {
       const mid = addDays(k, 1);
       if (map[addDays(k, 2)] && !map[mid] && fromYmd(mid).getDay() !== 0) map[mid] = "国民の休日";
@@ -6518,8 +5876,6 @@
   }
   const holidayName = (date) => holidaysOf(+date.slice(0, 4))[date] || "";
 
-  // localStorage は端末の設定によっては例外を投げる。ここで止まると記録画面
-  // ごと動かなくなるので、必ず握りつぶして続行する。
   let recordStoreOK = true;
   function loadRecords() {
     try {
@@ -6530,14 +5886,11 @@
     }
     return {};
   }
-  // 🚨 成否を必ず返す。呼び出し側が「保存しました」を出すかどうかの判断に使う。
-  //    失敗を黙って飲み込むと、書いたのに消えたという最悪の形になる。
   function saveRecords() {
     try {
       localStorage.setItem(RECORD_KEY, JSON.stringify(myRecords));
       return true;
     } catch (err) {
-      // 保存の上限に当たったときだけ、原因が分かる案内を出す。
       if (err && (err.name === "QuotaExceededError" || err.code === 22)) {
         alert("保存できる量をこえました。\n\n書き残した文章が多いのかもしれません。\n古いものをいくつか消してみてください。");
         return false;
@@ -6570,7 +5923,6 @@
 
   const activeRecords = () => myRecords;
 
-  // 生年月日が入っていないと、その日の数字も言葉も出せない。
   function birthReduced() {
     const y = parseInt(birthYearInput.value, 10);
     const m = parseInt(birthMonthInput.value, 10);
@@ -6580,10 +5932,6 @@
     return calcLifePathNumber(y, m, d);
   }
 
-  // その日の3つの数字。計算式はメイン画面と同じ関数をそのまま使う
-  // （片方だけ直すと、表示と記録で数字が食い違う）。
-  // 🚨 手帳と毎朝のお便りは「自分のもの」。鑑定の入力欄ではなく、登録した自分情報を見る
-  //    （2026-08-28 依頼者の指示）。登録がまだなら、これまでどおり入力欄を使う。
   function ownerLifePath() {
     const own = selfBirthParts();
     return own ? calcLifePathNumber(own.y, own.m, own.d) : birthReduced();
@@ -6593,7 +5941,6 @@
     return numbersOnFor(dateStr, ownerLifePath());
   }
 
-  // 登録した自分の誕生日と同じ月日か（年は見ない）。
   function isSelfBirthday(dateStr) {
     const own = selfBirthParts();
     if (!own) return false;
@@ -6601,8 +5948,6 @@
     return d.getMonth() + 1 === own.m && d.getDate() === own.d;
   }
 
-  // 誰の数字かを外から渡せる形。毎朝のお便りは自分情報の生年月日で作るため、
-  // 入力欄を見に行く numbersOn とは分けてある。
   function numbersOnFor(dateStr, lp) {
     if (!lp) return null;
     const d = fromYmd(dateStr);
@@ -6613,8 +5958,6 @@
     return { lifePath: lp.value, year: py, month: pm, day: pd, wordDay: wd };
   }
 
-  // その日に届いた（届く）言葉。記録に残っていればそれを優先する。
-  // 文章を後から書き直しても、過去の記録に出ていた言葉が変わらないようにするため。
   function wordOn(dateStr) {
     const saved = activeRecords()[dateStr];
     if (saved && saved.word) return saved.word;
@@ -6663,9 +6006,7 @@
         + (birthday ? " birth" : "")
         + (key === recordToday ? " today" : "") + (key === calSelected ? " sel" : "");
       const plans = plansOn(key);
-      // 推しごとカレンダーの予定は読むだけ。自分で書いたものの後ろに並べる。
       const shownPlans = plans.concat(oshiPlansOn(key).map((o) => ({ t: o.t, s: o.s, oshi: true })));
-      // 記録の無い日には何も出さない。「未記録」という言い方はしない。
       cell.setAttribute("aria-label",
         `${d.getMonth() + 1}月${d.getDate()}日${holi ? " " + holi : ""}${birthday ? " お誕生日" : ""}`
         + (shownPlans.length ? ` 予定${shownPlans.length}件` : "")
@@ -6679,7 +6020,6 @@
         mark.className = "cal-mark";
         cell.appendChild(mark);
       }
-      // 自分の誕生日。毎年おなじ月日に出す。
       if (birthday) {
         const cake = document.createElement("span");
         cake.className = "cal-birth";
@@ -6687,7 +6027,6 @@
         cell.appendChild(cake);
       }
 
-      // その日の数字を、薄く大きく敷く。月を開くだけで数字の流れが見える。
       const cnums = numbersOn(key);
       if (cnums) {
         const wm = document.createElement("span");
@@ -6696,7 +6035,6 @@
         cell.appendChild(wm);
       }
 
-      // 予定はいちばん下。手帳として最もよく見る情報なので、数字より前に出す。
       if (shownPlans.length) {
         cell.classList.add("has-plans");
         const pl = document.createElement("span");
@@ -6725,8 +6063,6 @@
     }
   }
 
-
-  // ---- 手帳の持ち出し（控え・いつものカレンダー） -------------------------
   const LF = String.fromCharCode(10);
   const CRLF = String.fromCharCode(13, 10);
 
@@ -6740,7 +6076,6 @@
     setTimeout(() => URL.revokeObjectURL(a.href), 1000);
   }
 
-  // 逆斜線・記号・改行は、決まった形に置き換えないと読み込み側で壊れる。
   const ICS_BS = String.fromCharCode(92);
   function icsEscape(v) {
     let out = String(v);
@@ -6751,8 +6086,6 @@
     out = out.split(LF).join(ICS_BS + "n");
     return out;
   }
-  // 1行75オクテットの決まり。数え方は文字数ではなく**バイト数**。
-  // 日本語は1文字3バイトになるため、文字数で数えると折り返しが効かない。
   function icsFold(line) {
     const enc = new TextEncoder();
     if (enc.encode(line).length <= 74) return line;
@@ -6788,7 +6121,6 @@
         L.push("DTSTAMP:" + stamp);
         L.push(icsFold("SUMMARY:" + icsEscape(pn.s)));
         if (pn.t) {
-          // 時間帯は端末の時刻として扱わせる（TZIDを付けない書き方）。1時間で置く。
           const hm = pn.t.replace(":", "");
           const end = new Date(fromYmd(key));
           end.setHours(Number(pn.t.slice(0, 2)) + 1, Number(pn.t.slice(3, 5)), 0, 0);
@@ -6797,7 +6129,6 @@
           L.push("DTEND:" + p2(end.getFullYear()) + p2(end.getMonth() + 1) + p2(end.getDate())
             + "T" + p2(end.getHours()) + p2(end.getMinutes()) + "00");
         } else {
-          // addDays は日付の文字列を受け取り、日付の文字列を返す
           L.push("DTSTART;VALUE=DATE:" + ymdPlain);
           L.push("DTEND;VALUE=DATE:" + addDays(key, 1).replace(/-/g, ""));
         }
@@ -6818,7 +6149,6 @@
       records: myRecords,
     });
   }
-  // 控えは足し合わせる。端末に残っているものは消さない。
   function mergeBackup(data) {
     let plans = 0, records = 0;
     const bp = (data && data.plans) || {};
@@ -6846,14 +6176,7 @@
     return { plans: plans, records: records };
   }
 
-  // ---- 推しごとカレンダー（同じ住所に置かれた別アプリ）の予定を読む -------
-  // 推しごとカレンダーの ⚙️「数秘電卓に送る」で渡されたものを、ここに預かる。
-  // 🚨 同じ住所にあるので相手の保存場所を直接覗くこともできるが、それはやらない。
-  //    ホーム画面にアイコンを2つ置くと、iPhoneでは互いの保存場所が見えなくなり、
-  //    「予定が1件も出ない」が起きる。受け取る形にすれば開き方によらず必ず届く。
   const OSHI_RECV_KEY = "numerology-oshi-recv";
-  // ひと月を描くだけで42マス分の問い合わせが来る。毎回読み直すと目に見えて重くなるので、
-  // 文字列が同じ間は前回の解析結果を使い回す。
   let oshiCacheRaw = null;
   let oshiCacheVal = null;
   function readOshi() {
@@ -6870,13 +6193,10 @@
       return null;
     }
   }
-  // 「その日に予定があるか」の判定は、推しごとカレンダー側の occursOn と同じでなければ
-  // ならない。片方にしか無い条件があると、同じ日を見ているのに中身が食い違う。
   function oshiOccursOn(e, key) {
     if (!e.date || key < e.date) return false;
     if (!e.repeat) return key === e.date;
     if (e.until && key > e.until) return false;
-    // その回だけ休みにした予定。向こうで休みにしたものを、こちらで出さない。
     if (Array.isArray(e.skips) && e.skips.includes(key)) return false;
     const a = fromYmd(e.date), b = fromYmd(key);
     if (e.repeat === "daily") return true;
@@ -6884,19 +6204,15 @@
     if (e.repeat === "monthly") return a.getDate() === b.getDate();
     return false;
   }
-  // 読むだけ。こちらから書き換えない。相手のアプリが正本。
   function oshiPlansOn(key) {
     const o = readOshi();
     if (!o) return [];
-    // 向こうで「今は隠す」を選んだ推しの予定は、こちらにも出さない。
     const hidden = Array.isArray(o.hidden) ? o.hidden.map(String) : [];
     return o.events.filter((e) => !hidden.includes(String(e.ownerId || "")) && oshiOccursOn(e, key))
       .map((e) => ({ t: String(e.time || ""), s: String(e.title || "") }))
-      // 時刻の無い予定は下に置く。向こうの並び順に合わせる（見比べたときに順番が違うと迷う）。
       .sort((a, b) => (a.t || "99:99").localeCompare(b.t || "99:99"));
   }
 
-  // 予定の1行。時刻と内容をその場で直せる。「保存」を押させない。
   function planRow(key, plan, redraw) {
     const row = document.createElement("div");
     row.className = "plan-row";
@@ -6918,15 +6234,12 @@
       const sv = text.value.trim();
       const tv = time.value;
       if (plan) {
-        // 内容を空にしたら、消したものとして扱う（時刻だけの予定は作らない）
         if (!sv) { removePlan(key, plan); redraw(); renderCalendar(); return; }
         plan.s = sv; plan.t = tv;
         savePlans();
         renderCalendar();
         return;
       }
-      // 🚨 内容が入るまでは増やさない。時刻から先に入れる人が多く、そこで行が
-      //    増えてしまうと、続けて書いた内容が別の予定になってしまう。
       if (!sv) return;
       addPlan(key, { t: tv, s: sv });
       redraw(true);
@@ -6956,7 +6269,6 @@
     return row;
   }
 
-  // 予定は誰でも書ける。数字が出ない日でも、先の日でも書ける。
   function buildPlanBlock(key) {
     const wrap = document.createElement("div");
     wrap.className = "plan-block";
@@ -6973,7 +6285,6 @@
     const draw = (focusNew) => {
       list.textContent = "";
       plansOn(key).forEach((pn) => list.appendChild(planRow(key, pn, draw)));
-      // 末尾は常に空の1行。「追加」を押させない ＝ 手が止まらない。
       list.appendChild(planRow(key, null, draw));
       if (focusNew) {
         const next = list.querySelector(".plan-row.is-new .plan-text");
@@ -6982,7 +6293,6 @@
     };
     draw();
 
-    // 推しごとカレンダーの予定は、読むだけ。ここでは直せない（向こうが正本）。
     const oshiItems = oshiPlansOn(key);
     if (oshiItems.length) {
       const t2 = document.createElement("div");
@@ -7041,8 +6351,6 @@
     }
     box.appendChild(h);
 
-    // 🚨 予定は数字より前、かつ下の早期リターンより前に置く。
-    //    生年月日が未入力でも、先の日付でも、予定だけは書けるようにするため。
     box.appendChild(buildPlanBlock(key));
 
     if (!nums) {
@@ -7056,8 +6364,6 @@
 
     const nrow = document.createElement("div");
     nrow.className = "day-nums";
-    // 見ている日が今日でないときに「今年・今月・今日」と書くと、どの日の
-    // 数字なのか分からなくなる。今日かどうかで言い方を変える。
     const isToday = key === recordToday;
     const numLabels = isToday
       ? ["今年の数字", "今月の数字", "今日の数字"]
@@ -7084,7 +6390,6 @@
       return;
     }
 
-    // その日に届いた言葉。記録と並べて見えることに意味がある。
     const word = wordOn(key);
     if (word) {
       const w = document.createElement("div");
@@ -7121,7 +6426,6 @@
         const store = myRecords;
         const cur = store[key];
         if (cur && cur.choice === choice) {
-          // 押し直しで取り消す。書き残しも無ければ、その日の記録ごと消す。
           if (cur.note) { delete cur.choice; } else { delete store[key]; }
         } else {
           store[key] = Object.assign({}, cur, {
@@ -7151,9 +6455,6 @@
     savedMsg.setAttribute("role", "status");
     nl.appendChild(savedMsg);
 
-    // 🚨 「保存」ボタンは置かない。押し忘れという新しい失敗が生まれ、日記では
-    //    「書いたのに消えた」が最も起きてはいけないため。代わりに、
-    //    打鍵が止まったら自動で保存し、保存できたことを目で分かるようにする。
     let savedTimer = null;
     const showSaved = (ok) => {
       const failed = !ok;
@@ -7162,8 +6463,6 @@
       savedMsg.classList.toggle("is-warn", failed);
       savedMsg.classList.add("is-on");
       clearTimeout(savedTimer);
-      // 失敗した表示は消さずに残す。目を離した隙に消えると、書いた人は
-      // 保存できたものと思い込んだまま画面を閉じてしまう。
       if (!failed) savedTimer = setTimeout(() => savedMsg.classList.remove("is-on"), 2200);
     };
     const writeNote = () => {
@@ -7194,8 +6493,6 @@
     ta.addEventListener("change", writeNote);   // 欄の外をタップしたとき
     nl.appendChild(ta);
 
-    // 保存ボタンを置いていないので、押さなくてよいことをその場に書く。
-    // 書いてあると分かっていないと、閉じるのが怖くて手が止まる。
     const noteHint = document.createElement("p");
     noteHint.className = "day-note-hint";
     noteHint.textContent = "書いたものは自動で残ります。そのまま閉じて大丈夫です。";
@@ -7217,7 +6514,6 @@
     const keys = Object.keys(recs).filter((k) => recs[k].choice);
     recordSummaryEl.textContent = "";
 
-    // 何も無いときは、件数を出さない。やることを1つだけ示す。
     if (!keys.length) {
       const box = document.createElement("div");
       box.className = "record-empty";
@@ -7237,8 +6533,6 @@
 
     const counts = {};
     keys.forEach((k) => { counts[recs[k].choice] = (counts[recs[k].choice] || 0) + 1; });
-    // 並び順は選択肢の並びで固定する。多い順にすると順位付けになるため。
-    // 一度も選んでいないものは出さない（0が並ぶ画面にしない）。
     const shown = RECORD_CHOICES.filter((c) => counts[c]);
 
     const lead = document.createElement("p");
@@ -7252,7 +6546,6 @@
     recordSummaryEl.appendChild(days);
 
     if (keys.length < SUMMARY_MIN) {
-      // まだ少ない。回数を出すと、偶然の揺れを傾向として読ませてしまう。
       const wrap = document.createElement("div");
       wrap.className = "sum-plain";
       shown.forEach((c) => {
@@ -7293,10 +6586,6 @@
     }
   }
 
-  // 下から出すパネルの開け閉め。開いている間は裏の画面を動かさない
-  // （スマホでパネルの中をスクロールしたとき、裏の月表まで一緒に動くのを防ぐ）。
-  // 書きかけの書き残しを、閉じる・画面を離れる直前に必ず書き込む。
-  // これが無いと、打ったまま × を押した分が消える。
   let noteTimer = null;
   let pendingNote = null;
   function flushNote() {
@@ -7311,9 +6600,6 @@
   window.addEventListener("pagehide", flushNote);
 
   let dayScrollY = 0;
-  // 🚨 中央に出すと、文字を打つときに鍵盤（キーボード）が下半分を覆い、
-  //    打っている欄が見えなくなる。鍵盤が出た分だけ、見えている範囲へ寄せ直す。
-  //    visualViewport は「いま実際に見えている範囲」を教えてくれる仕組み。
   function fitDayPanel() {
     const view = window.visualViewport;
     if (!view || dayMaskEl.classList.contains("hidden")) return;
@@ -7357,8 +6643,6 @@
   const toolOshiStateEl = document.getElementById("tool-oshi-state");
   const toolOshiClearEl = document.getElementById("tool-oshi-clear");
 
-  // 受け取っているかどうかを、🔧 を開くたびに出す。出していないと
-  // 「送ったのに届いていないのか、届いたのに出ていないのか」が分からない。
   function renderOshiState() {
     const o = readOshi();
     if (!o) {
@@ -7441,14 +6725,12 @@
     reader.onload = () => {
       let data = null;
       try { data = JSON.parse(String(reader.result)); } catch (err) { data = null; }
-      // 控えのファイルを選んでしまうこともある。どちらにも予定は入っているので受け取る。
       if (!data || !Array.isArray(data.events)) {
         alert(["このファイルには予定が入っていませんでした。", "",
           "推しごとカレンダーの ⚙️ にある「数秘電卓に送る」で作ったものを選んでください。"].join(LF));
         toolOshiFileEl.value = "";
         return;
       }
-      // 預かるのは予定と「今は隠す」の指定だけ。推しの名前や写真は持たない。
       const keep = {
         app: "oshi-cal-plans",
         exportedAt: String(data.exportedAt || ""),
@@ -7484,9 +6766,6 @@
     if (!dayMaskEl.classList.contains("hidden")) renderDaySheet();
   });
 
-  // 🚨 予定は「欄から離れたとき」に保存される作り。ところがアプリを切り替えても
-  //    欄から離れたことにはならず、書きかけのまま画面を離れられる。記録のほうは
-  //    flushNote で同じ手当てをしているのに、予定には無かった。
   function commitEditingPlan() {
     const el = document.activeElement;
     if (!el) return;
@@ -7540,7 +6819,6 @@
   });
 
   recordOpenBtn.addEventListener("click", () => {
-    // 開きっぱなしで日をまたぐことがあるので、開くたびに今日を取り直す。
     recordToday = ymd(new Date());
     calView = fromYmd(recordToday);
     calView.setDate(1);
@@ -7551,12 +6829,6 @@
     window.scrollTo(0, 0);
   });
 
-  // ---------------- 鑑定の機能（有料） ----------------
-  //
-  // 🚨 計算は既存の calc* をそのまま呼ぶ。ここで式を作り直さないこと。
-  //    同じ式が5か所にあり、書き写すと必ず片方が古くなる。
-  //
-  // 入れた内容は保存しない。お客様の生年月日を端末に残さないため、閉じれば消える。
   const proEl = document.getElementById("pro");
   const proBackBtn = document.getElementById("pro-back-btn");
   const proForecastEl = document.getElementById("pro-forecast");
@@ -7593,8 +6865,6 @@
     el.classList.toggle("hidden", !message);
   }
 
-  // 🚨 タブは3つ。増やしたら、下の3行すべてに名前を足すこと。
-  // ⚠️ 無料版には「気持ちから読む」が無い。**無いときに落ちないようにしておく。**
   function proShowTab(which) {
     proForecastEl.classList.toggle("hidden", which !== "forecast");
     proSheetEl.classList.toggle("hidden", which !== "sheet");
@@ -7602,21 +6872,12 @@
     proTabSheet.setAttribute("aria-selected", String(which === "sheet"));
     if (proFeelEl) proFeelEl.classList.toggle("hidden", which !== "feel");
     if (proTabFeel) proTabFeel.setAttribute("aria-selected", String(which === "feel"));
-    // 図は重いので、開かれたときに初めて組む。
     if (which === "feel" && typeof buildFeel === "function") buildFeel();
   }
 
   proTabForecast.addEventListener("click", () => proShowTab("forecast"));
   proTabSheet.addEventListener("click", () => proShowTab("sheet"));
   if (proTabFeel) proTabFeel.addEventListener("click", () => proShowTab("feel"));
-  // ==有料ここから==
-  // ---------------- 気持ちから読む（鑑定の機能・有料） ----------------
-  // 🚨 2026-09-03、依頼者の指示で資料（無料）から鑑定の機能（有料）へ移した。
-  //    「サブスク契約してよかったと思ってもらえるように」（依頼者）。
-  // 🚨 3つの図は別々の資料ではなく、**1つの順番**として組んである。
-  //    その方の数字（誰か）→ ① どの気持ちか → ② どのくらい重いか → ③ 怒りだけ下へ
-  // 🚨 かけたい言葉は **NUMBER_WORDS（依頼者の言葉）**からしか出さない。
-  //    段の名前は **LADDER（もとの並び）**からしか出さない。**AIの作文を混ぜない。**
   const feelWheelEl = document.getElementById("feel-wheel");
   const feelLadderEl = document.getElementById("feel-ladder");
   const feelAngerEl = document.getElementById("feel-anger");
@@ -7627,11 +6888,8 @@
     anger: document.getElementById("feel-tab-anger"),
   };
   let feelBuilt = false;
-  // いま観ているお客様の控え。端末の中だけで持ち、残すまで保存しない。
   const feelState = { birth: null, life: null, soul: null, destiny: null, feel: null, step: null };
 
-  // 記録は端末の localStorage だけ。サーバーへは送らない。
-  // 🚨 お客様の生年月日が入る。必ず消せるようにしておくこと。
   const FEEL_LOG_KEY = "numerology-feel-log";
 
   function readFeelLog() {
@@ -7648,7 +6906,6 @@
     try {
       localStorage.setItem(FEEL_LOG_KEY, JSON.stringify(log));
     } catch (err) {
-      /* 覚えられない端末でも、その日の鑑定は続けられる */
     }
   }
 
@@ -7676,7 +6933,6 @@
     return box;
   }
 
-  // 生年月日が入るたびに、その方の数字と言葉を出し直す。
   function feelUpdateWho() {
     const birth = proReadDate("feel-year", "feel-month", "feel-day");
     feelWhoOutEl.innerHTML = "";
@@ -7687,7 +6943,6 @@
       return;
     }
     feelState.birth = [birth.year, birth.month, birth.day].join("-");
-    // 🚨 怒りの出どころは3つ（依頼者・2026-09-03）。名前が無ければライフパスだけ。
     const romaji = (document.getElementById("feel-last").value.trim() + " "
       + document.getElementById("feel-first").value.trim()).trim();
     const p = compatProfile(birth.year, birth.month, birth.day, romaji ? nameLetters(romaji) : []);
@@ -7713,8 +6968,6 @@
     if (w) {
       if (w.say.length) feelWhoOutEl.appendChild(feelList("かけたい言葉", w.say, "is-say"));
       if (w.stuck.length) feelWhoOutEl.appendChild(feelList("つまずきやすいところ", w.stuck));
-      // 空のときは、見出しごと出さない。
-      // ⚠️ 「まだ伺えていません」はこちらの都合。買った人には意味が分からない。
       if (w.act.length) feelWhoOutEl.appendChild(feelList("してみるとよいこと", w.act));
       if (w.note) {
         const note = document.createElement("p");
@@ -7728,7 +6981,6 @@
     feelRenderShould();
   }
 
-  // 前に同じ方を観たときの控え。2回目からが、この機能のいちばん効くところ。
   function feelRenderLog() {
     const box = document.createElement("div");
     box.className = "feel-log";
@@ -7784,13 +7036,9 @@
     return "残しました";
   }
 
-  // 怒りの根っこにある「べき」。生年月日が入っているときだけ出す。
-  // 🚨 当てるためではなく、**伺うため**に出す。「思い当たることはありますか」で終わる。
   const feelShouldEl = document.createElement("div");
   feelShouldEl.className = "feel-should hidden";
 
-  // 🚨 怒りの出どころは3つ（依頼者・2026-09-03）。向きが違う。
-  //    ライフパス … ずっと持っている芯／ソウル … 自分に向く／デスティニー … 人に向く
   const FEEL_POINTS = [
     ["life", "ライフパス", "生き方の芯"],
     ["soul", "ソウル", "本音。自分に向く怒り"],
@@ -7846,8 +7094,6 @@
     feelShouldEl.appendChild(why);
   }
 
-  // goto("anger") / goto("ladder", 段) で、押した先へそのまま移る。
-  // 鑑定の最中に、画面を探させないため。
   function feelGoto(where, step) {
     if (where === "ladder") {
       feelShow("ladder", step);
@@ -7867,13 +7113,9 @@
     feelWheelEl.classList.toggle("hidden", which !== "wheel");
     feelLadderEl.classList.toggle("hidden", which !== "ladder");
     feelAngerEl.classList.toggle("hidden", which !== "anger");
-    // 段を指して移ってきたときは、はしごを組み直してその段を選んでおく。
     if (which === "ladder") {
       feelLadderEl.innerHTML = "";
       feelLadderEl.appendChild(feelHeading("② いま、どのあたりか"));
-      // 🚨 もとの教え方そのまま（2026-09-03 に確かめた）。
-      //    「いつも喜びでいるための決まりではなく、いまの場所を知って1段だけ上を目指す地図」。
-      //    ⚠️ これが無いと「軽いほうが良い」と読まれ、お客様を急かす形になる。
       const map = document.createElement("p");
       map.className = "feel-should-lead";
       map.textContent = "いつも軽いところにいるための決まりではありません。いまの場所を知って、ひとつだけ隣を目指すための地図です。";
@@ -7909,18 +7151,14 @@
     document.getElementById("feel-year").value = birthYearInput.value;
     document.getElementById("feel-month").value = birthMonthInput.value;
     document.getElementById("feel-day").value = birthDayInput.value;
-    // 計算画面の名前は、もうヘボン式に変わっている。そのまま持ってくる。
     document.getElementById("feel-last").value = document.getElementById("last-name").value;
     document.getElementById("feel-first").value = document.getElementById("first-name").value;
     feelUpdateWho();
   });
 
-  // 名前の欄も、他の画面と同じ扱いにする（カナ→ヘボン式、苗字→名前へ送る）。
   ["feel-last", "feel-first"].forEach((id) => setupCompatNameInput(document.getElementById(id)));
   setupNameSplit("feel-last", "feel-first");
 
-  // お客様にお見せするあいだは、鑑定士向けの手引きを隠す。
-  // 🚨 携帯を渡した先で、こちらの覚え書きとお客様の生年月日が読まれないようにするため。
   document.getElementById("feel-present-btn").addEventListener("click", () => {
     feelShow("wheel");
     document.body.classList.add("feel-present");
@@ -7931,35 +7169,25 @@
     window.scrollTo(0, 0);
   });
 
-  // ==有料ここまで==
-
   proOpenBtn.addEventListener("click", () => {
-    // 🚨 払っていないお客様には開かない。ボタンは見えているので、ここで必ず止める。
-    //    見た目（is-locked）だけで止めると、クラスを外すだけで開けてしまう。
     if (!isPaidRole(currentRole)) {
       const note = document.getElementById("nav-locked-note");
-      // 🚨 支度が済むまでは、押せないボタンを出さずに、お声がけの案内にする。
       note.textContent = STRIPE_READY
         ? "「鑑定の機能」は、月1,500円でお使いいただけます。"
-        // 🚨 支度が済むまでは、値段を出さない（依頼者・2026-09-03）。
-        //    まずは無料でお使いいただく人を増やす方向にしたため。
         : "「鑑定の機能」は準備中です。整いましたら、お知らせします。";
       note.classList.remove("hidden");
       joinBtn.classList.toggle("hidden", !STRIPE_READY);
       return;
     }
-    // 開くたびに「いつまで」を入れ直す。控えの期限は、置き場に確かめるたびに動く。
     const untilEl = document.getElementById("pro-until");
     const member = readMember();
     if (member && member.expiresAt) {
       untilEl.textContent = memberUntilText(member.expiresAt);
       untilEl.classList.remove("hidden");
     } else {
-      // 依頼者ご自身（管理者）は会員ではないので、何も出さない。
       untilEl.classList.add("hidden");
     }
 
-    // 開くたびに「見たい日」を今日に戻す。日をまたいで開きっぱなしのことがある。
     const now = new Date();
     document.getElementById("pro-target-year").value = String(now.getFullYear());
     document.getElementById("pro-target-month").value = String(now.getMonth() + 1);
@@ -8055,21 +7283,6 @@
     proForecastResultEl.classList.remove("hidden");
   });
 
-  // ---- お渡しする1枚 ----
-  //
-  // A4 の縦（150dpi 相当）で描く。印刷しても、画像のまま送っても読める大きさ。
-  // 🚨 アプリからよそへは送らない。端末に保存するところまでで、渡すのは人の手。
-  // 数字ごとの「キーワード」と「強みとして表れるとき」を、資料の文章から取り出す。
-  //
-  // 🚨 ここに文章を書き写さないこと。正本は資料メニューの「各ナンバーの深堀解説」で、
-  //    あちらを直せば1枚も一緒に直る。写すと必ず片方が古くなる。
-  // ⚠️ 1〜9 には「◯◯力」の見出しがあるが、11・22・33 には無い。だから見出しは使わない。
-  //    キーワードと強みは、12個すべてに入っている（2026-08-31 に確認）。
-  // 🚨 「この数字が表すもの」は使わない。11・22・33 が「還元すると2になる数字です」で
-  //    始まり、性格として読めないため。
-  // お客様に見せる／お渡しする1枚に載せるQR。中身は**アプリのURLだけ**。
-  // 🚨 作り方と照合は tools/icon-maker/make-app-qr.js にある。
-  //    作ったら必ず読み取って中身を確かめること（過去に違うURLのQRを配った事故がある）。
   const APP_QR = "data:image/png;base64,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";
   const APP_QR_IMG = new Image();
   APP_QR_IMG.src = APP_QR;
@@ -8104,9 +7317,6 @@
     return profile;
   }
 
-  // 「◯◯ナンバーが何を表すか」を、結果カードの ⓘ（GLOSSARY）から取り出す。
-  // ⚠️ GLOSSARY のキーは英語（lifePath など）。画面の表示名では引けないので、見出しで探す。
-  // ⚠️ 1枚には1文目だけを載せる（全文は53〜97字あり、紙に入らない）。
   function positionMeaning(label) {
     const want = label + "とは？";
     const key = Object.keys(GLOSSARY).find((k) => GLOSSARY[k] && GLOSSARY[k].title === want);
@@ -8115,7 +7325,6 @@
     return first ? first + "。" : "";
   }
 
-  // 決めた幅で折り返して書く。書き終わった次の行の y を返す。
   function drawWrapped(ctx, text, x, y, maxWidth, lineHeight) {
     let line = "";
     for (const ch of text) {
@@ -8132,17 +7341,6 @@
     return y;
   }
 
-  // ---- お渡しする1枚 ----
-  //
-  // A4 の縦（150dpi 相当）で描く。印刷しても、画像のまま送っても読める大きさ。
-  // 🚨 アプリからよそへは送らない。端末に保存するところまでで、渡すのは人の手。
-  //
-  // 🚨 作りの芯（依頼者・2026-08-31）
-  //    「お客様は算出された数字ではなく、どのような意味があるか、
-  //      結局どのような性格なのかといったところを重視します」
-  //    「お客様は数字を見てもちんぷんかんぷんです」
-  //    → **数字を見出しにしない。**意味を見出しにして、性格を本文にする。
-  //      数字は根拠として、下に小さく置く。
   function proDrawSheet(birth, name, romaji) {
     const W = 1240;
     const H = 1754;
@@ -8159,8 +7357,6 @@
     ctx.lineWidth = 3;
     ctx.strokeRect(48, 48, W - 96, H - 96);
 
-    // 🚨 表題は中央に置く（依頼者・2026-09-03「鑑定書として渡したい」）。
-    //    左寄せの見出しだと、お知らせの紙に見える。中央の表題と「様」で、渡す紙になる。
     ctx.fillStyle = "#2B2418";
     ctx.textBaseline = "alphabetic";
     ctx.textAlign = "center";
@@ -8193,10 +7389,6 @@
     const letters = romaji ? nameLetters(romaji) : [];
     const p = compatProfile(birth.year, birth.month, birth.day, letters);
 
-    // ── もとになった数字（右上）──
-    // 🚨 数字は主役ではない（依頼者・2026-08-31）。「お客様は数字を見てもちんぷんかんぷん」。
-    //    紙の主役は下の「あなたの持ち味」。数字は根拠として右上にまとめ、場所を取らせない。
-    // ⚠️ ここだけ「ナンバー」を省く。右の幅に収めるため（下の持ち味では正式な名前で出す）。
     const rows = [
       ["ライフパス", p.lifePath],
       ["バースデー", p.birthday],
@@ -8242,10 +7434,8 @@
       ry += 48;
     });
 
-    // 左（名前）と右（数字）の、下にきたほうから続ける。
     y = Math.max(y, ry + 20);
 
-    // ── あなたの持ち味（ここが主役）──
     const picks = [
       ["ライフパスナンバー", p.lifePath],
       ["ソウルナンバー", p.soul],
@@ -8266,8 +7456,6 @@
 
       picks.forEach(function (pair, index) {
         const label = pair[0], num = pair[1];
-        // 🚨 ライフパスは人生で最も影響がある数字（依頼者・2026-08-31）。
-        //    3つを同じ重さで並べない。1つ目だけ、字を大きくして縦線を添える。
         const isCentre = index === 0;
         if (isCentre) {
           ctx.strokeStyle = "#C9B98E";
@@ -8277,13 +7465,10 @@
           ctx.lineTo(96, y + 170);
           ctx.stroke();
         }
-        // ① 何を表すものか（これを見出しにする。数字ではなく、こちらが読まれる）
         const meaning = positionMeaning(label)
           .replace(/を表す数字です。$/, "")
           .replace(/を表すとされる数字です。$/, "")
           .replace(/とされる数字です。$/, "");
-        // 🚨 数字は「見出しの上に小さく」置く。下に置くと、次の見出しにくっついて
-        //    どちらのものか分からなくなった（2026-08-31、実物で確認）。
         ctx.fillStyle = "#A0917A";
         ctx.font = "20px " + jpSans;
         ctx.fillText(label + "　" + num, 110, y);
@@ -8293,7 +7478,6 @@
         ctx.font = (isCentre ? "31px " : "26px ") + jp;
         y = drawWrapped(ctx, meaning, 110, y, W - 220, isCentre ? 42 : 36);
         y += 10;
-        // ② その人の性格
         ctx.fillStyle = "#2B2418";
         ctx.font = (isCentre ? "28px " : "25px ") + jpSans;
         y = drawWrapped(ctx, numberProfile(num).strength, 110, y, W - 220, isCentre ? 42 : 38);
@@ -8301,9 +7485,6 @@
       });
     }
 
-    // ── 下に貼り付ける部分（断り書きと作成日）──
-    // 🚨 上から流れてくる文章の量で位置を決めない。**紙の下から測って置く。**
-    //    以前は作成日だけを紙の下に固定していたため、文章が増えたときに重なった。
     const notes = [
       "数秘術には複数の計算方法・流派があり、この鑑定書は",
       "一般的な現代数秘術の一例によるものです。",
@@ -8315,7 +7496,6 @@
     ctx.font = "26px " + jpSans;
     notes.forEach(function (line, i) { ctx.fillText(line, 110, footTop + i * 40); });
 
-    // 🚨 下とぶつかっていないかを確かめ、近すぎたら記録に残す（作った側が気づけるように）。
     if (y > footTop - 20) {
       console.warn("お渡しする1枚：中身が下の断り書きに近すぎます（残り " + Math.round(footTop - y) + "px）");
     }
@@ -8324,8 +7504,6 @@
     ctx.font = "24px " + jpSans;
     ctx.fillText("鑑定日　" + madeAt.getFullYear() + "年" + (madeAt.getMonth() + 1) + "月" + madeAt.getDate() + "日", 110, H - 62);
 
-    // 右下にQR。持ち帰った紙から、お客様がご自分でアプリを開ける。
-    // ⚠️ 読み込みが間に合っていなければ描かない（紙は出す。QRだけ無い形にする）。
     if (APP_QR_IMG.complete && APP_QR_IMG.naturalWidth) {
       const qs = 150;
       const qx = W - 110 - qs;
@@ -8351,12 +7529,9 @@
       return;
     }
     proShowError(proSheetErrorEl, "");
-    // ホーム画面と同じで、2欄はもうヘボン式に変わっている。つないで数字に使う。
     const last = document.getElementById("pro-sheet-last").value.trim();
     const first = document.getElementById("pro-sheet-first").value.trim();
     const romaji = (last + " " + first).trim();
-    // 🚨 鑑定書はローマ字で印字する（依頼者・2026-09-03）。
-    //    数字はこの綴りから出しているので、**紙の名前と、数字の根拠がそろう。**
     const canvas = proDrawSheet(birth, romaji.toUpperCase(), romaji);
 
     proSheetPreviewEl.textContent = "";
@@ -8369,7 +7544,6 @@
     canvas.toBlob((blob) => {
       proSheetBlob = blob;
       proSheetActionsEl.classList.remove("hidden");
-      // 送れる端末にだけ「そのまま送る」を出す。出しておいて押せないほうが困る。
       let canShare = false;
       try {
         canShare = !!(blob && navigator.canShare && navigator.canShare({
@@ -8388,8 +7562,6 @@
     return "鑑定書-" + d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate()) + ".png";
   }
 
-  // 🚨 この欄だけ自動変換が無かった（依頼者・2026-09-03「ローマ字に変わりません」）。
-  //    計算画面・相性診断と同じ規則で、カナをヘボン式に変える。
   ["pro-sheet-last", "pro-sheet-first"].forEach((id) => {
     setupCompatNameInput(document.getElementById(id));
   });
@@ -8403,7 +7575,6 @@
     document.body.appendChild(a);
     a.click();
     a.remove();
-    // すぐ消すと、端末によっては保存が始まる前に消えることがある。
     setTimeout(() => URL.revokeObjectURL(url), 60000);
   });
 
@@ -8415,14 +7586,10 @@
       .catch(() => { /* 取り消しただけのことが多い。何も出さない。 */ });
   });
 
-  // 通知から渡された日付で、手帳のその日のシートを開く。
-  // 「手帳」ボタンを押したときとの違いは、今日ではなくその日を選んで、
-  // カレンダーを出すだけで終わらせずにシートまで開くこと。
   function openPendingTecho() {
     if (!pendingTechoDate) return;
     const dateStr = pendingTechoDate;
     pendingTechoDate = null;
-    // 開きっぱなしで日をまたぐことがあるので、開くたびに今日を取り直す。
     recordToday = ymd(new Date());
     calView = fromYmd(dateStr);
     calView.setDate(1);
@@ -8434,25 +7601,12 @@
     openDaySheet();
   }
 
-  // 手帳の部品がそろった。ここから先は、解錠のたびに unlock() から呼ばれる。
   techoReady = true;
   openPendingTecho();
-
-  // ---------------- 毎朝のお便り（受け取りの登録と、端末に貯める一覧） ----------------
-  //
-  // 🚨 送り手は「朝です」という合図しか送らない（仕様書「端末の外に、利用者の情報を
-  //    持たない」2026-08-24 依頼者の決定）。どの文章を出すかは、この端末が決める。
-  //    そのために、これから先の分の「日付 → 見出し・本文」をここで作って端末に貯め、
-  //    サービスワーカー（通知を受け取る係）に読ませる。
-  //
-  // 🚨 計算式をサービスワーカー側へ写さないこと。
-  //    式は5か所に散っており、増やすと画面と通知で違う数字が出る
-  //    （→ numerology-formula スキル）。作るのは必ずこちら側。
 
   const MORNING_DB = "numerology-morning";
   const MORNING_STORE = "kv";
   const MORNING_KEY = "plan";
-  // 1年ぶん。アプリを開くたびに作り直すので、実際にはここまで使い切らない。
   const MORNING_DAYS = 400;
 
   function saveMorningWords(value) {
@@ -8483,11 +7637,7 @@
     });
   }
 
-  // これから先の分の言葉を作って端末に貯める。
-  // 🚨 体験モードの見本の記録は混ぜない。届くのは本人の生年月日から出た言葉だけ。
   function saveMorningPlan() {
-    // 🚨 自分情報があれば必ずそちらを使う。鑑定で他の方を計算しても、
-    //    毎朝のお便りが入れ替わらないようにするため（2026-08-28）。
     const lp = ownerLifePath();
     if (!lp) return Promise.resolve(false);
     const days = {};
@@ -8502,58 +7652,25 @@
     return saveMorningWords({ savedAt: ymd(new Date()), days });
   }
 
-  // 開いた時点で一度貯める。以後は「計算する」を押すたびに作り直す。
   saveMorningPlan();
 
-  // ---------------- 受け取りの登録 ----------------
-
-  // 公開鍵。これは公開してよいもの（対になる秘密鍵は GitHub Secrets にある）。
-  // 🚨 鍵を変えると既存の購読はすべて無効になる。変えたら登録し直してもらうこと。
   const VAPID_PUBLIC_KEY = "BB9S3DceY4YVRxbU7IZG6D1j-CqeAwC2L6IaxLwReWHrui1Xy9Zpq3X0x3cddXmygGJFjt74fUhAHGIwioB-dxc";
 
-  // 合言葉の送り先。押すだけで、この宛先のメールが開く。
-  // 🚨 ここに書いたアドレスは、アプリを開いた人なら誰でも読める（このページは公開されている）。
-  //    空にすると、メールのボタンを出さず、コピーだけの画面に戻る。
   const HANDOFF_MAIL = "suuhi.app2026@gmail.com";
-  // 画面に出す送り先の呼び名。「さん」まで含めてここに書く（文の中でそのまま使う）。
-  // 空なら、呼び名を出さない言い方になる。
   const HANDOFF_NAME = "たかしさん";
 
-  // 🚨 合言葉の置き場（2026-08-28 依頼者の決定）。
-  //    登録できた時点で、アプリが自分でここへ預ける。利用者に送ってもらう手間を無くすため。
-  //    預けるのは「この端末への届け先」だけ。生年月日も、そこから出る数字も入れない。
-  //    ここに書く鍵は「入れる」ことしかできない（置き場の側で読み取りを許していない）。
-  //    ⚠️ 預けられなかったときは、下のメールの導線に戻る。黙って落とさない。
   const HANDOFF_BOX_URL = "https://ubnhnrkdaxoglolzgpdb.supabase.co/rest/v1/push_subscriptions";
   const HANDOFF_BOX_KEY = "sb_publishable_l3nDeW6cR1XJxBzWF0SSRg_ufPY4F17";
 
-  // 🚨 お支払いのあとの「一度きりのリンク」（`?p=...`）を、置き場に照らして開ける。
-  //    一度きりなので、URLを人に転送されても増えない。
-  //
-  // ⚠️ これは「守り」ではない。役は端末の中で決まるし、このページは公開されている。
-  //    リンクの役目は「何も打たせずに、お支払いの済んだ方をなめらかに通すこと」。
-  //    本当に守るのは、有料の中身を出す側で会員かどうかを見ること。
-  // 🚨 v2 にしたのは、期限のある会員を作るため（2026-09-01）。
-  //    古い redeem_paid_invite も置き場に残してある。前のアプリを開いたままの
-  //    端末が、リンクを開いても落ちないようにするため。
   const PAID_RPC_URL = "https://ubnhnrkdaxoglolzgpdb.supabase.co/rest/v1/rpc/redeem_paid_invite_v2";
-  // 会員がまだ続いているかを聞く口。合言葉を知っている端末しか、自分の分を引けない。
   const CHECK_RPC_URL = "https://ubnhnrkdaxoglolzgpdb.supabase.co/rest/v1/rpc/check_membership";
-  // 🚨 自分の届け先を消す口。合言葉は要らない（自分の宛先を知っている端末しか呼べない）。
-  //    他の人の宛先を知る方法は無い（一覧を出す口には合言葉が要る）。
   const FORGET_RPC_URL = "https://ubnhnrkdaxoglolzgpdb.supabase.co/rest/v1/rpc/forget_my_subscription";
 
-  // ---------------- お申し込み（Stripe） ----------------
-  // 🚨 Stripe の支度（登録・値段の作成・置き場への鍵の設定・知らせ先の登録）が
-  //    すべて済むまでは false のままにしておくこと。
-  //    true にすると、無料の方に「お申し込みへ進む」が出る。
-  //    支度が済んでいないのに true にすると、押したお客様が支払い画面へ行けずに終わる。
   const STRIPE_READY = false;
   const CHECKOUT_URL = "https://ubnhnrkdaxoglolzgpdb.supabase.co/functions/v1/stripe-checkout";
 
   const joinBtn = document.getElementById("join-btn");
 
-  // お支払いの画面へ送る。
   joinBtn.addEventListener("click", async () => {
     joinBtn.disabled = true;
     const note = document.getElementById("nav-locked-note");
@@ -8578,11 +7695,6 @@
     }
   });
 
-  // お支払いを済ませて戻ってきた方を通す。
-  //
-  // 🚨 戻ってきた時点では、まだ開かないことがある。Stripe からの知らせが
-  //    置き場へ届くまでに、少しかかるため。届くまで何度か聞き直す。
-  //    黙って「使えません」と出すと、払った直後の方が不安になる。
   async function useMemberFromUrl() {
     if (!pendingMemberToken) return;
     const token = pendingMemberToken;
@@ -8592,7 +7704,6 @@
     note.textContent = "お支払いを確かめています…";
     note.classList.remove("hidden");
 
-    // 2秒おきに10回まで（およそ20秒）。
     for (let i = 0; i < 10; i++) {
       let data = null;
       try {
@@ -8603,7 +7714,6 @@
         });
         if (res.ok) data = await res.json();
       } catch (err) {
-        // つながらなかった。次の回で聞き直す。
       }
 
       if (data && data.ok === true) {
@@ -8621,8 +7731,6 @@
       await new Promise((done) => setTimeout(done, 2000));
     }
 
-    // 🚨 まだ届いていない。合言葉は残しておく。次に開いたときに
-    //    refreshMembership() が拾って、そのとき開く。
     saveMember(token, null);
     note.classList.add("hidden");
     openInfoModal({
@@ -8634,19 +7742,15 @@
     });
   }
 
-  // 「いつまで」を、お客様に読める形にする。
   function memberUntilText(iso) {
     const d = new Date(iso);
     if (isNaN(d.getTime())) return "お支払いの期間のあいだ、お使いいただけます。";
     return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日まで、お使いいただけます。`;
   }
 
-  // 期間が終わっていた。開いている画面ごと、無料の状態に戻す。
-  // 🚨 黙って閉じない。前の日まで使えていたものが理由も分からず消えるため。
   function relockPaid(body) {
     forgetMember();
     setRole("subscriber");
-    // 「鑑定」を開いたままのことがある。開いていたら、電卓の画面へ戻す。
     if (!proEl.classList.contains("hidden")) {
       proEl.classList.add("hidden");
       appEl.classList.remove("hidden");
@@ -8655,11 +7759,6 @@
     openInfoModal({ title: "お支払いの期間が終わりました", body: body });
   }
 
-  // 続いているかどうかを、置き場に確かめて直す。
-  //
-  // 🚨 つながらなかったときは、何も変えない。電波の届かない場所で
-  //    使えなくなるのは、お支払いいただいているお客様に対して筋が通らない。
-  //    閉じるのは、置き場が「もう続いていない」とはっきり答えたときだけ。
   async function refreshMembership() {
     const m = readMember();
     if (!m) return;
@@ -8679,13 +7778,11 @@
     if (!data || typeof data !== "object") return;
 
     if (data.ok === true) {
-      // 更新されていれば、ここで期限が延びる。
       saveMember(m.token, data.expires_at);
       if (!isPaidRole(currentRole)) unlock("paid");
       return;
     }
 
-    // 管理者としてご覧になっている場合は、閉じない（依頼者ご自身の確認の邪魔になる）。
     if (currentRole === "admin") return;
 
     relockPaid(
@@ -8714,7 +7811,6 @@
     }
 
     if (got) {
-      // 🚨 役は端末に書かない。会員の合言葉と期限だけを残す。
       saveMember(got.member, got.expires_at);
       unlock("paid");
       openInfoModal({
@@ -8726,7 +7822,6 @@
       return;
     }
 
-    // 🚨 黙って無料のまま開かない。お支払いが済んでいる方が、何が起きたか分からなくなる。
     openInfoModal({
       title: "このリンクは使えませんでした",
       body: "このリンクは、すでに一度お使いになったようです。\n\n"
@@ -8738,8 +7833,6 @@
 
   usePaidToken();
   useMemberFromUrl();
-  // リンクから開いた回は usePaidToken() / useMemberFromUrl() が済ませるので、ここは
-  // 「前に会員になった端末を、開くたびに確かめ直す」ための呼び出し。
   refreshMembership();
 
   const pushBtn = document.getElementById("push-btn");
@@ -8762,7 +7855,6 @@
     pushMsgEl.innerHTML = html;
   }
 
-  // 公開鍵の文字列を、購読に渡せる形へ変換する
   function urlBase64ToUint8Array(base64String) {
     const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
     const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
@@ -8772,9 +7864,6 @@
     return out;
   }
 
-  // 既存の登録が、いまの公開鍵で作られたものかを確かめる。
-  // 🚨 鍵を作り直しても購読は自動で更新されない。古い鍵のまま送ると
-  //    VapidPkHashMismatch で弾かれ、利用者側の操作では直せない。
   function sameKey(stored, current) {
     if (!stored) return false;
     const a = new Uint8Array(stored);
@@ -8785,10 +7874,6 @@
     return true;
   }
 
-  // 🚨 iPad は Safari が自分を Macintosh と名乗る（iPadOS 13 以降）。
-  //    指で触れる Mac は無いので、触れる点の数で見分ける。
-  // 合言葉を置き場へ預ける。うまくいけば true。
-  // ⚠️ 圏外や置き場の不調で止まらないよう、8秒で見切る。
   async function putInBox(sub) {
     if (!HANDOFF_BOX_URL || !HANDOFF_BOX_KEY) return false;
     const stop = new AbortController();
@@ -8804,10 +7889,6 @@
         body: JSON.stringify({ endpoint: sub.endpoint, subscription: sub }),
         signal: stop.signal,
       });
-      // 409 は「同じ届け先がすでに入っている」。登録し直した場合に出るが、
-      // 預かっている中身は同じなので、うまくいったものとして扱う。
-      // 🚨 重複を黙って無視させる書き方（on_conflict）は使えない。置き場の側で
-      //    「入れる」しか許していないため、書き換えの許可が要る形になり弾かれる。
       return res.ok || res.status === 409;
     } catch (err) {
       return false;
@@ -8822,16 +7903,10 @@
     window.navigator.standalone === true ||
     window.matchMedia("(display-mode: standalone)").matches;
 
-  // 🚨 3つそろって初めて通知を扱える。iPhone・iPad では、ホーム画面に追加しても
-  //    iOS 16.4 より古いと Notification が無く、押した先で英語の例外になる
-  //    （2026-08-27、実機で「Can't find variable: Notification」が出た）。
-  //    押す前に止めて、日本語で理由を出す。
   const canPush = "serviceWorker" in navigator &&
     "PushManager" in window &&
     typeof Notification !== "undefined";
 
-  // 通知が届いた時刻を、サービスワーカーが残した記録から読む。
-  // 🚨 localStorage はサービスワーカーから見えないので、両方から使える入れ物を読む。
   function readArrived() {
     return new Promise((resolve) => {
       let request;
@@ -8874,8 +7949,6 @@
     el.classList.remove("hidden");
   }
 
-  // いまこの端末が受け取る設定になっているか。なっていれば「止める」を出す。
-  // 受け取っていれば true を返す。
   async function showStopIfSubscribed() {
     const stop = document.getElementById("push-stop");
     stop.classList.add("hidden");
@@ -8886,7 +7959,6 @@
       if (!sub) return false;
       stop.classList.remove("hidden");
       stop.disabled = false;
-      // すでに受け取っているので、ほかの案内は出さない。
       pushDoBtn.classList.add("hidden");
       pushIosEl.classList.add("hidden");
       pushHandoffEl.classList.add("hidden");
@@ -8900,9 +7972,6 @@
     }
   }
 
-  // 🚨 受け取っている端末には、受け取っている話だけを出す。
-  //    以前は「自分の情報を登録してください」と「いま受け取る設定になっています」が
-  //    同じ画面に並んで出た（2026-09-01、実物で発覚）。**先に調べてから、1つの形に決める。**
   async function openPushModal() {
     showArrived();
     pushModal.classList.remove("hidden");
@@ -8914,7 +7983,6 @@
     pushDoBtn.classList.remove("hidden");
     pushDoBtn.disabled = false;
 
-    // 🚨 生年月日はここで入れさせない。「自分の情報」が正本で、ここは見せるだけ。
     const own = selfBirthParts();
     pushNoSelEl.classList.add("hidden");
     pushToSelfBtn.classList.add("hidden");
@@ -8922,7 +7990,6 @@
       ? `${own.y}年${own.m}月${own.d}日生まれの言葉をお届けします。`
       : "";
 
-    // iPhone はホーム画面に追加しないと通知が届かない（仕様書「配信」）。
     if (isIOS && !isStandalone) {
       pushIosEl.classList.remove("hidden");
       pushDoBtn.classList.add("hidden");
@@ -8935,7 +8002,6 @@
           + "<strong>設定 → 一般 → 情報 → システムバージョン</strong>でご確認ください。"
         : "お使いの環境では通知を扱えないようです。別のブラウザでお試しください。");
     } else if (!own) {
-      // 誰の言葉を届けるのかが決まっていないと、貯める一覧が作れない。
       pushNoSelEl.classList.remove("hidden");
       pushToSelfBtn.classList.remove("hidden");
       pushDoBtn.classList.add("hidden");
@@ -8950,8 +8016,6 @@
     if (e.target === pushModal) pushModal.classList.add("hidden");
   });
 
-  // 🚨 止める。端末の通知を切るだけでなく、預かっている届け先も置き場から消す。
-  //    片方だけだと「やめたのに残っている」状態になる（Codexの指摘・2026-08-31）。
   document.getElementById("push-stop").addEventListener("click", async () => {
     const stop = document.getElementById("push-stop");
     stop.disabled = true;
@@ -8981,7 +8045,6 @@
       stop.classList.add("hidden");
       pushDoBtn.classList.remove("hidden");
       pushDoBtn.disabled = false;
-      // 🚨 消せなかったことを黙らない。「やめたつもり」で残るのがいちばん困る。
       pushSay(erased ? "ok" : "",
         erased
           ? "止めました。<strong>明日の朝からは届きません。</strong><br>お預かりしていた届け先も消しました。"
@@ -8993,7 +8056,6 @@
     }
   });
 
-  // 「自分の情報」へ渡す。ここで登録してから、もう一度 🔔 を開いてもらう。
   pushToSelfBtn.addEventListener("click", () => {
     pushModal.classList.add("hidden");
     openSelfModal();
@@ -9005,9 +8067,6 @@
     pushSay("", "準備しています…");
 
     try {
-      // 🚨 ここでは登録しない。通知の受け取り役はページの読み込み時に登録済みで、
-      //    ここで register() をもう一度書くと、確認用ページ（Service Worker を
-      //    外して作る）にもそれが残ってしまう（make-preview.js が止める）。
       const existing = await navigator.serviceWorker.getRegistration();
       if (!existing) {
         pushDoBtn.disabled = false;
@@ -9023,8 +8082,6 @@
         return;
       }
 
-      // 🚨 許可を取ってから貯め直す。ここで一覧が無いと、初回の通知が
-      //    「アプリを開くと読めます」という案内だけになってしまう。
       await saveMorningPlan();
 
       const appKey = urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
@@ -9043,8 +8100,6 @@
       pushSubEl.value = btoa(JSON.stringify(sub));
       pushDoBtn.classList.add("hidden");
 
-      // 置き場へ預けられたら、利用者の手はここで終わり。
-      // 預けられなければ、これまでどおりメールで送っていただく。
       if (await putInBox(sub)) {
         pushHandoffEl.classList.add("hidden");
         pushSay("ok", "受け取りの準備ができました。<br>明日の朝からお届けします。<strong>ほかにしていただくことはありません。</strong>");
@@ -9070,15 +8125,12 @@
     setTimeout(() => { pushCopyBtn.textContent = "合言葉をコピーする"; }, 3000);
   });
 
-  // 「コピーはできたが、どこへ送るのか分からない」を無くす。送り先が決まっていれば、
-  // 押すだけで宛先と本文の入ったメールが開き、あとは送信を押すだけにする。
   if (HANDOFF_MAIL) {
     pushSendBtn.classList.remove("hidden");
     pushHandoffAlt.classList.remove("hidden");
     pushHandoffLead.innerHTML = "あと少しです。下のボタンを押すと、"
       + (HANDOFF_NAME ? HANDOFF_NAME + "あての" : "")
       + "メールが開きます。<strong>そのまま送信してください。</strong>届くようになります。";
-    // メールを使っていない端末のための逃げ道。ここにも送り先の名前を出す。
     pushHandoffAlt.textContent = "メールが開かないときは、下の合言葉をコピーして、"
       + (HANDOFF_NAME ? HANDOFF_NAME + "へ" : "")
       + "お送りください。";
@@ -9087,8 +8139,6 @@
   }
 
   pushSendBtn.addEventListener("click", () => {
-    // 🚨 合言葉は長い。件名と本文は必ず encodeURIComponent を通す
-    //    （+ / = がそのままだと途中で切れて届かない）。
     const body = "毎朝のお便りの合言葉です。このまま送信してください。\n\n" + pushSubEl.value + "\n";
     window.location.href = "mailto:" + HANDOFF_MAIL
       + "?subject=" + encodeURIComponent("毎朝のお便り 合言葉")
@@ -9103,11 +8153,6 @@
     window.scrollTo(0, 0);
   });
 
-  // 🚨 題名を5回続けて押すと、管理者になる（依頼者・2026-09-01）。
-  //    ホーム画面に追加したアプリは Safari と記憶が別で、開く住所も決め打ちのため、
-  //    `?a=` では入れない。**URLを打てない場所でも入れる形**として置く。
-  // ⚠️ これは「守り」ではない。合言葉と同じで、公開しているページの中にある。
-  //    本当に守るのは、有料の中身を出す置き場の側で会員かどうかを見ること。
   (function () {
     const title = document.getElementById("app-title");
     if (!title) return;
@@ -9117,7 +8162,6 @@
       if (currentRole === "admin") return;
       taps += 1;
       clearTimeout(timer);
-      // 3秒あいたら数え直す。ふつうに触った回数で入ってしまわないように。
       timer = setTimeout(() => { taps = 0; }, 3000);
       if (taps < 5) return;
       taps = 0;
@@ -9129,26 +8173,17 @@
     });
   })();
 
-  // ---------------- 管理者用ページ ----------------
-  // 🚨 依頼者だけが開く（2026-08-31「管理者用のページはやはり必要」）。
-  //    入口のボタンは admin のときだけ出す。開く判断は unlock() 側。
   const adminEl = document.getElementById("admin");
   const adminOpenBtn = document.getElementById("admin-open-btn");
 
   const MINT_RPC_URL = "https://ubnhnrkdaxoglolzgpdb.supabase.co/rest/v1/rpc/mint_paid_invite";
-  // 🚨 渡した分の様子を見る口。合言葉が要るのは作るときと同じ。
   const LIST_RPC_URL = "https://ubnhnrkdaxoglolzgpdb.supabase.co/rest/v1/rpc/list_paid_invites";
-  // 続いているお客様を見る口。こちらも合言葉が要る。
   const MEMBERS_RPC_URL = "https://ubnhnrkdaxoglolzgpdb.supabase.co/rest/v1/rpc/list_paid_members";
 
   function readMintPass() {
     try { return localStorage.getItem(MINT_PASS_KEY) || ""; } catch (err) { return ""; }
   }
 
-  // 合言葉を用意する。無ければ null を返し、呼んだ側が案内を出す。
-  // 🚨 ここで聞かないこと（依頼者・2026-09-01「合言葉は使いたくないです」）。
-  //    合言葉は自動で作った32文字以上の文字列で、その場で打てるものではない。
-  //    端末に入れるのは `?mp=` のブックマークの役目（ファイルの上のほう）。
   function ensureMintPass(say) {
     const saved = readMintPass();
     if (saved) return saved;
@@ -9156,13 +8191,11 @@
     return null;
   }
 
-  // 合言葉が違ったときは、覚えたものを消す。入れ直せるようにするため。
   function forgetMintPass() {
     try { localStorage.removeItem(MINT_PASS_KEY); } catch (err) { /* ignore */ }
   }
 
   adminOpenBtn.addEventListener("click", () => {
-    // QRはここで初めて置く（開かない人の画面には作らない）。
     const box = document.getElementById("admin-qr");
     if (!box.firstChild) {
       const img = document.createElement("img");
@@ -9189,7 +8222,6 @@
     const out = document.getElementById("admin-mint-out");
     const say = (text) => { msg.textContent = text; msg.classList.remove("hidden"); };
 
-    // 🚨 初回だけ聞く。この端末にだけ残る。
     const pass = ensureMintPass(say);
     if (!pass) return;
 
@@ -9204,7 +8236,6 @@
       });
       const token = res.ok ? await res.json() : null;
       if (!token) {
-        // 合言葉が違うと null が返る。覚えたものを消して、入れ直せるようにする。
         forgetMintPass();
         say("リンクを作れませんでした。管理者用のリンクから開き直してください。");
         return;
@@ -9213,7 +8244,6 @@
       document.getElementById("admin-mint-url").value = url;
       out.classList.remove("hidden");
       say("できました。お客様の端末で開いていただくと、鑑定の機能まで使えます。");
-      // 送れる端末では「そのまま送る」も出す。
       const shareBtn = document.getElementById("admin-mint-share");
       shareBtn.classList.toggle("hidden", !navigator.share);
     } catch (err) {
@@ -9223,10 +8253,6 @@
     }
   });
 
-  // 🚨 渡した分の様子（2026-09-01）。置き場には前から口があったのに、
-  //    アプリから呼んでいなかった。渡したリンクが開かれたかどうかを、
-  //    依頼者がその場で見られるようにする。
-  //    出すのは「いつ作ったか・開かれたか・覚え書き」だけ。合言葉そのものは出さない。
   document.getElementById("admin-list-btn").addEventListener("click", async () => {
     const btn = document.getElementById("admin-list-btn");
     const msg = document.getElementById("admin-list-msg");
@@ -9245,7 +8271,6 @@
         headers: { apikey: HANDOFF_BOX_KEY, "Content-Type": "application/json" },
         body: JSON.stringify({ pass: pass }),
       });
-      // 合言葉が違うと、中身が空のまま返る。つながらなかった場合と分けて伝える。
       if (!res.ok) {
         say("読めませんでした。少し時間をおいて、もう一度お試しください。");
         return;
@@ -9257,7 +8282,6 @@
         return;
       }
       if (rows.length === 0) {
-        // 合言葉が違っても空で返るので、どちらとも取れる言い方にする。
         out.classList.add("hidden");
         say("まだ1本もありません。（合言葉が違うときも、こう出ます）");
         return;
@@ -9273,13 +8297,6 @@
     }
   });
 
-  // 🚨 お申し込みの支度がどこまで済んだか（2026-09-01）。
-  //    依頼者が Stripe の画面で設定を入れたあと、うまくいったかを
-  //    ご自身で確かめられるようにする。設定の中身は分からなくてよく、
-  //    「入っている・まだ」だけが分かればよい。
-  //
-  //    置き場の側は、入っているかどうか（はい・いいえ）しか返さない。
-  //    鍵そのものは返さない（公開しているページから読めてしまうため）。
   const SETUP_STEPS = [
     ["stripe_key", "Stripe の鍵", "STRIPE_SECRET_KEY"],
     ["price", "月1,500円の値段", "STRIPE_PRICE_ID"],
@@ -9347,7 +8364,6 @@
       tr.appendChild(what);
 
       const state = document.createElement("td");
-      // 済んだ分は金色にする。ひと目で残りが分かるように。
       if (data[key]) state.className = "n";
       state.textContent = data[key] ? "入っています" : "まだ";
       tr.appendChild(state);
@@ -9361,9 +8377,6 @@
     out.appendChild(table);
   }
 
-  // 🚨 続いているお客様（2026-09-01）。期限を付けたので、切れる日が見えないと
-  //    更新のお声がけができない。会員の合言葉そのものは返らない
-  //    （置き場の側で外してある。一覧から他の方の分を使えてしまうため）。
   document.getElementById("admin-members-btn").addEventListener("click", async () => {
     const btn = document.getElementById("admin-members-btn");
     const msg = document.getElementById("admin-members-msg");
@@ -9429,7 +8442,6 @@
       tr.appendChild(from);
 
       const until = document.createElement("td");
-      // 使える方は金色にする。ひと目で見分けられるように。
       if (row.active) until.className = "n";
       until.textContent = inviteWhen(row.expires_at);
       tr.appendChild(until);
@@ -9440,7 +8452,6 @@
 
       const state = document.createElement("td");
       if (row.canceled_at) {
-        // 解約されても、期限までは使っていただく。どちらなのかを分けて出す。
         state.textContent = row.active ? "解約済み（期限まで）" : "解約済み";
       } else {
         state.textContent = row.active ? "お使いになれます" : "期限切れ";
@@ -9452,8 +8463,6 @@
     out.appendChild(table);
   }
 
-  // 日付を「9月1日 14:05」の形にする。時刻まで出すのは、同じ日に何本も
-  // お作りすることがあり、日付だけでは見分けがつかないため。
   function inviteWhen(iso) {
     const d = new Date(iso);
     if (isNaN(d.getTime())) return "—";
@@ -9483,7 +8492,6 @@
       tr.appendChild(made);
 
       const state = document.createElement("td");
-      // 開かれた分は金色にする。ひと目で「渡って使われた」と分かるように。
       if (row.used_at) {
         state.className = "n";
         state.textContent = inviteWhen(row.used_at) + " に開かれました";
@@ -9520,7 +8528,6 @@
     window.scrollTo(0, 0);
   });
 
-  // ---------------- Number glossary modal ----------------
   const infoModal = document.getElementById("info-modal");
   const infoModalClose = document.getElementById("info-modal-close");
   const infoModalTitle = document.getElementById("info-modal-title");
@@ -9540,8 +8547,6 @@
     if (e.target === infoModal) infoModal.classList.add("hidden");
   });
 
-  // 使い方の説明は、結果カードの「ⓘ」と同じヘルプモーダルに寄せる。タップ表を
-  // 開くたびに長文が目に入ると圧迫感があるため、見たい人だけが開ける形にする。
   romajiHelpBtn.addEventListener("click", () => {
     openInfoModal({
       title: "ローマ字表の使い方",
@@ -9549,11 +8554,6 @@
     });
   });
 
-  // ---------------- Modern-romaji reference/input table ----------------
-  // Lets someone who only knows the kana for their name (and not modern
-  // Hepburn romanization) tap out the correct spelling instead of guessing —
-  // the whole reason this exists is so they don't write "si" for し.
-  // 苗字・名前それぞれ別に「1つ戻す」できるよう、欄ごとに履歴を分けて持つ。
   const insertHistories = new WeakMap([[lastNameInput, []], [firstNameInput, []]]);
   let pendingSokuon = false;
   let sokuonKeyEl = null;
@@ -9570,46 +8570,28 @@
     sokuonKeyEl = null;
   }
 
-  // 促音「っ」の直後の子音を重ねる際、ち・ちゃ・ちゅ・ちょ（chi/cha/chu/cho）
-  // だけは c を重ねて cchi とはせず、t を補って tchi と表記する（ヘボン式の慣例）。
   function applySokuon(romaji) {
     if (/^[aiueo]/.test(romaji)) return romaji;
     if (romaji.startsWith("ch")) return "t" + romaji;
     return romaji[0] + romaji;
   }
 
-  // ---------------- Kana → romaji auto-conversion ----------------
-  // Lets someone type their name in kana directly (via the device's own
-  // Japanese keyboard) and have it become Hepburn romaji automatically,
-  // instead of needing the tap table below. Reuses the exact same
-  // KANA_SECTIONS data and the same sokuon/long-vowel/n rules as the tap
-  // table, so the two stay consistent by construction.
   const ROMAJI_MAP = {};
   KANA_SECTIONS.forEach((section) => {
     section.items.forEach(([kana, romaji]) => {
       ROMAJI_MAP[kana] = romaji;
     });
   });
-  // ヴ単体の入力（濁点キー等）はひらがな化すると「ゔ」になるため、タップ表の
-  // 「ヴ」行と同じ変換先を、ひらがな側のキーとしても登録しておく。
   ROMAJI_MAP["ゔぁ"] = "ba";
   ROMAJI_MAP["ゔぃ"] = "bi";
   ROMAJI_MAP["ゔ"] = "bu";
   ROMAJI_MAP["ゔぇ"] = "be";
   ROMAJI_MAP["ゔぉ"] = "bo";
 
-  // カタカナはひらがなと同じ並びでUnicode上+0x60ずれているだけなので、
-  // オフセットで変換する（ー等、この範囲に無い文字はそのまま残る）。
   function katakanaToHiragana(str) {
     return str.replace(/[ァ-ヶ]/g, (ch) => String.fromCharCode(ch.charCodeAt(0) - 0x60));
   }
 
-  // タップ表（handleKanaKeyClick）と同じルールを、1文字ずつのクリックではなく
-  // 文字列全体に対して適用する版。すでにローマ字化済みの部分（a-z等）はどの
-  // キーにも一致しないため、そのまま素通りする。
-  // 直前の変換で「切れ目かもしれない省略」が起きたか。呼び出し側は変換の
-  // 直後に読む（入力欄の値は変換後のローマ字になり、かなが消えてしまうため、
-  // 後から判定し直すことはできない）。
   let lastConversionBoundarySuspect = false;
   const boundarySuspectByInput = new WeakMap();
 
@@ -9651,47 +8633,23 @@
         continue;
       }
       const lastChar = out.slice(-1);
-      // 外務省のヘボン式ローマ字綴方表では、長音の扱いが位置によって分かれる。
-      //   ・末尾以外の長音「お」→ O を表記しない（大野＝おおの→ono、大西→onishi）
-      //   ・末尾の長音「お」    → O を表記する  （高遠＝たかとお→takatoo、
-      //                                          妹尾＝せのお→senoo、横尾＝よこお→yokoo）
-      //   ・長音「う」          → 末尾かどうかに関わらず U を表記しない
-      //                          （幸太＝こうた→kota、優子＝ゆうこ→yuko、太郎→taro）
-      // 末尾の「お」だけが例外なので、そこだけ省略の対象から外す。
       const isTrailingLongO = romaji === "o" && lastChar === "o"
         && (i + consumed) >= src.length;
       if (!isTrailingLongO
           && VOWELS.has(romaji)
           && (romaji === lastChar || (romaji === "u" && lastChar === "o"))) {
-        // 省略した母音が、長音ではなく漢字の切れ目だったという場合がある
-        // （松浦＝まつ＋うら、井上＝い＋の＋うえ）。かなだけを見ても切れ目は
-        // 見えないので自動では直せないが、疑わしい並びのときは印を立てて
-        // 本人に知らせ、手入力へ誘導する。文字数が変われば出る数字も変わる。
-        //   ・u が続けて並ぶ … まつうら／ふくうら
-        //     ただし「ゆう（ゅう）」は長音として普通に出てくるので外す
-        //     （ゆうこ＝YUKO、きゅうた＝KYUTA は鳴らさない）
-        //   ・o の次の u の後ろが、さらに母音 … いのうえ
-        //     後ろに何も無いときは語末の長音なので外す（さとう＝SATO）
         const prevKana = src[i - 1] || "";
         const nextKana = src[i + consumed] || "";
         const doubledU = romaji === "u" && lastChar === "u"
           && prevKana !== "ゆ" && prevKana !== "ゅ";
         const uBeforeVowel = romaji === "u" && lastChar === "o"
           && nextKana !== "" && "あいうえお".includes(nextKana);
-        //   ・「おお」の後ろに続く u … おおうら（大浦）／おおうち（大内）
-        //     「お段＋う」の長音がここに重なることはまず無い
         const uAfterLongO = romaji === "u" && lastChar === "o" && prevKana === "お";
-        // 「お」の側の2つは、切れ目だと判定できたらその場で直せる。省略を
-        // やめれば井上＝INOUE、大浦＝OURA、大内＝OUCHI と正しく綴れる。
-        // 直った以上、本人に知らせることは無いので警告は立てない。
         if (uBeforeVowel || uAfterLongO) {
           out += romaji;
           i += consumed;
           continue;
         }
-        // doubledU は直せない。「まつうら＝MATSUURA（切れ目）」と
-        // 「ふうか＝FUKA（長音）」がかなの上で同じ形になり、直すと今度は
-        // 後者が壊れる。省略はそのままにして、本人に確かめてもらう。
         if (doubledU) {
           lastConversionBoundarySuspect = true;
         }
@@ -9710,9 +8668,6 @@
     return out;
   }
 
-  // 漢字などはひらがな・カタカナのどのキーにも一致せずそのまま素通りするため、
-  // 気づかないまま計算対象から外れてしまう（nameLettersがa-z以外を除外する
-  // ため）。変換後も苗字・名前どちらかにかな・漢字が残っていたら、注意書きを出す。
   function checkNameWarning() {
     const pattern = /[぀-ヿ一-鿿]/;
     const hasUnconverted = pattern.test(lastNameInput.value) || pattern.test(firstNameInput.value);
@@ -9721,8 +8676,6 @@
       nameWarningEl.classList.remove("hidden");
       return;
     }
-    // 手入力モードはタブを閉じるまで残る。切り替えたことを忘れたまま
-    // カナを打つと「変換が壊れた」と受け取られるので、オンの間は理由を出す。
     if (nameInputMode === "manual") {
       nameWarningEl.textContent = MANUAL_MODE_NOTICE;
       nameWarningEl.classList.remove("hidden");
@@ -9738,8 +8691,6 @@
     nameWarningEl.classList.add("hidden");
   }
 
-  // 変換の直後にだけ呼ぶ。かなが無い入力（すでにローマ字）で上書きすると、
-  // 一度出した注意書きが次の打鍵で消えてしまうため、そのときは触らない。
   function recordBoundarySuspect(inputEl, kanaBefore) {
     if (!inputEl.value) {
       boundarySuspectByInput.delete(inputEl);
@@ -9750,15 +8701,8 @@
     }
   }
 
-  // かな入力の途中（拗音・ヴ行の2文字目や、モバイル特有の「小さい文字」への
-  // 直前トグルなど）で早まって変換してしまうと、きゃ→ki+ゃ のように壊れる。
-  // そのため入力のたびに即変換はせず、少し打鍵が止まってから変換する。
-  // IME変換中（isComposing）も同様に、確定するまでは手を出さない。
-  // 苗字・名前は別々に打つので、待ちタイマーも欄ごとに独立させる。
   const autoConvertTimers = new WeakMap();
   function runAutoConvert(inputEl) {
-    // 手入力モードでは、打鍵が止まっても綴りに手を出さない。ここを素通り
-    // させると、計算直前の flush でも変換されなくなる（意図どおり）。
     if (nameInputMode === "manual") {
       inputEl.classList.remove("romaji-pending");
       checkNameWarning();
@@ -9770,9 +8714,6 @@
     inputEl.classList.remove("romaji-pending");
     if (converted !== before) {
       inputEl.value = converted;
-      // タップ表のキーと同じ「一瞬光る」フィードバックを入力欄自体にも与え、
-      // 変換が起きたことに気づきやすくする（無音で0.5秒待つだけだと、初心者は
-      // 何も起きていないと思いやすい）。
       inputEl.classList.add("romaji-flash");
       setTimeout(() => inputEl.classList.remove("romaji-flash"), 400);
     }
@@ -9785,8 +8726,6 @@
       checkNameWarning();
       return;
     }
-    // かなが含まれているときだけ「変換待ち」の見た目にする。普通にローマ字を
-    // 直接タイプしている人まで毎回薄く点滅して見えるのを避けるため。
     if (/[぀-ヿ]/.test(inputEl.value)) {
       inputEl.classList.add("romaji-pending");
     }
@@ -9820,14 +8759,8 @@
     lastNameInput.placeholder = text.placeholder;
     firstNameInput.placeholder = text.placeholder;
     nameWarningEl.textContent = text.warning;
-    // オンで手入力（自動変換オフ）。ボタンの文言は変えず、スイッチの見た目と
-    // 入力欄のラベル（カナ／ローマ字）で今どちらなのかを示す。
     nameModeToggleBtn.setAttribute("aria-pressed", String(mode === "manual"));
 
-    // 切り替えた時点でかなが残っていたら、どちらの向きでも一度ヘボン式に
-    // 確定させる。手入力へ移る人の目的は「一度出た綴りを直すこと」なので、
-    // かなのままでは直す起点が無い。runAutoConvert はモード判定で素通り
-    // するため、ここでは変換を直接呼ぶ。
     [lastNameInput, firstNameInput].forEach((el) => {
       clearTimeout(autoConvertTimers.get(el));
       el.classList.remove("romaji-pending");
@@ -9841,7 +8774,6 @@
     try {
       sessionStorage.setItem(NAME_MODE_KEY, mode);
     } catch (err) {
-      // Ignore: このページ読み込みのあいだはモードが効いていれば十分。
     }
   }
 
@@ -9858,15 +8790,12 @@
   });
   setNameMode(getRememberedNameMode());
 
-  // ---------------- 自分情報の出し入れ ----------------
   const selfFillBtn = document.getElementById("self-fill");
   const selfClearBtn = document.getElementById("self-clear");
 
   const selfMsgEl = document.getElementById("self-msg");
   let selfMsgTimer = null;
 
-  // 覚えているかどうかで、呼び出しのボタンを出し入れするだけ。
-  // 🚨 ボタンの文字は変えない。押すたびに名前が変わると、何のボタンか分からなくなる。
   function refreshSelfButtons() {
     selfFillBtn.classList.toggle("hidden", !readSelf());
   }
@@ -9879,7 +8808,6 @@
     selfMsgTimer = setTimeout(() => selfMsgEl.classList.add("hidden"), 2600);
   }
 
-  // お客様を入れるとき、自分の値を1文字ずつ消さずに済むようにする。
   selfClearBtn.addEventListener("click", () => {
     birthYearInput.value = "";
     birthMonthInput.value = "";
@@ -9891,7 +8819,6 @@
     saySelf("欄を空にしました。お客様の生年月日をお入れください。");
   });
 
-  // ---------------- 自分の情報（別窓） ----------------
   const selfModal = document.getElementById("self-modal");
   const selfOpenBtn = document.getElementById("self-open-btn");
   const selfStoreBtn = document.getElementById("self-store");
@@ -9936,15 +8863,12 @@
       selfModalMsg.textContent = "生年月日を正しく入れてください。";
       return;
     }
-    // 🚨 この窓の氏名はカナで受け取る。ローマ字の手入力は計算画面の切り替えで
-    //    行うもので、こちらに持ち込むと、どちらで覚えたのか分からなくなる。
     writeSelf({
       birth: [y, m, d].join("-"),
       last: selfLastInput.value,
       first: selfFirstInput.value,
       mode: "kana",
     });
-    // 毎朝のお便りの持ち主も、ここで決まる。作り置きを本人のもので作り直す。
     saveMorningPlan();
     refreshSelfButtons();
     selfModalMsg.className = "push-status ok";
@@ -9960,11 +8884,7 @@
       birthMonthInput.value = String(Number(parts[1]));
       birthDayInput.value = String(Number(parts[2]));
     }
-    // 🚨 覚えている氏名が無いときは、欄に手を触れない。
-    //    空で上書きすると、いま打っている名前が消える。
     if (self.last || self.first) {
-      // 🚨 先に入力の種類（カナ／ローマ字）を戻す。あとから値を入れないと、
-      //    切り替えの際の変換が、入れた文字にかかってしまう。
       if (self.mode && self.mode !== nameInputMode) setNameMode(self.mode);
       if (self.last) lastNameInput.value = self.last;
       if (self.first) firstNameInput.value = self.first;
@@ -9975,9 +8895,6 @@
       : "生年月日を入れました。（氏名はまだ覚えていません）");
   });
 
-  // 長音の省略（大野＝おおの→ono など）で2回目のタップが何も追加しないとき、
-  // 初心者ほど「タップが反応していない」と誤解しやすい。タップ自体は効いている
-  // ことが分かるよう、対象のキーを一瞬光らせて視覚フィードバックを返す。
   function flashKey(keyEl) {
     if (!keyEl) return;
     keyEl.classList.add("flash");
@@ -9991,34 +8908,16 @@
       insertRomaji(doubled);
       return;
     }
-    // 長音は、パスポートのヘボン式ローマ字綴方表（外務省）の原則どおり、
-    // 「同じ母音が連続する場合は2つ目を書かない」で網羅する：
-    //   あ段+あ→a（例：ばあ→ba）　い段+い→i（例：井伊＝いい→Ii）
-    //   う段+う→u（例：すう→su）　え段+え→e（例：ねえ→ne）
-    //   お段+お→o（例：とおい→to、大野＝おおの→ono）
-    // 「お段+う」（おう＝長音のお、日本語で最も多いパターン）だけは母音の文字
-    // 自体は異なる（o→u）ため、別途 lastChar==="o" を明示的に見て拾う
-    // （例：太郎＝たろう→Taro、東京＝とうきょう→Tokyo、八丁＝はっちょう→hatcho）。
-    // 逆に「え段+い」（けいこ等）はhepburnでは省略しない例外なので、
-    // 同じ母音同士のときしか反応しないこのロジックでは自然に対象外のままになる。
     const lastChar = activeNameInput.value.slice(-1);
     if (VOWELS.has(romaji) && (romaji === lastChar || (romaji === "u" && lastChar === "o"))) {
       flashKey(keyEl);
       return;
     }
-    // ん（末尾がn）の直後にま・ば・ぱ行が続く場合は、ヘボン式の慣例に合わせて
-    // n を m に書き換える（例：三瓶＝さんぺい→sampei、難波＝なんば→namba）。
-    // 直前に何が入力されたかではなく、入力欄の実際の末尾文字を見て判定するため、
-    // 手動編集で欄の中身が変わっていても正しく動く。
     if (lastChar === "n" && /^[pbm]/.test(romaji)) {
       activeNameInput.value = activeNameInput.value.slice(0, -1) + "m";
       insertRomaji(romaji);
       return;
     }
-    // 「ん」の直後に母音（あ・い・う・え・お）や・ゆ・よが続くと、区切りが
-    // わからず別の1文字（な行・にゃ行など）に読めてしまうため、ヘボン式では
-    // アポストロフィを挟んで区切りを明示する（例：純一＝じゅんいち→jun'ichi、
-    // 本位＝ほんい→hon'i、金融＝きんゆう→kin'yu）。
     if (lastChar === "n" && /^[aiueoy]/.test(romaji)) {
       insertRomaji("'" + romaji);
       return;
@@ -10026,8 +8925,6 @@
     insertRomaji(romaji);
   }
 
-  // 「おおの」のお試し再生（romajiDemoBtn）が、実在するキー要素を見つけて
-  // 本物のクリックとして発火させるためのルックアップ。
   const kanaKeyMap = {};
 
   romajiTableBody.innerHTML = "";
@@ -10051,8 +8948,6 @@
     romajiTableBody.appendChild(gridEl);
   });
 
-  // 促音「っ」・長音「ー」は単独では読み方が定まらないため、他のかなと同じ
-  // ボタンにはせず、直後の入力に作用する特殊キーとして別枠で扱う。
   const specialTitleEl = document.createElement("div");
   specialTitleEl.className = "romaji-section-title";
   specialTitleEl.textContent = "促音・長音";
@@ -10076,9 +8971,6 @@
   });
   specialGridEl.appendChild(sokuonKey);
 
-  // ー（音引き）はヘボン式の一般的な慣例に合わせ、他の長音（お段+う、う段+う）
-  // と同じく伸ばす分の文字を書かない（例：ヴォードレール→bodoreru）。押しても
-  // 何も入力されない旨がひと目でわかるよう、ボタン自体にそう表示しておく。
   const chouonKey = document.createElement("button");
   chouonKey.type = "button";
   chouonKey.className = "romaji-key";
@@ -10098,12 +8990,6 @@
     activeNameInput.focus();
   });
 
-  // ローマ字表そのものが入力面なので、開いているあいだは端末のソフトキーボードを
-  // 出さない。スマホでは画面下半分をキーボードが占有し、名前欄の下に置いてある
-  // この表を丸ごと隠してしまうため、表を出しても打てないという状態になっていた。
-  // inputmode="none" はフォーカス・キャレットを保ったままキーボードだけを抑制する。
-  // insertRomaji() が毎回 focus() を呼ぶので、これが無いとタップのたびに
-  // キーボードが復帰して表が隠れ直す。
   function setRomajiTableOpen(open) {
     romajiTablePanel.classList.toggle("hidden", !open);
     romajiToggleBtn.textContent = open
@@ -10117,12 +9003,8 @@
       clearPendingSokuon();
       return;
     }
-    // 開く時点で名前欄にフォーカスが残っていると、既に出ているキーボードは
-    // inputmode を変えただけでは引っ込まない。いったん外して閉じさせる
-    // （以後のタップ入力は insertRomaji 側で focus し直される）。
     const focused = document.activeElement;
     if (focused === lastNameInput || focused === firstNameInput) focused.blur();
-    // 表は名前欄より下にあるため、開いた直後に画面内へ送っておく。
     requestAnimationFrame(() => {
       romajiTablePanel.scrollIntoView({ block: "nearest", behavior: "smooth" });
     });
@@ -10134,9 +9016,6 @@
     setRomajiTableOpen(romajiTablePanel.classList.contains("hidden"));
   });
 
-  // 文章で例を並べる代わりに、実際にタップされる様子を1回再生して見せる
-  // お試しボタン。「おおの→ono」で長音の省略を体感してもらうことで、他の
-  // 名前でも同じ仕組みが働くことが（大野さん限定の説明ではなく）伝わる。
   romajiDemoBtn.addEventListener("click", () => {
     if (romajiTablePanel.classList.contains("hidden")) setRomajiTableOpen(true);
     activeNameInput.value = "";
@@ -10159,18 +9038,9 @@
     playNext();
   });
 
-  // Offline support: caches the whole page on first visit so it keeps
-  // working with no network at all. Has no effect when opened as a local
-  // file (service workers require http/https), so this is a no-op for the
-  // app/ folder's local-only version.
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => {
       navigator.serviceWorker.register("sw.js").then((registration) => {
-        // ホーム画面から再度開いたときなど、OSがページを新規に読み込まず
-        // 中断していた状態から復帰させるだけのことがあり、その場合は
-        // sw.jsのfetchハンドラ（ネットワーク優先）すら一度も走らないまま
-        // 古い画面が表示され続けてしまう。アプリが再び見えるようになる
-        // たびに、新しいバージョンが出ていないか明示的に確認する。
         document.addEventListener("visibilitychange", () => {
           if (document.visibilityState === "visible") {
             registration.update().catch(() => {});
@@ -10178,10 +9048,6 @@
         });
       }).catch(() => {});
 
-      // 新しいService Workerが有効になった（＝新しいバージョンが見つかった）
-      // 瞬間に、表示中のページを1回だけ自動で再読み込みし、最新の内容を
-      // 反映する。これが無いと、更新自体は裏側で完了していても、開いたまま
-      // だった画面には反映されない。
       let hasReloaded = false;
       navigator.serviceWorker.addEventListener("controllerchange", () => {
         if (hasReloaded) return;

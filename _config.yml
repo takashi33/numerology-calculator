@@ -4,7 +4,10 @@
 #    GitHub Pages は、リポジトリに入れたファイルを**そのまま全部公開する。**
 #    2026-09-03 に無料版と有料版へ分けたのに、元の app.html が
 #    `.../numerology-calculator/app.html` で誰でも開ける状態だった。
-#    **分けた意味が無くなっていた。**（公開の直前に気づいて塞いだ）
+#
+# 🚨 これは二重の守りにすぎない。**本当の守りは「元をこのリポジトリに置かないこと」。**
+#    Pages で止めても、`raw.githubusercontent.com` からは読めてしまうため。
+#    元と道具は、隣の非公開フォルダ（numerology-calculator-src）にある。
 #
 # 🚨 ここに書いたものは公開されない。**公開したくないものを足したら、必ずここに書く。**
 # ⚠️ `.nojekyll` を置かないこと。置くとこの決まりごと無視され、全部公開される。
@@ -12,12 +15,11 @@
 # 公開されるのは index.html（無料版）／ r9x4t7m2.html（有料版）／ sw.js の3つだけ。
 
 exclude:
-  - app.html          # 元。有料の中身を含む
-  - preview           # 確認用。app.html から作るので、こちらも有料の中身を含む
+  - app.html
+  - preview
   - build.js
+  - strip.js
   - make-preview.js
   - deploy.sh
   - icon-source.png
   - supabase
-  - CODEX-REVIEW.md
-  - README.md
