@@ -2296,7 +2296,7 @@
     <p id="name-warning" class="name-warning hidden"></p>
 
     <div class="self-row">
-      <button type="button" id="self-clear" class="self-btn">お客様を入れる</button>
+      <button type="button" id="self-clear" class="self-btn">他の人を入力する</button>
       <button type="button" id="self-fill" class="self-btn hidden">自分に戻す</button>
     </div>
     <p id="self-msg" class="self-msg hidden"></p>
@@ -7891,8 +7891,51 @@
 
   nameModeToggleBtn.addEventListener("click", () => {
     setNameMode(nameInputMode === "manual" ? "kana" : "manual");
+    saveLastInput();
   });
   setNameMode(getRememberedNameMode());
+
+  const LAST_INPUT_KEY = "numerology-last-input";
+  const INPUT_FIELDS = [birthYearInput, birthMonthInput, birthDayInput, lastNameInput, firstNameInput];
+
+  function saveLastInput() {
+    try {
+      const v = {
+        y: birthYearInput.value,
+        m: birthMonthInput.value,
+        d: birthDayInput.value,
+        last: lastNameInput.value,
+        first: firstNameInput.value,
+        mode: nameInputMode,
+      };
+      if (!v.y && !v.m && !v.d && !v.last && !v.first) localStorage.removeItem(LAST_INPUT_KEY);
+      else localStorage.setItem(LAST_INPUT_KEY, JSON.stringify(v));
+    } catch (err) {
+    }
+  }
+
+  function forgetLastInput() {
+    try { localStorage.removeItem(LAST_INPUT_KEY); } catch (err) { /* ignore */ }
+  }
+
+  function restoreLastInput() {
+    let v = null;
+    try { v = JSON.parse(localStorage.getItem(LAST_INPUT_KEY) || "null"); } catch (err) { return; }
+    if (!v) return;
+    if (v.mode && v.mode !== nameInputMode) setNameMode(v.mode);
+    birthYearInput.value = v.y || "";
+    birthMonthInput.value = v.m || "";
+    birthDayInput.value = v.d || "";
+    lastNameInput.value = v.last || "";
+    firstNameInput.value = v.first || "";
+    checkNameWarning();
+  }
+
+  restoreLastInput();
+  for (const el of INPUT_FIELDS) {
+    el.addEventListener("input", saveLastInput);
+    el.addEventListener("change", saveLastInput);
+  }
 
   const selfFillBtn = document.getElementById("self-fill");
   const selfClearBtn = document.getElementById("self-clear");
@@ -7919,8 +7962,9 @@
     lastNameInput.value = "";
     firstNameInput.value = "";
     checkNameWarning();
+    forgetLastInput();
     birthYearInput.focus();
-    saySelf("欄を空にしました。お客様の生年月日をお入れください。");
+    saySelf("欄を空にしました。他の人の生年月日をお入れください。");
   });
 
   const selfModal = document.getElementById("self-modal");
@@ -7994,6 +8038,7 @@
       if (self.first) firstNameInput.value = self.first;
       checkNameWarning();
     }
+    saveLastInput(); // 入れた内容も、この端末に残す
     saySelf(self.last || self.first
       ? "自分の情報を入れました。"
       : "生年月日を入れました。（氏名はまだ覚えていません）");
