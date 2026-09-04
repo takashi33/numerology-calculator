@@ -161,6 +161,34 @@
     font-family: var(--font-body);
   }
 
+  .name-hint {
+    position: relative;
+    margin: -2px 0 0;
+    padding: 10px 14px;
+    font-size: 13px;
+    line-height: 1.7;
+    font-family: var(--font-body);
+    color: #2a1a4d;
+    background: #f4d98b;
+    border-radius: 12px;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.28);
+    animation: name-hint-in 0.22s ease-out;
+  }
+  .name-hint::before {
+    content: "";
+    position: absolute;
+    top: -7px;
+    left: 24px;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-bottom: 8px solid #f4d98b;
+  }
+  .name-hint strong { font-weight: 700; }
+  @keyframes name-hint-in {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: none; }
+  }
+
   .date-input-group {
     display: flex;
     align-items: center;
@@ -2293,6 +2321,7 @@
       <span id="first-name-label">名前（カナ）</span>
       <input type="text" id="first-name" placeholder="カナ入力">
     </label>
+    <p id="name-hint" class="name-hint hidden" role="status" aria-live="polite"></p>
     <p id="name-warning" class="name-warning hidden"></p>
 
     <div class="self-row">
@@ -3002,6 +3031,7 @@
   const firstNameInput = document.getElementById("first-name");
   let activeNameInput = lastNameInput;
   const nameWarningEl = document.getElementById("name-warning");
+  const nameHintEl = document.getElementById("name-hint");
   const nameModeToggleBtn = document.getElementById("name-mode-toggle");
   const lastNameLabelEl = document.getElementById("last-name-label");
   const firstNameLabelEl = document.getElementById("first-name-label");
@@ -3022,6 +3052,8 @@
     },
   };
   const BOUNDARY_WARNING = "同じ母音が続いたので、長音として1文字にまとめました。漢字の切れ目にあたる名字（松浦＝MATSUURA、福浦＝FUKUURA など）はこの綴りでは足りません。当てはまる場合は「ローマ字を手入力する」をオンにして直してください。";
+  const NAME_HINT_BEFORE = "カナで入れてください。少し待つと、自動でローマ字に変わります。";
+  const NAME_HINT_AFTER = "ローマ字に変わりました。打ち直さずに、このまま進めてください。";
   const MANUAL_MODE_NOTICE = "手入力モードです。カナを入れても自動でローマ字に変換されません。自動変換に戻すには、上の「ローマ字を手入力する」をオフにしてください。";
   let nameInputMode = "kana";
   const romajiToggleBtn = document.getElementById("romaji-table-toggle");
@@ -8669,9 +8701,41 @@
     return out;
   }
 
+  let nameHintState = "none";
+  let nameHintTimer = null;
+
+  function showNameHint(text) {
+    clearTimeout(nameHintTimer);
+    nameHintEl.textContent = text;
+    nameHintEl.classList.remove("hidden");
+  }
+
+  function hideNameHint() {
+    clearTimeout(nameHintTimer);
+    nameHintEl.classList.add("hidden");
+  }
+
+  function noticeNameTyping() {
+    if (nameHintState !== "none") return;
+    if (nameInputMode !== "kana") return;
+    nameHintState = "before";
+    showNameHint(NAME_HINT_BEFORE);
+  }
+
+  function noticeNameConverted() {
+    if (nameHintState === "done") return;
+    nameHintState = "after";
+    showNameHint(NAME_HINT_AFTER);
+    nameHintTimer = setTimeout(() => {
+      nameHintState = "done";
+      nameHintEl.classList.add("hidden");
+    }, 6000);
+  }
+
   function checkNameWarning() {
     const pattern = /[぀-ヿ一-鿿]/;
     const hasUnconverted = pattern.test(lastNameInput.value) || pattern.test(firstNameInput.value);
+    if (hasUnconverted || nameInputMode === "manual") hideNameHint();
     if (hasUnconverted) {
       nameWarningEl.textContent = NAME_MODE_TEXT[nameInputMode].warning;
       nameWarningEl.classList.remove("hidden");
@@ -8685,6 +8749,7 @@
     const suspect = boundarySuspectByInput.get(lastNameInput)
       || boundarySuspectByInput.get(firstNameInput);
     if (suspect) {
+      hideNameHint(); // 長音の注意のほうが大事。吹き出しと重ねない
       nameWarningEl.textContent = BOUNDARY_WARNING;
       nameWarningEl.classList.remove("hidden");
       return;
@@ -8717,6 +8782,7 @@
       inputEl.value = converted;
       inputEl.classList.add("romaji-flash");
       setTimeout(() => inputEl.classList.remove("romaji-flash"), 400);
+      noticeNameConverted();
     }
     checkNameWarning();
     saveLastInput();
@@ -8738,6 +8804,7 @@
       activeNameInput = inputEl;
     });
     inputEl.addEventListener("input", (e) => {
+      noticeNameTyping();
       if (e.isComposing) return;
       scheduleAutoConvert(inputEl);
     });
