@@ -7822,6 +7822,7 @@
       setTimeout(() => inputEl.classList.remove("romaji-flash"), 400);
     }
     checkNameWarning();
+    saveLastInput();
   }
   function scheduleAutoConvert(inputEl) {
     clearTimeout(autoConvertTimers.get(inputEl));
@@ -7936,6 +7937,7 @@
     el.addEventListener("input", saveLastInput);
     el.addEventListener("change", saveLastInput);
   }
+  window.addEventListener("pagehide", saveLastInput);
 
   const selfFillBtn = document.getElementById("self-fill");
   const selfClearBtn = document.getElementById("self-clear");
