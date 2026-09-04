@@ -1,15 +1,12 @@
 # GitHub Pages が公開するファイルの決まり。
 #
-# 公開されるのは index.html / r9x4t7m2.html / sw.js の3つ。
-# 🚨 ここに書いたものは公開されない。公開したくないものを足したら、必ずここに書くこと。
-# ⚠️ `.nojekyll` を置かないこと。置くとこの決まりごと無視され、全部公開される。
+# 🚨 このリポジトリは、もうアプリを置いていない（2026-09-05）。
+#    アプリは Cloudflare Pages（studio-lantern-numerology.pages.dev）へ移した。
+#    ここに残っているのは、次の2つだけ。
+#      ・index.html … 新しい住所へ送るだけの1枚。**お渡し済みのQRやカードを生かすため**
+#      ・.github    … 毎朝のお便りを送る仕組み（公開とは関わりがない）
+#
+# 🚨 ここにアプリのファイルを戻さないこと。戻した時点で、誰でも読めるようになる。
 
 exclude:
-  - app.html
-  - preview
-  - build.js
-  - strip.js
-  - make-preview.js
-  - deploy.sh
-  - icon-source.png
   - supabase
