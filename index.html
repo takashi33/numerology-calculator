@@ -17,12 +17,17 @@
 <div>
   <h1>数秘電卓は、引っ越しました</h1>
   <p>新しい住所へ移ります。<br>そのままお待ちください。</p>
-  <p><a href="https://studio-lantern-numerology.pages.dev/">移らないときは、ここを押してください</a></p>
+  <p><a id="go" href="https://studio-lantern-numerology.pages.dev/">移らないときは、ここを押してください</a></p>
 </div>
 <script>
   // 古い住所に残っている読み込みの仕掛けを片づけてから移る。
   // 残したままだと、前の中身が表示され続けることがある。
   (async function () {
+    // 手で押すほうのリンクにも、付いてきたものをそのまま足しておく。
+    try {
+      const go = document.getElementById("go");
+      if (go) go.href = "https://studio-lantern-numerology.pages.dev/" + location.search + location.hash;
+    } catch (err) { /* 押せなくなるより、そのままのほうがよい */ }
     try {
       if (navigator.serviceWorker) {
         const rs = await navigator.serviceWorker.getRegistrations();
@@ -35,6 +40,8 @@
     } catch (err) {
       // 片づけられなくても、移ることを優先する。
     }
-    location.replace("https://studio-lantern-numerology.pages.dev/");
+    // 🚨 `?t=`（お客様の一度きりのリンク）や `?a=`（依頼者の入り口）を落とさない。
+    //    落とすと、お渡し済みのリンクで開けなくなる。
+    location.replace("https://studio-lantern-numerology.pages.dev/" + location.search + location.hash);
   })();
 </script>
