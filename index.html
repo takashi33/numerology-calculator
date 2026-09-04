@@ -23,10 +23,33 @@
   // 古い住所に残っている読み込みの仕掛けを片づけてから移る。
   // 残したままだと、前の中身が表示され続けることがある。
   (async function () {
+    // 🚨 この端末に残っているものを、新しい住所へ持って行く（Codexの指摘・2026-09-05）。
+    //    手帳の記録は**ここにしか無い。**住所が変わると読めなくなり、戻せない。
+    //    ⚠️ 送り先は「#」の後ろに載せる。**「#」から後ろは、置き場へは送られない。**
+    //    ⚠️ 役（管理者）と発行の合言葉は持って行かない。持たせると、番号を知らなくても入れてしまう。
+    let hikitsugi = "";
+    try {
+      const MOTTE_IKANAI = ["numerology-gate-role", "numerology-mint-pass"];
+      const nimotsu = {};
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (!k || k.indexOf("numerology-") !== 0) continue;
+        if (MOTTE_IKANAI.indexOf(k) >= 0) continue;
+        nimotsu[k] = localStorage.getItem(k);
+      }
+      if (Object.keys(nimotsu).length) {
+        const moji = btoa(unescape(encodeURIComponent(JSON.stringify(nimotsu))));
+        // 長すぎると住所に載らない。載らないくらい多い場合は、あきらめて先へ進む。
+        if (moji.length < 900000) hikitsugi = "#hikitsugi=" + moji;
+      }
+    } catch (err) {
+      // 持って行けなくても、移ることを優先する。
+    }
+
     // 手で押すほうのリンクにも、付いてきたものをそのまま足しておく。
     try {
       const go = document.getElementById("go");
-      if (go) go.href = "https://studio-lantern-numerology.pages.dev/" + location.search + location.hash;
+      if (go) go.href = "https://studio-lantern-numerology.pages.dev/" + location.search + (hikitsugi || location.hash);
     } catch (err) { /* 押せなくなるより、そのままのほうがよい */ }
     try {
       if (navigator.serviceWorker) {
@@ -42,6 +65,6 @@
     }
     // 🚨 `?t=`（お客様の一度きりのリンク）や `?a=`（依頼者の入り口）を落とさない。
     //    落とすと、お渡し済みのリンクで開けなくなる。
-    location.replace("https://studio-lantern-numerology.pages.dev/" + location.search + location.hash);
+    location.replace("https://studio-lantern-numerology.pages.dev/" + location.search + (hikitsugi || location.hash));
   })();
 </script>
